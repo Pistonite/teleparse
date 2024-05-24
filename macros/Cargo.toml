@@ -1,0 +1,15 @@
+[package]
+name = "llnparse-macros"
+version = "0.0.1"
+edition = "2021"
+description = "Proc-macro crate for llnparse"
+repository = "https://github.com/Pistonite/llnparse"
+license = "MIT"
+authors = ["Pistonight <terrabyte100k@gmail.com>"]
+
+[dependencies]
+proc-macro2 = "1.0.83"
+quote = "1.0.36"
+
+[lib]
+proc-macro = true
