@@ -1,4 +1,21 @@
 [workspace]
 resolver = "2"
-members = ["macros", "main"]
+members = ["macros"]
+
+[package]
+name = "llnparse"
+version = "0.0.1"
+edition = "2021"
+description = "llnparse"
+license = "MIT"
+
+[dependencies]
+deref-derive = "0.1.0"
+llnparse-macros = { path = "macros", version = "=0.0.1" }
+
+[dev-dependencies]
+macrotest = "1.0.12"
+
+[features]
+arc = []
 

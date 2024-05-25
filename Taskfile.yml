@@ -1,0 +1,7 @@
+version: "3"
+
+tasks:
+  doc:
+    desc: Watch and serve documentation (requires python)
+    cmds:
+      - cargo watch -s "cargo doc && python -m http.server -d target/doc"
