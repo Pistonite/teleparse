@@ -42,14 +42,19 @@ fn expand_internal(input: syn::DeriveInput) -> syn::Result<TokenStream2> {
         // check for attributes
         let mut extract = false;
         for attr in &variant.attrs {
-            if !is_crate_attr(attr) {
-                continue;
-            }
-            let id = attr.parse_args::<syn::Ident>()?;
-            if id == "extract" {
-                extract = true;
-            } else {
-                syn_error!(id, "unknown {CRATE} attribute `{id}`");
+            let metas = match parse_attr_meta(attr)? {
+                Some(metas) => metas,
+                None => continue,
+            };
+            for meta in metas {
+                match meta {
+                    syn::Meta::Path(path) => {
+                        if path.is_ident("extract") {
+                            extract = true;
+                        }
+                    }
+                    _ => syn_error!(meta, "unknown {CRATE} attribute `{meta}` for deriving TokenType"),
+                }
             }
         }
 

@@ -3,6 +3,7 @@ pub(crate) use proc_macro::TokenStream;
 pub(crate) use proc_macro2::Span;
 pub(crate) use quote::quote;
 pub(crate) use syn::parse_macro_input;
+pub(crate) use syn::punctuated::Punctuated;
 
 /// Type to distinct with proc_macro::TokenStream
 pub(crate) type TokenStream2 = proc_macro2::TokenStream;
@@ -14,9 +15,18 @@ pub(crate) fn crate_ident() -> syn::Ident {
     syn::Ident::new(CRATE, Span::call_site())
 }
 
-/// Check if an attribute is a crate attribute
-pub(crate) fn is_crate_attr(attr: &syn::Attribute) -> bool {
-    attr.path().is_ident(CRATE)
+pub(crate) fn parse_attr_meta(attr: &syn::Attribute) -> syn::Result<
+Option<Punctuated<syn::Meta, syn::Token![,]>>> {
+    if !attr.path().is_ident(CRATE) {
+        return Ok(None);
+    }
+
+    Ok(Some(attr.parse_args_with(Punctuated::<syn::Meta, syn::Token![,]>::parse_terminated)?))
+}
+
+/// Remove [llnparse] attributes from a list of attributes
+pub(crate) fn strip_attrs(attrs: &mut Vec<syn::Attribute>) {
+    attrs.retain(|attr| !attr.path().is_ident(CRATE));
 }
 
 /// Convert a [`syn::Result`] to a [`TokenStream`]

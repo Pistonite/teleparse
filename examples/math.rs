@@ -5,7 +5,7 @@
 //! like (1-2)(3+4) or 2(3+4)
 //!
 
-use llnparse::llnparse_derive;
+use llnparse::prelude::*;
 
 // note that this example is not the only way to define the parser
 
@@ -23,18 +23,18 @@ pub enum TokenType {
 /// Convenience type for the token
 type Token = llnparse::Token<TokenType>;
 
-// /// The lexer
-// #[llnparse_derive(Lexer)]
-// #[lexer(
-//     TokenType,
-//     ignore(regex(r#"\s+"#)), // ignore whitespaces
-//     regex(Integer, r#"\d+"#),
-//     regex(Operator, r#"[\+-\*/]"#),
-//     // you can also use regex for these, here it's just showing how to use literal
-//     literal(Param, "("), 
-//     literal(Param, ")")
-// )]
-// pub struct Lexer;
+/// The lexer
+#[llnparse_derive(Lexer)]
+#[llnparse(
+    token(TokenType),
+    ignore = r#"^\s+"#, // ignore whitespaces
+    Integer = r#"^\d+"#,
+    Operator = r#"^[\+\-\*/]"#,
+    Param = r#"^[\(\)]"#,
+)]
+pub struct Lexer<'s> {
+    state: llnparse::LexerState<'s>
+}
 //
 // // The "grammar"
 // // This is simplified to allow lists, thus with quotes
@@ -56,8 +56,7 @@ type Token = llnparse::Token<TokenType>;
 //     /// An expression surrounded by parentheses
 //     WithParam(ExprWithParam),
 //     /// An expression not surrounded by parentheses
-//     #[list(non_empty)] 
-//     WithoutParam(llnparse::SepListNoTrail<Term, OpAddSub>),
+//     WithoutParam(SepList<Term, OpAddSub>),
 //     // ^ note this is in order so WithoutParam must be before Integer
 //     /// An integer
 //     #[token(Integer)]

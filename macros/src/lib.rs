@@ -5,7 +5,8 @@
 mod prelude;
 use prelude::*;
 
-type TokenStream2 = proc_macro2::TokenStream;
+mod lexer_derive_impl;
+mod token_type_derive_impl;
 
 /// Derive trait from llnparse along with other required traits
 #[proc_macro_attribute]
@@ -22,11 +23,13 @@ fn llnparse_derive_internal(ident: &syn::Ident, input: TokenStream) -> syn::Resu
         "TokenType" => {
             token_type_derive_impl::expand(input)
         },
+        "Lexer" => {
+            lexer_derive_impl::expand(input)
+        },
         _ => syn_error!(ident, "unknown llnparse_derive input `{ident}`"),
     };
 
     Ok(out)
 }
 
-mod token_type_derive_impl;
 

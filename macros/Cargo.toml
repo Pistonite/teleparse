@@ -10,6 +10,7 @@ authors = ["Pistonight <terrabyte100k@gmail.com>"]
 [dependencies]
 proc-macro2 = "1.0.83"
 quote = "1.0.36"
+regex = "1.10.4"
 syn = "2.0.66"
 
 [lib]
