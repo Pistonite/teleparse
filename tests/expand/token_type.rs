@@ -1,11 +1,57 @@
 use llnparse::llnparse_derive;
 
 #[llnparse_derive(TokenType)]
-pub enum MyTokenType {
-   // extract means the tokens are not relevant in the AST
-   // but still collected so you may use them later
-   #[llnparse(extract)] 
-   Comment,
-   Keyword,
-   Ident,
+pub enum TokenU16 {
+    X0000,
+    X0001,
+    X0010,
+    X0011,
+    X0100,
+    X0101,
+    X0110,
+    X0111,
+    X1000,
+    X1001,
+    X1010,
+    X1011,
+    X1100,
+    X1101,
+    X1110,
+    X1111,
+}
+
+#[llnparse_derive(TokenType)]
+pub enum TokenU32 {
+    X00000,
+    X00001,
+    X00010,
+    X00011,
+    X00100,
+    X00101,
+    X00110,
+    X00111,
+    X01000,
+    X01001,
+    X01010,
+    X01011,
+    X01100,
+    X01101,
+    X01110,
+    X01111,
+    X10000,
+    X10001,
+    X10010,
+    X10011,
+    X10100,
+    X10101,
+    X10110,
+    X10111,
+    X11000,
+    X11001,
+    X11010,
+    X11011,
+    X11100,
+    X11101,
+    X11110,
+    X11111,
 }

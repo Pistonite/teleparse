@@ -10,8 +10,11 @@ description = "llnparse"
 license = "MIT"
 
 [dependencies]
+bit-set = "0.5.3"
 deref-derive = "0.1.0"
 llnparse-macros = { path = "macros", version = "=0.0.1" }
+num = "0.4.3"
+thiserror = "1.0.61"
 
 [dev-dependencies]
 macrotest = "1.0.12"
