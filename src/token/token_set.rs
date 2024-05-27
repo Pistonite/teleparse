@@ -2,7 +2,7 @@ use num::Zero;
 
 use super::TokenType;
 
-/// Stores multiple token types as a bit set
+/// Efficiently stores multiple token types as a bit set
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct TokenTySet<T: TokenType>(T::Repr);
 
@@ -40,19 +40,20 @@ impl<T: TokenType> TokenTySet<T> {
 
 impl<T: TokenType> IntoIterator for TokenTySet<T> {
     type Item = T;
-    type IntoIter = TTSetIter<T>;
+    type IntoIter = TokenTySetIter<T>;
     fn into_iter(self) -> Self::IntoIter {
-        TTSetIter::from(self.0)
+        TokenTySetIter::from(self.0)
     }
 }
 
-pub struct TTSetIter<T: TokenType> {
+/// Iterator for a [`TokenTySet`]
+pub struct TokenTySetIter<T: TokenType> {
     set: T::Repr,
     cur: Option<T>,
     done: bool,
 }
 
-impl<T: TokenType> TTSetIter<T> {
+impl<T: TokenType> TokenTySetIter<T> {
     pub fn from(repr: T::Repr) -> Self {
         Self {
             set: repr,
@@ -62,7 +63,7 @@ impl<T: TokenType> TTSetIter<T> {
     }
 }
 
-impl<T: TokenType> Iterator for TTSetIter<T> {
+impl<T: TokenType> Iterator for TokenTySetIter<T> {
     type Item = T;
     fn next(&mut self) -> Option<Self::Item> {
         if self.done {

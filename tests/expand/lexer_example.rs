@@ -1,5 +1,12 @@
 use llnparse::prelude::*;
 
+#[llnparse_derive(TokenType)]
+pub enum TokenType {
+    Integer,
+    Operator,
+    Param,
+}
+
 #[llnparse_derive(Lexer)]
 #[llnparse(
     token(TokenType),

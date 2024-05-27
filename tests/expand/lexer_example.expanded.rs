@@ -1,56 +1,105 @@
 use llnparse::prelude::*;
+#[repr(u8)]
+pub enum TokenType {
+    Integer = 0x1u8,
+    Operator = 0x2u8,
+    Param = 0x4u8,
+}
+#[automatically_derived]
+impl ::core::fmt::Debug for TokenType {
+    #[inline]
+    fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+        ::core::fmt::Formatter::write_str(
+            f,
+            match self {
+                TokenType::Integer => "Integer",
+                TokenType::Operator => "Operator",
+                TokenType::Param => "Param",
+            },
+        )
+    }
+}
+#[automatically_derived]
+impl ::core::clone::Clone for TokenType {
+    #[inline]
+    fn clone(&self) -> TokenType {
+        *self
+    }
+}
+#[automatically_derived]
+impl ::core::marker::Copy for TokenType {}
+#[automatically_derived]
+impl ::core::marker::StructuralPartialEq for TokenType {}
+#[automatically_derived]
+impl ::core::cmp::PartialEq for TokenType {
+    #[inline]
+    fn eq(&self, other: &TokenType) -> bool {
+        let __self_tag = ::core::intrinsics::discriminant_value(self);
+        let __arg1_tag = ::core::intrinsics::discriminant_value(other);
+        __self_tag == __arg1_tag
+    }
+}
+#[automatically_derived]
+impl ::core::cmp::Eq for TokenType {
+    #[inline]
+    #[doc(hidden)]
+    #[coverage(off)]
+    fn assert_receiver_is_total_eq(&self) -> () {}
+}
+#[automatically_derived]
+impl ::core::hash::Hash for TokenType {
+    #[inline]
+    fn hash<__H: ::core::hash::Hasher>(&self, state: &mut __H) -> () {
+        let __self_tag = ::core::intrinsics::discriminant_value(self);
+        ::core::hash::Hash::hash(&__self_tag, state)
+    }
+}
+#[automatically_derived]
+impl llnparse::TokenType for TokenType {
+    type Repr = u8;
+    #[inline]
+    fn should_extract(&self) -> bool {
+        match self {
+            _ => false,
+        }
+    }
+    #[inline]
+    fn to_repr(&self) -> Self::Repr {
+        *self as Self::Repr
+    }
+    #[inline]
+    fn first() -> Self {
+        Self::Integer
+    }
+    fn next(&self) -> Option<Self> {
+        match self {
+            Self::Param => None,
+            _ => {
+                let repr = self.to_repr();
+                let next = repr << 1;
+                Some(unsafe { std::mem::transmute(next) })
+            }
+        }
+    }
+}
 pub struct Lexer<'s> {
     state: LexerState<'s>,
 }
 #[automatically_derived]
 const _: () = {
-    #[allow(missing_copy_implementations)]
-    #[allow(non_camel_case_types)]
-    #[allow(dead_code)]
-    struct RULES {
-        __private_field: (),
-    }
     #[doc(hidden)]
-    static RULES: RULES = RULES { __private_field: () };
-    impl ::lazy_static::__Deref for RULES {
-        type Target = [llnparse::LexerRule<TokenType>; 4usize];
-        fn deref(&self) -> &[llnparse::LexerRule<TokenType>; 4usize] {
-            #[inline(always)]
-            fn __static_ref_initialize() -> [llnparse::LexerRule<TokenType>; 4usize] {
-                {
-                    [
-                        llnparse::LexerRule::ignore(
-                            llnparse::dep::Regex::new(r#"^\s+"#).unwrap(),
-                        ),
-                        llnparse::LexerRule::token(
-                            TokenType::Integer,
-                            llnparse::dep::Regex::new(r#"^\d+"#).unwrap(),
-                        ),
-                        llnparse::LexerRule::token(
-                            TokenType::Operator,
-                            llnparse::dep::Regex::new(r#"^[\+\-\*/]"#).unwrap(),
-                        ),
-                        llnparse::LexerRule::token(
-                            TokenType::Param,
-                            llnparse::dep::Regex::new(r#"^[\(\)]"#).unwrap(),
-                        ),
-                    ]
-                }
-            }
-            #[inline(always)]
-            fn __stability() -> &'static [llnparse::LexerRule<TokenType>; 4usize] {
-                static LAZY: ::lazy_static::lazy::Lazy<
-                    [llnparse::LexerRule<TokenType>; 4usize],
-                > = ::lazy_static::lazy::Lazy::INIT;
-                LAZY.get(__static_ref_initialize)
-            }
-            __stability()
-        }
-    }
-    impl ::lazy_static::LazyStatic for RULES {
-        fn initialize(lazy: &Self) {
-            let _ = &**lazy;
-        }
+    fn _the_rules() -> &'static [llnparse::LexerRule<TokenType>; 4usize] {
+        static RULES: std::sync::OnceLock<[llnparse::LexerRule<TokenType>; 4usize]> = std::sync::OnceLock::new();
+        RULES
+            .get_or_init(|| {
+                [
+                    llnparse::LexerRule::ignore(r#"^\s+"#).unwrap(),
+                    llnparse::LexerRule::token(TokenType::Integer, r#"^\d+"#).unwrap(),
+                    llnparse::LexerRule::token(TokenType::Operator, r#"^[\+\-\*/]"#)
+                        .unwrap(),
+                    llnparse::LexerRule::token(TokenType::Param, r#"^[\(\)]"#).unwrap(),
+                ]
+            })
     }
     impl<'s> llnparse::Lexer<'s> for Lexer<'s> {
         type T = TokenType;
@@ -62,8 +111,7 @@ const _: () = {
         fn next(
             &mut self,
         ) -> (Option<llnparse::Span>, Option<llnparse::Token<Self::T>>) {
-            use std::ops::Deref;
-            self.state.next(RULES.deref())
+            self.state.next(_the_rules())
         }
     }
 };

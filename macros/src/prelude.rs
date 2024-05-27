@@ -34,6 +34,20 @@ pub(crate) fn from_result(result: syn::Result<TokenStream2>) -> TokenStream {
     result.unwrap_or_else(syn::Error::into_compile_error).into()
 }
 
+pub(crate) fn from_result_keep_input(input: TokenStream, result: syn::Result<TokenStream2>) -> TokenStream {
+    let input2 = TokenStream2::from(input);
+    match result {
+        Ok(output) => output,
+        Err(err) => {
+            let output = err.into_compile_error();
+            quote! {
+                #input2
+                #output
+            }
+        }
+    }.into()
+}
+
 /// Macro for creating and returning `syn::Error`
 macro_rules! syn_error {
     ($tokens:expr, $msg:expr) => {

@@ -2,6 +2,19 @@ version: "3"
 
 tasks:
   doc:
-    desc: Watch and serve documentation (requires python)
+    desc: Watch and serve documentation (requires node)
     cmds:
-      - cargo watch -s "cargo doc && python -m http.server -d target/doc"
+      - cargo doc
+      - npx live-server target/doc &
+      - cargo watch -s "cargo doc --target-dir target/doc_live && cp -R target/doc_live/doc/* target/doc"
+  #   deps:
+  #     - _doc:watch
+  #     - _doc:serve
+  #
+  # _doc:watch:
+  #   cmds:
+  #     - cargo watch -x doc
+  #
+  # _doc:serve:
+  #   cmds:
+  #     - npx live-server target/doc

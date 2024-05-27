@@ -1,12 +1,9 @@
-
-use std::ops::{Index, IndexMut};
-
 use deref_derive::{Deref, DerefMut};
 
 use super::{TokenTySet, TokenType, Token};
 
 
-/// One cell in the token storage, with the token and any semantic types added
+/// One cell in a [`TokenStorage`], with the token and any semantic types added
 #[derive(Deref, DerefMut)]
 pub struct TokenCell<T: TokenType> {
     #[deref]
@@ -23,6 +20,7 @@ impl<T: TokenType> From<Token<T>> for TokenCell<T> {
     }
 }
 
+/// Stores token and semantic information during parsing
 pub struct TokenStorage<T: TokenType> {
     tokens: Vec<TokenCell<T>>,
 }

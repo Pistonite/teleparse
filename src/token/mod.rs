@@ -10,11 +10,12 @@ mod token_set;
 pub use token_set::*;
 mod token_storage;
 pub use token_storage::*;
-mod token_stream;
-pub use token_stream::*;
 mod token_type;
 pub use token_type::*;
 
+use crate::{SyntaxError, SyntaxErrorKind};
+
+/// Position in the source code
 pub type Pos = usize;
 
 /// A arbitrary span in the source
@@ -85,13 +86,17 @@ impl<T: TokenType> Token<T> {
     }
 
     /// Get the source of this token
-    pub fn get_source<'s>(&self, src: &'s str) -> &'s str {
+    pub fn get_src<'s>(&self, src: &'s str) -> &'s str {
         let Span { lo, hi } = self.span;
         if hi <= lo {
             return "";
         }
         let hi = hi.min(src.len());
         &src[lo..hi]
+    }
+
+    pub fn unexpected(self) -> SyntaxError {
+        SyntaxError::new(self.span, SyntaxErrorKind::UnexpectedToken)
     }
 
     /// Associate source code with this token to make a [`SrcToken`]
@@ -123,7 +128,7 @@ impl<'t, 's, T: TokenType> SrcToken<'t, 's, T> {
 
     /// Get the source str of this token
     pub fn as_str(&self) -> &str {
-        self.token.get_source(self.src.as_ref())
+        self.token.get_src(self.src.as_ref())
     }
 }
 
@@ -140,7 +145,7 @@ mod tests {
     #[test]
     fn test_token() {
         let token = Token::new((0, 1), TT::Comment);
-        assert_eq!(token.get_source("abc"), "a");
+        assert_eq!(token.get_src("abc"), "a");
     }
 
     #[test]
@@ -152,6 +157,6 @@ mod tests {
     #[test]
     fn test_overflows() {
         let token = Token::new(0..100, TT::Comment);
-        assert_eq!(token.get_source("abc"), "abc");
+        assert_eq!(token.get_src("abc"), "abc");
     }
 }
