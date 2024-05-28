@@ -12,7 +12,6 @@ license = "MIT"
 [dependencies]
 bit-set = "0.5.3"
 deref-derive = "0.1.0"
-lazy_static = "1.4.0"
 teleparse-macros = { path = "macros", version = "=0.0.1" }
 num = "0.4.3"
 regex = "1.10.4"
@@ -20,7 +19,3 @@ thiserror = "1.0.61"
 
 [dev-dependencies]
 macrotest = "1.0.12"
-
-[features]
-arc = []
-

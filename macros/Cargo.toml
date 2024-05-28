@@ -8,6 +8,7 @@ license = "MIT"
 authors = ["Pistonight <terrabyte100k@gmail.com>"]
 
 [dependencies]
+proc-macro-crate = "3.1.0"
 proc-macro2 = "1.0.83"
 quote = "1.0.36"
 regex = "1.10.4"

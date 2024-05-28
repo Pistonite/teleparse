@@ -2,7 +2,8 @@
 pub(crate) use proc_macro::TokenStream;
 pub(crate) use proc_macro2::Span;
 pub(crate) use quote::quote;
-pub(crate) use syn::parse_macro_input;
+use regex::Regex;
+pub(crate) use syn::{parse_macro_input, parse_quote};
 pub(crate) use syn::punctuated::Punctuated;
 
 /// Type to distinct with proc_macro::TokenStream
@@ -12,16 +13,10 @@ pub(crate) type TokenStream2 = proc_macro2::TokenStream;
 pub(crate) const CRATE: &str = "teleparse";
 
 pub(crate) fn crate_ident() -> syn::Ident {
-    syn::Ident::new(CRATE, Span::call_site())
-}
-
-pub(crate) fn parse_attr_meta(attr: &syn::Attribute) -> syn::Result<
-Option<Punctuated<syn::Meta, syn::Token![,]>>> {
-    if !attr.path().is_ident(CRATE) {
-        return Ok(None);
+    match proc_macro_crate::crate_name(CRATE) {
+        Ok(proc_macro_crate::FoundCrate::Name(s)) => syn::Ident::new(&s, Span::call_site()),
+        _ => syn::Ident::new(CRATE, Span::call_site()),
     }
-
-    Ok(Some(parse_crate_attr_meta(attr)?))
 }
 
 pub(crate) fn parse_crate_attr_meta(attr: &syn::Attribute) -> syn::Result<
@@ -29,12 +24,7 @@ Punctuated<syn::Meta, syn::Token![,]>> {
     Ok(attr.parse_args_with(Punctuated::<syn::Meta, syn::Token![,]>::parse_terminated)?)
 }
 
-/// Remove [llnparse] attributes from a list of attributes
-pub(crate) fn strip_attrs(attrs: &mut Vec<syn::Attribute>) {
-    attrs.retain(|attr| !attr.path().is_ident(CRATE));
-}
-
-/// Take [llnparse] attributes from a list of attributes
+/// Take teleparse attributes from a list of attributes
 pub(crate) fn strip_take_attrs(attrs: &mut Vec<syn::Attribute>) -> Vec<syn::Attribute> {
     let take_attrs = {
         let mut out = Vec::with_capacity(attrs.len());
@@ -51,11 +41,6 @@ pub(crate) fn strip_take_attrs(attrs: &mut Vec<syn::Attribute>) -> Vec<syn::Attr
         }
     }
     out
-}
-
-/// Convert a [`syn::Result`] to a [`TokenStream`]
-pub(crate) fn from_result(result: syn::Result<TokenStream2>) -> TokenStream {
-    result.unwrap_or_else(syn::Error::into_compile_error).into()
 }
 
 pub(crate) fn from_result_keep_input(input: TokenStream2, result: syn::Result<TokenStream2>) -> TokenStream {
@@ -83,15 +68,25 @@ macro_rules! syn_error {
 pub(crate) use syn_error;
 
 /// Parse the `llnparse` attribute on the input and return the meta list, also stripping the attribute
-pub(crate) fn parse_strip_root_meta(input: &mut syn::DeriveInput, derive_ident: &syn::Ident) -> syn::Result<Punctuated<syn::Meta, syn::Token![,]>> {
+pub(crate) fn parse_strip_root_meta_optional(input: &mut syn::DeriveInput, derive_ident: &syn::Ident) -> syn::Result<Option<Punctuated<syn::Meta, syn::Token![,]>>> {
     let context = derive_ident.to_string();
     let root_attrs = strip_take_attrs(&mut input.attrs);
     let root_attr = match ensure_one(root_attrs) {
-        EnsureOne::None => syn_error!(derive_ident, "Deriving {} requires a {} attribute to define additional properties.", context, CRATE),
+        EnsureOne::None => return Ok(None),
         EnsureOne::More => syn_error!(derive_ident, "Multiple root {} attributes found for {}! You might want to merge them.", CRATE, context),
         EnsureOne::One(attr) => attr,
     };
-    parse_crate_attr_meta(&root_attr)
+    Ok(Some(parse_crate_attr_meta(&root_attr)?))
+}
+
+pub(crate) fn parse_strip_root_meta(input: &mut syn::DeriveInput, derive_ident: &syn::Ident) -> syn::Result<Punctuated<syn::Meta, syn::Token![,]>> {
+    match parse_strip_root_meta_optional(input, derive_ident)? {
+        Some(metas) => Ok(metas),
+        None => {
+            let context = derive_ident.to_string();
+            syn_error!(derive_ident, "Deriving {} requires a {} attribute to define additional properties.", context, CRATE)
+        }
+    }
 }
 
 #[must_use]
@@ -122,5 +117,22 @@ pub(crate) fn get_doc(attrs: &[syn::Attribute]) -> TokenStream2 {
 }
 
 pub(crate) fn unit_type() -> syn::Type {
-    syn::parse_quote! { () }
+    parse_quote! { () }
+}
+
+pub(crate) fn checked_regex_rule(input: &syn::LitStr) -> syn::Result<()> {
+    let regex = input.value();
+    if !regex.starts_with("^") {
+        syn_error!(input, "expected a regular expression starting with `^`, because it always needs to match the beginning of the remaining input");
+    }
+    let regex = match Regex::new(&regex) {
+        Err(e) => {
+            syn_error!(input, e.to_string());
+        },
+        Ok(x) => x
+    };
+    if regex.find("").is_some() {
+        syn_error!(input, "the rule regular expression must not match the empty string");
+    }
+    Ok(())
 }

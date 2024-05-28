@@ -1,3 +1,4 @@
+//! Implementation of lexer and related utilities
 use regex::Regex;
 
 use crate::{Pos, Span, Token, TokenType};
@@ -5,14 +6,8 @@ use crate::{Pos, Span, Token, TokenType};
 /// Trait for lexer
 ///
 /// ## Note
-/// This is normally derived with [`#[llnparse_derive(Lexer)]`](crate::llnparse_derive) on a struct
-/// with a single named field of type [`LexerState`]. Then use the `llnparse` attribute to declare
-/// the token type and rules.
-///
-/// ## Example
-/// ```rust
-#[doc = include_str!("../tests/expand/lexer_example.rs")]
-/// ```
+/// This is normally derived with [`#[teleparse_derive(TokenType)]`](crate::teleparse_derive) on an
+/// enum. See [`TokenType`] for more information.
 /// 
 pub trait Lexer<'s> {
     type T: TokenType;
@@ -40,22 +35,25 @@ pub struct LexerRule<T: TokenType> {
 
 impl<T: TokenType> LexerRule<T> {
     /// Create a rule for matching a token
-    ///
-    /// Returns None if the regex is invalid
-    pub fn token(ty: T, pat: impl Into<Pattern>) -> Self {
+    pub fn token(ty: T, pat: &str) -> Self {
         Self {
             ty: Some(ty),
-            pat: pat.into()
+            pat: Pattern::Regex(Regex::new(pat).unwrap())
+        }
+    }
+
+    pub fn token_literal(ty: T, pat: &'static[&'static str]) -> Self {
+        Self {
+            ty: Some(ty),
+            pat: Pattern::Literals(pat)
         }
     }
 
     /// Create a rule for matching something to ignore
-    ///
-    /// Returns None if the regex is invalid
-    pub fn ignore(pat: impl Into<Pattern>) -> Self {
+    pub fn ignore(pat: &str) -> Self {
         Self {
             ty: None,
-            pat: pat.into()
+            pat: Pattern::Regex(Regex::new(pat).unwrap())
         }
     }
 }
@@ -115,27 +113,25 @@ impl<'s> LexerState<'s> {
     /// Try matching a token from the current position.
     /// Advances self.idx to the position after the token if one is matched
     fn next_internal<T: TokenType>(&mut self, rules: &[LexerRule<T>]) -> Option<Token<T>> {
-        // let source_len = self.source.len();
-        // 'outer: while self.idx < source_len {
-        //     let rest = &self.source[self.idx..];
-        //     for rule in rules {
-        //         if let Some(mat) = rule.regex.find(rest) {
-        //             let len = mat.end();
-        //             let start = self.idx;
-        //             self.idx += len;
-        //             let ty = match rule.ty {
-        //                 None => continue 'outer,
-        //                 Some(x) => x
-        //             };
-        //             return Some(Token::new((start, self.idx), ty));
-        //         }
-        //     }
-        //     // no rule matched
-        //     return None;
-        // }
-        //
-        // None
-        todo!()
+        let source_len = self.source.len();
+        'outer: while self.idx < source_len {
+            let rest = &self.source[self.idx..];
+            for rule in rules {
+                if let Some(len) = rule.pat.find_prefix(rest) {
+                    let start = self.idx;
+                    self.idx += len;
+                    let ty = match rule.ty {
+                        None => continue 'outer,
+                        Some(x) => x
+                    };
+                    return Some(Token::new((start, self.idx), ty));
+                }
+            }
+            // no rule matched
+            return None;
+        }
+        
+        None
     }
 }
 
@@ -144,17 +140,17 @@ pub enum Pattern {
     Literals(&'static [&'static str]),
 }
 
-impl From<&'static str> for Pattern {
-    fn from(s: &'static str) -> Self {
-        Self::Regex(Regex::new(s).unwrap())
-    }
-}
-
-impl From<&'static [&'static str]> for Pattern {
-    fn from(s: &'static [&'static str]) -> Self {
-        Self::Literals(s)
-    }
-}
+// impl From<&'static str> for Pattern {
+//     fn from(s: &'static str) -> Self {
+//         Self::Regex(Regex::new(s).unwrap())
+//     }
+// }
+//
+// impl From<&'static [&'static str]> for Pattern {
+//     fn from(s: &'static [&'static str]) -> Self {
+//         Self::Literals(s)
+//     }
+// }
 
 impl Pattern {
     pub fn find_prefix(&self, haystack: &str) -> Option<usize> {

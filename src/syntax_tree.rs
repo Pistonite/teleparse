@@ -1,5 +1,5 @@
 use crate::{
-    lexer::Lexer, Parser, Pos, Span, SrcToken, SyntaxError, SyntaxErrorKind, SyntaxResult, Token,
+    lexer::Lexer, Parser, Pos, Span, SyntaxError, SyntaxErrorKind, SyntaxResult, Token,
     TokenStorage, TokenType,
 };
 use std::{collections::HashSet, ops::Deref};

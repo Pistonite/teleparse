@@ -25,13 +25,13 @@ fn teleparse_derive_internal(ident: &syn::Ident, input: TokenStream) -> syn::Res
         "TokenType" => {
             token_type_derive_impl::expand(input, ident)
         },
-        "Lexer" => {
-            lexer_derive_impl::expand(input, ident)
-        },
+        // "Lexer" => {
+        //     lexer_derive_impl::expand(input, ident)
+        // },
         "SyntaxTree" => {
             syntax_tree_derive_impl::expand(input, ident)
         },
-        _ => syn_error!(ident, "unknown llnparse_derive input `{}`", ident),
+        _ => syn_error!(ident, "unknown teleparse_derive input `{}`", ident),
     };
 
     Ok(out)

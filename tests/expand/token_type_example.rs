@@ -1,11 +1,22 @@
-use llnparse::llnparse_derive;
+use teleparse::prelude::*;
 
-#[llnparse_derive(TokenType)]
-pub enum MyTokenType {
-   // extract means the tokens are not relevant in the AST
-   // but still collected so you may use them later
-   #[llnparse(extract)] 
-   Comment,
-   Keyword,
-   Ident,
+#[teleparse_derive(TokenType)]
+#[teleparse(ignore(r#"^\s+"#))]
+pub enum TokenType {
+    /// Numbers in the expression
+    #[teleparse(regex(r#"^\d+"#), terminal(Integer))]
+    Integer,
+    /// The 4 basic operators
+    #[teleparse(terminal(
+        OpAdd = "+",
+        OpSub = "-",
+        OpMul = "*",
+        OpDiv = "/",
+    ))]
+    Operator,
+    /// Parentheses
+    #[teleparse(terminal(ParamOpen = "(",
+        ParamClose = ")"
+    ))]
+    Param,
 }
