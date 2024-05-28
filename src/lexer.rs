@@ -140,18 +140,6 @@ pub enum Pattern {
     Literals(&'static [&'static str]),
 }
 
-// impl From<&'static str> for Pattern {
-//     fn from(s: &'static str) -> Self {
-//         Self::Regex(Regex::new(s).unwrap())
-//     }
-// }
-//
-// impl From<&'static [&'static str]> for Pattern {
-//     fn from(s: &'static [&'static str]) -> Self {
-//         Self::Literals(s)
-//     }
-// }
-
 impl Pattern {
     pub fn find_prefix(&self, haystack: &str) -> Option<usize> {
         match self {
