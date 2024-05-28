@@ -1,4 +1,4 @@
-use crate::{Lexer, Span, SyntaxError, SyntaxErrorKind, SyntaxResult, SyntaxTree, Token, TokenStorage, TokenType};
+use crate::{Lexer, Span, SyntaxError, SyntaxErrorKind, SyntaxResult, SyntaxResultExt, SyntaxTree, Token, TokenStorage, TokenType};
 
 pub struct Parser<'s, T, L, Ctx>
     where
@@ -127,18 +127,9 @@ impl<'s, T, L, Ctx> Parser<'s, T, L, Ctx>
     fn try_parse_internal
     <ST: SyntaxTree<T=T,Ctx=Ctx>>
     (&mut self) -> SyntaxResult<ST> {
-        let mut result = ST::try_parse(self);
-        match &mut result {
-            Ok(tree) => {
-                tree.apply_semantic(self);
-            }
-            Err(errors) => {
-                if let Some(tree) = &mut errors.obj {
-                    tree.apply_semantic(self);
-                }
-            }
-        }
-        result
+        ST::try_parse_ast(self).map_ext(|ast| {
+            ST::into_parse_tree(ast, self)
+        })
     }
 
     /// Get the token at self.idx, or None if the end of the source is reached
@@ -210,6 +201,9 @@ pub trait ParserState<'s> {
     /// Get the source code of a token
     fn get_src(&self, token: &Token<Self::T>) -> &'s str;
 
+    /// Get an empty span at the current location
+    fn current_span(&self) -> Span;
+
     /// Get and consume the current token, advancing the token stream position
     fn consume_token(&mut self) -> Option<Token<Self::T>>;
 
@@ -251,6 +245,10 @@ impl<'s, T, L, Ctx> ParserState<'s> for Parser<'s, T, L, Ctx>
 
     fn get_src(&self, token: &Token<T>) -> &'s str {
         token.get_src(self.source)
+    }
+
+    fn current_span(&self) -> Span {
+        Span::new(self.idx, self.idx)
     }
 
     fn consume_token(&mut self) -> Option<Token<T>> {

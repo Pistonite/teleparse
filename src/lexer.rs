@@ -34,29 +34,29 @@ pub trait Lexer<'s> {
 /// This is usually used internally when deriving [`Lexer`]
 pub struct LexerRule<T: TokenType> {
     /// The token type to match. None for ignore
-    pub ty: Option<T>,
-    pub regex: Regex
+    ty: Option<T>,
+    pat: Pattern,
 }
 
 impl<T: TokenType> LexerRule<T> {
     /// Create a rule for matching a token
     ///
     /// Returns None if the regex is invalid
-    pub fn token(ty: T, regex: &str) -> Option<Self> {
-        Some(Self {
+    pub fn token(ty: T, pat: impl Into<Pattern>) -> Self {
+        Self {
             ty: Some(ty),
-            regex: Regex::new(regex).ok()?
-        })
+            pat: pat.into()
+        }
     }
 
     /// Create a rule for matching something to ignore
     ///
     /// Returns None if the regex is invalid
-    pub fn ignore(regex: &str) -> Option<Self> {
-        Some(Self {
+    pub fn ignore(pat: impl Into<Pattern>) -> Self {
+        Self {
             ty: None,
-            regex: Regex::new(regex).ok()?
-        })
+            pat: pat.into()
+        }
     }
 }
 
@@ -115,25 +115,61 @@ impl<'s> LexerState<'s> {
     /// Try matching a token from the current position.
     /// Advances self.idx to the position after the token if one is matched
     fn next_internal<T: TokenType>(&mut self, rules: &[LexerRule<T>]) -> Option<Token<T>> {
-        let source_len = self.source.len();
-        'outer: while self.idx < source_len {
-            let rest = &self.source[self.idx..];
-            for rule in rules {
-                if let Some(mat) = rule.regex.find(rest) {
-                    let len = mat.end();
-                    let start = self.idx;
-                    self.idx += len;
-                    let ty = match rule.ty {
-                        None => continue 'outer,
-                        Some(x) => x
-                    };
-                    return Some(Token::new((start, self.idx), ty));
-                }
-            }
-            // no rule matched
-            return None;
-        }
+        // let source_len = self.source.len();
+        // 'outer: while self.idx < source_len {
+        //     let rest = &self.source[self.idx..];
+        //     for rule in rules {
+        //         if let Some(mat) = rule.regex.find(rest) {
+        //             let len = mat.end();
+        //             let start = self.idx;
+        //             self.idx += len;
+        //             let ty = match rule.ty {
+        //                 None => continue 'outer,
+        //                 Some(x) => x
+        //             };
+        //             return Some(Token::new((start, self.idx), ty));
+        //         }
+        //     }
+        //     // no rule matched
+        //     return None;
+        // }
+        //
+        // None
+        todo!()
+    }
+}
 
-        None
+pub enum Pattern {
+    Regex(Regex),
+    Literals(&'static [&'static str]),
+}
+
+impl From<&'static str> for Pattern {
+    fn from(s: &'static str) -> Self {
+        Self::Regex(Regex::new(s).unwrap())
+    }
+}
+
+impl From<&'static [&'static str]> for Pattern {
+    fn from(s: &'static [&'static str]) -> Self {
+        Self::Literals(s)
+    }
+}
+
+impl Pattern {
+    pub fn find_prefix(&self, haystack: &str) -> Option<usize> {
+        match self {
+            Self::Regex(regex) => {
+                regex.find(haystack).map(|m| m.end())
+            }
+            Self::Literals(lits) => {
+                for lit in *lits {
+                    if haystack.starts_with(lit) {
+                        return Some(lit.len());
+                    }
+                }
+                None
+            }
+        }
     }
 }

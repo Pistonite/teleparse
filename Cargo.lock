@@ -77,30 +77,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
-name = "llnparse"
-version = "0.0.1"
-dependencies = [
- "bit-set",
- "deref-derive",
- "lazy_static",
- "llnparse-macros",
- "macrotest",
- "num",
- "regex",
- "thiserror",
-]
-
-[[package]]
-name = "llnparse-macros"
-version = "0.0.1"
-dependencies = [
- "proc-macro2",
- "quote",
- "regex",
- "syn 2.0.66",
-]
-
-[[package]]
 name = "macrotest"
 version = "1.0.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -309,6 +285,30 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
+]
+
+[[package]]
+name = "teleparse"
+version = "0.0.1"
+dependencies = [
+ "bit-set",
+ "deref-derive",
+ "lazy_static",
+ "macrotest",
+ "num",
+ "regex",
+ "teleparse-macros",
+ "thiserror",
+]
+
+[[package]]
+name = "teleparse-macros"
+version = "0.0.1"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "regex",
+ "syn 2.0.66",
 ]
 
 [[package]]

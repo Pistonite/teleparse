@@ -1,9 +1,9 @@
 [package]
-name = "llnparse-macros"
+name = "teleparse-macros"
 version = "0.0.1"
 edition = "2021"
-description = "Proc-macro crate for llnparse"
-repository = "https://github.com/Pistonite/llnparse"
+description = "Proc-macro crate for teleparse"
+repository = "https://github.com/Pistonite/teleparse"
 license = "MIT"
 authors = ["Pistonight <terrabyte100k@gmail.com>"]
 

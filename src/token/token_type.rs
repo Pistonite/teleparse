@@ -4,6 +4,8 @@ use std::ops::{BitAnd, BitOr, Not};
 
 use num::{Integer, Unsigned};
 
+use crate::Lexer;
+
 /// Trait for token types
 ///
 /// ## Note
@@ -24,6 +26,8 @@ pub trait TokenType: Debug + Clone + Copy + PartialEq + Eq + Hash {
     /// Bitflag representation of the token type. This could be u8, u16, u32, u64, or u128
     type Repr: Unsigned + Integer + BitAnd<Output = Self::Repr> + BitOr<Output = Self::Repr> + Not<Output = Self::Repr> + Copy;
 
+    type Lexer<'s>: Lexer<'s, T = Self>;
+
     /// Whether this token should be excluded from AST, but still has value.
     ///
     /// One example is comments
@@ -37,5 +41,8 @@ pub trait TokenType: Debug + Clone + Copy + PartialEq + Eq + Hash {
 
     /// Get the next type. Used to iterate over all types
     fn next(&self) -> Option<Self>;
+
+    /// Create a lexer for parsing this token type
+    fn lexer<'s>(source: &'s str) -> Self::Lexer<'s>;
 }
 

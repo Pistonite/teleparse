@@ -39,6 +39,7 @@ pub trait SyntaxResultExt<T> {
     fn has_value(&self) -> bool {
         self.as_value().is_some()
     }
+    fn unwrap_or_extend_errors<T2>(self, errors: &mut Vec<SyntaxError>) -> Result<T, SyntaxErrors<T2>>;
 }
 
 impl<T> SyntaxResultExt<T> for SyntaxResult<T> {
@@ -62,6 +63,13 @@ impl<T> SyntaxResultExt<T> for SyntaxResult<T> {
         match self {
             Ok(tree) => Some(tree),
             Err(errors) => errors.obj,
+        }
+    }
+
+    fn unwrap_or_extend_errors<T2>(self, errors: &mut Vec<SyntaxError>) -> Result<T, SyntaxErrors<T2>> {
+        match self {
+            Ok(x) => Ok(x),
+            Err(e) => e.unwrap_extend_or_into(errors),
         }
     }
 }
@@ -137,6 +145,12 @@ impl<T> SyntaxErrors<T> {
             Some(obj) => Ok((obj, self.errors)),
             None => Err(SyntaxErrors::new(None, self.errors)),
         }
+    }
+
+    pub fn unwrap_extend_or_into<T2>(self, errors: &mut Vec<SyntaxError>) -> Result<T, SyntaxErrors<T2>> {
+        let (value, new_errors) = self.unwrap_or_into()?;
+        errors.extend(new_errors);
+        Ok(value)
     }
 
     fn do_replace(&mut self, obj: Option<T>, errors: Vec<SyntaxError>, new_highest: Pos) {

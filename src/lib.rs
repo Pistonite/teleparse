@@ -3,12 +3,12 @@
 // https://github.com/bkchr/proc-macro-crate/issues/14
 extern crate self as llnparse;
 
-// re-export all proc-macros
-pub use llnparse_macros::*;
+// re-export user-facing proc-macros
+pub use teleparse_macros::teleparse_derive;
 
 /// prelude for all traits and common includes
 pub mod prelude {
-    pub use crate::llnparse_derive;
+    pub use crate::teleparse_derive;
     pub use crate::LexerState;
 
     // traits

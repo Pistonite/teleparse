@@ -7,6 +7,7 @@ use std::{collections::HashSet, ops::Deref};
 pub trait SyntaxTree: Sized {
     type T: TokenType;
     type Ctx;
+    type AST;
 
     fn parse_with_context<'s, L: Lexer<'s, T = Self::T>>(
         source: &'s str,
@@ -26,24 +27,24 @@ pub trait SyntaxTree: Sized {
         (result, parser.context)
     }
 
-    fn span(&self) -> Span;
+    fn span_of(ast: &Self::AST) -> Span;
+    //
+    // fn start_set() -> HashSet<Start<Self::T>>;
 
-    fn start_set() -> HashSet<Start<Self::T>>;
-
-    /// Attempt to parse one syntax tree node from the state
+    /// Attempt to parse one AST node
     ///
     /// This is a recursive API that should be derived instead of implemented
-    fn try_parse<'s, L: Lexer<'s, T = Self::T>>(
+    fn try_parse_ast<'s, L: Lexer<'s, T = Self::T>>(
         parser: &mut Parser<'s, Self::T, L, Self::Ctx>,
-    ) -> SyntaxResult<Self>;
+    ) -> SyntaxResult<Self::AST>;
 
-    /// Apply the semantic info to the token storage in the state
+    /// Transform the parsed AST node into the final tree node
     ///
     /// This is a recursive API that should be derived instead of implemented
-    fn apply_semantic<'s, L: Lexer<'s, T = Self::T>>(
-        &self,
+    fn into_parse_tree<'s, L: Lexer<'s, T = Self::T>>(
+        ast: Self::AST,
         parser: &mut Parser<'s, Self::T, L, Self::Ctx>,
-    );
+    ) -> Self;
 }
 
 pub trait SyntaxTreeNoCtx: SyntaxTree<Ctx = ()> {

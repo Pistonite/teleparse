@@ -3,30 +3,18 @@ use regex::Regex;
 use crate::*;
 
 /// Derive the `Lexer` trait for a struct that has a LexerState field
-pub fn expand(input: TokenStream) -> TokenStream {
-    let derive_input = {
+pub fn expand(input: TokenStream, derive_ident: &syn::Ident) -> TokenStream {
+    let mut derive_input = {
         let input = input.clone();
         parse_macro_input!(input as syn::DeriveInput)
     };
-    from_result_keep_input(input, expand_internal(derive_input))
+    let result = expand_internal(&mut derive_input, derive_ident);
+    from_result_keep_input(quote!{#derive_input}, result)
 }
 
-fn expand_internal(mut input: syn::DeriveInput) -> syn::Result<TokenStream2> {
+fn expand_internal(input: &mut syn::DeriveInput, derive_ident: &syn::Ident) -> syn::Result<TokenStream2> {
     // parse the root attributes
-    let mut root_metas = None;
-    for attr in &input.attrs {
-        let metas = match parse_attr_meta(attr)? {
-            Some(metas) => metas,
-            None => continue,
-        };
-        // only one root attribute is allowed
-        if root_metas.is_some() {
-            syn_error!(attr, "multiple root {CRATE} attributes found for Lexer! Keep only 1");
-        }
-        root_metas = Some(metas);
-        break;
-    }
-    strip_attrs(&mut input.attrs);
+    let root_metas = parse_strip_root_meta(input,derive_ident)?;
 
     // has to be struct
     let struct_data = match &input.data {
@@ -47,12 +35,7 @@ fn expand_internal(mut input: syn::DeriveInput) -> syn::Result<TokenStream2> {
         _ => syn_error!(input, "To derive Lexer, the struct must have exactly 1 field of type `{CRATE}::LexerState`"),
     };
 
-    let root_metas = match root_metas {
-        Some(metas) => metas,
-        None => syn_error!(input, "Deriving Lexer requires a {CRATE} attribute to define the rules."),
-    };
-
-    let mut token_type_ident = None;
+    let mut token_ty = None;
     for meta in &root_metas {
         let meta = match meta {
             syn::Meta::List(meta) => meta,
@@ -61,10 +44,10 @@ fn expand_internal(mut input: syn::DeriveInput) -> syn::Result<TokenStream2> {
         if !meta.path.is_ident("token") {
             continue;
         }
-        if token_type_ident.is_some() {
+        if token_ty.is_some() {
             syn_error!(meta, "multiple `token` attributes found for Lexer! Keep only 1");
         }
-        token_type_ident = Some(meta.parse_args::<syn::Ident>()?);
+        token_ty = Some(meta.parse_args::<syn::Path>()?);
     }
 
     let llnparse = crate_ident();
@@ -108,7 +91,7 @@ fn expand_internal(mut input: syn::DeriveInput) -> syn::Result<TokenStream2> {
             });
         } else {
             rule_exprs.extend(quote! {
-                #llnparse::LexerRule::token(#token_type_ident::#name, #value).unwrap(),
+                #llnparse::LexerRule::token(#token_ty::#name, #value).unwrap(),
             });
         }
         rule_count += 1;
@@ -122,8 +105,8 @@ fn expand_internal(mut input: syn::DeriveInput) -> syn::Result<TokenStream2> {
         #[automatically_derived]
         const _: () = {
             #[doc(hidden)]
-            fn _the_rules() -> &'static [ #llnparse::LexerRule<#token_type_ident>; #rule_count] {
-                static RULES: std::sync::OnceLock<[ #llnparse::LexerRule<#token_type_ident>; #rule_count]> =
+            fn _the_rules() -> &'static [ #llnparse::LexerRule<#token_ty>; #rule_count] {
+                static RULES: std::sync::OnceLock<[ #llnparse::LexerRule<#token_ty>; #rule_count]> =
                 std::sync::OnceLock::new();
                 RULES.get_or_init(|| {
                     [
@@ -132,7 +115,7 @@ fn expand_internal(mut input: syn::DeriveInput) -> syn::Result<TokenStream2> {
                 })
             }
             impl<'s> #llnparse::Lexer<'s> for #input_ident<'s> {
-                type T = #token_type_ident;
+                type T = #token_ty;
 
                 fn new(source: &'s str) -> Self {
                     Self {
