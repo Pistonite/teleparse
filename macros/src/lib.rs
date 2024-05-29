@@ -4,13 +4,13 @@
 
 mod prelude;
 use prelude::*;
-use regex::Regex;
 
 mod lexer_derive_impl;
 mod token_type_derive_impl;
 mod syntax_tree_derive_impl;
 
-/// Derive trait from teleparse along with other required traits
+/// Derive macro for traits in the library. Note this is not a normal derive macro, since it also
+/// transforms the input in some way
 #[proc_macro_attribute]
 pub fn teleparse_derive(attr: TokenStream, input: TokenStream) -> TokenStream {
     let ident = parse_macro_input!(attr as syn::Ident);

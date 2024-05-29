@@ -9,11 +9,9 @@ use crate::{Pos, Span, Token, TokenType};
 /// This is normally derived with [`#[teleparse_derive(TokenType)]`](crate::teleparse_derive) on an
 /// enum. See [`TokenType`] for more information.
 /// 
+/// Once derived, you can create a lexer with [`TokenType::lexer()`].
 pub trait Lexer<'s> {
     type T: TokenType;
-
-    /// Create a new lexer from the source code
-    fn new(source: &'s str) -> Self;
 
     /// Read the next token from source code
     ///
@@ -26,15 +24,16 @@ pub trait Lexer<'s> {
 
 /// A rule in a lexer for matching a token or ignoring something
 ///
-/// This is usually used internally when deriving [`Lexer`]
+/// This is usually used internally when deriving [`TokenType`]
 pub struct LexerRule<T: TokenType> {
     /// The token type to match. None for ignore
     ty: Option<T>,
+    /// The pattern to match, either a regex or a set of literals
     pat: Pattern,
 }
 
 impl<T: TokenType> LexerRule<T> {
-    /// Create a rule for matching a token
+    /// Create a rule for matching a token with a regex
     pub fn token(ty: T, pat: &str) -> Self {
         Self {
             ty: Some(ty),
@@ -42,6 +41,7 @@ impl<T: TokenType> LexerRule<T> {
         }
     }
 
+    /// Create a rule for matching a token with a set of literals
     pub fn token_literal(ty: T, pat: &'static[&'static str]) -> Self {
         Self {
             ty: Some(ty),
@@ -49,7 +49,7 @@ impl<T: TokenType> LexerRule<T> {
         }
     }
 
-    /// Create a rule for matching something to ignore
+    /// Create a rule for matching something to ignore with a regex
     pub fn ignore(pat: &str) -> Self {
         Self {
             ty: None,
@@ -58,12 +58,14 @@ impl<T: TokenType> LexerRule<T> {
     }
 }
 
+/// State of a lexer while parsing some source code
 pub struct LexerState<'s> {
     source: &'s str,
     idx: Pos,
 }
 
 impl<'s> LexerState<'s> {
+    /// Create a new lexer state starting in the beginning of the source
     pub fn new(source: &'s str) -> Self {
         Self {
             source,
@@ -71,6 +73,7 @@ impl<'s> LexerState<'s> {
         }
     }
 
+    /// Implementation for [`Lexer::next`] with a set of rules
     pub fn next<T: TokenType>(&mut self, rules: &[LexerRule<T>]) -> (Option<Span>, Option<Token<T>>) {
         let source_len = self.source.len();
 
@@ -117,7 +120,7 @@ impl<'s> LexerState<'s> {
         'outer: while self.idx < source_len {
             let rest = &self.source[self.idx..];
             for rule in rules {
-                if let Some(len) = rule.pat.find_prefix(rest) {
+                if let Some(len) = rule.pat.get_prefix_len(rest) {
                     let start = self.idx;
                     self.idx += len;
                     let ty = match rule.ty {
@@ -135,20 +138,25 @@ impl<'s> LexerState<'s> {
     }
 }
 
+/// A pattern to match in a lexer
 pub enum Pattern {
+    /// A regex pattern. Must start with ^ to match the beginning of the string.
+    /// This is enforced by the derive macro attributes
     Regex(Regex),
+    /// A set of literals to match
     Literals(&'static [&'static str]),
 }
 
 impl Pattern {
-    pub fn find_prefix(&self, haystack: &str) -> Option<usize> {
+    /// If this pattern is a prefix of the input, return the length of the prefix
+    pub fn get_prefix_len(&self, input: &str) -> Option<usize> {
         match self {
             Self::Regex(regex) => {
-                regex.find(haystack).map(|m| m.end())
+                regex.find(input).map(|m| m.end())
             }
             Self::Literals(lits) => {
                 for lit in *lits {
-                    if haystack.starts_with(lit) {
+                    if input.starts_with(lit) {
                         return Some(lit.len());
                     }
                 }

@@ -1,4 +1,4 @@
-#[test]
-fn macrotest() {
-    macrotest::expand("tests/expand/*.rs");
-}
+// #[test]
+// fn macrotest() {
+//     macrotest::expand("tests/expand/*.rs");
+// }

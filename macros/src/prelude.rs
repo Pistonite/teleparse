@@ -120,7 +120,14 @@ pub(crate) fn unit_type() -> syn::Type {
     parse_quote! { () }
 }
 
-pub(crate) fn checked_regex_rule(input: &syn::LitStr) -> syn::Result<()> {
+pub(crate) fn is_unit_type(ty: &syn::Type) -> bool {
+    match ty {
+        syn::Type::Tuple(ty) => ty.elems.is_empty(),
+        _ => false,
+    }
+}
+
+pub(crate) fn checked_regex_rule(input: &syn::LitStr) -> syn::Result<Regex> {
     let regex = input.value();
     if !regex.starts_with("^") {
         syn_error!(input, "expected a regular expression starting with `^`, because it always needs to match the beginning of the remaining input");
@@ -134,5 +141,5 @@ pub(crate) fn checked_regex_rule(input: &syn::LitStr) -> syn::Result<()> {
     if regex.find("").is_some() {
         syn_error!(input, "the rule regular expression must not match the empty string");
     }
-    Ok(())
+    Ok(regex)
 }

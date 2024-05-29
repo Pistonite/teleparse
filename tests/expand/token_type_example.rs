@@ -8,15 +8,13 @@ pub enum TokenType {
     Integer,
     /// The 4 basic operators
     #[teleparse(terminal(
-        OpAdd = "+",
-        OpSub = "-",
-        OpMul = "*",
+        OpAdd = "+", 
+        OpSub = "-", 
+        OpMul = "*", 
         OpDiv = "/",
     ))]
     Operator,
     /// Parentheses
-    #[teleparse(terminal(ParamOpen = "(",
-        ParamClose = ")"
-    ))]
+    #[teleparse(terminal(ParamOpen = "(", ParamClose = ")"))]
     Param,
 }

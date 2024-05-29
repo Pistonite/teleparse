@@ -7,6 +7,11 @@ tasks:
       - cargo doc
       - npx live-server target/doc &
       - cargo watch -s "cargo doc --target-dir target/doc_live && cp -R target/doc_live/doc/* target/doc"
+
+  dev:
+    desc: Dev inner loop. Run tests in watch mode
+    cmds:
+      - cargo watch -x test
   #   deps:
   #     - _doc:watch
   #     - _doc:serve

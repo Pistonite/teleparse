@@ -1,12 +1,10 @@
+use std::marker::PhantomData;
+
 use crate::{Lexer, Span, SyntaxError, SyntaxErrorKind, SyntaxResult, SyntaxResultExt, SyntaxTree, Token, TokenStorage, TokenType};
 
-pub struct Parser<'s, T, L, Ctx>
-    where
-        T: TokenType,
-        L: Lexer<'s, T= T>,
-    {
+pub struct Parser<'s, T: TokenType> {
     /// The context
-    pub context: Ctx,
+    pub context: T::Ctx,
     /// The parts of the source code that were unable to be parsed
     pub invalid_source: Vec<Span>,
     /// The tokens that were unable to be parsed with the syntax
@@ -18,7 +16,7 @@ pub struct Parser<'s, T, L, Ctx>
     /// Errors encountered during parsing
     pub errors: Vec<SyntaxError>,
     /// The lexer
-    lexer: L,
+    lexer: T::Lexer<'s>,
     /// The source code to parse
     source: &'s str,
 
@@ -32,29 +30,13 @@ pub struct Parser<'s, T, L, Ctx>
     /// The max state size for the pos stack
     max_stack_size: usize,
 }
-impl<'s, T, L> Parser<'s, T, L, ()> 
-    where
-        T: TokenType,
-        L: Lexer<'s, T = T>,
-        // ST: SyntaxTree<'s, T = T, Ctx=()>,
-    {
-    /// Create a new ParseState
-    pub fn new(source: &'s str) -> Self {
-        Self::new_with_context(source, ())
-    }
-}
 
-impl<'s, T, L, Ctx> Parser<'s, T, L, Ctx> 
-    where
-        T: TokenType,
-        L: Lexer<'s, T = T>,
-        // ST: SyntaxTree<'s, T = T>,
-    {
+impl<'s, T: TokenType> Parser<'s, T> {
     /// Create a new ParseState
-    pub fn new_with_context(source: &'s str, context: Ctx) -> Self {
+    pub fn new_with_context(source: &'s str, context: T::Ctx) -> Self {
         Self {
             source,
-            lexer: L::new(source),
+            lexer: T::lexer(source),
             context,
             extracted_tokens: TokenStorage::new(),
             invalid_source: Vec::new(),
@@ -76,7 +58,7 @@ impl<'s, T, L, Ctx> Parser<'s, T, L, Ctx>
     ///
     /// Return None if a valid syntax tree could not be formed
     /// when the end of the source is reached
-    pub fn next<ST: SyntaxTree<T=T, Ctx=Ctx>>(&mut self) -> Option<ST> {
+    pub fn next<ST: SyntaxTree<T=T>>(&mut self) -> Option<ST> {
         let mut error_already_added = false;
         loop {
             match self.try_parse_internal() {
@@ -111,22 +93,19 @@ impl<'s, T, L, Ctx> Parser<'s, T, L, Ctx>
     }
 
     /// Create an iterator that can be used to parse all syntax tree roots in the source
-    pub fn iter<ST: SyntaxTree<T=T,Ctx=Ctx>>(&mut self) -> 
-    ParserIter<'s, '_, T, L, ST> {
-        ParserIter { state: self }
+    pub fn iter<ST: SyntaxTree<T=T>>(&mut self) -> ParserIter<'s, '_, T, ST> {
+        ParserIter { state: self, _type: PhantomData }
     }
 
     /// Parses all syntax trees in the source until the end
     pub fn parse_all
-    <ST: SyntaxTree<T=T,Ctx=Ctx>>
+    <ST: SyntaxTree<T=T>>
     (&mut self) -> Vec<ST> {
         self.iter().collect()
     }
 
     /// Internally parse a syntax tree node from the state and apply semantic info
-    fn try_parse_internal
-    <ST: SyntaxTree<T=T,Ctx=Ctx>>
-    (&mut self) -> SyntaxResult<ST> {
+    fn try_parse_internal <ST: SyntaxTree<T=T>> (&mut self) -> SyntaxResult<ST> {
         ST::try_parse_ast(self).map_ext(|ast| {
             ST::into_parse_tree(ast, self)
         })
@@ -157,21 +136,12 @@ impl<'s, T, L, Ctx> Parser<'s, T, L, Ctx>
     }
 }
 
-pub struct ParserIter<'s, 'p, T, L, ST> 
-    where
-        T: TokenType,
-        L: Lexer<'s, T= T>,
-        ST: SyntaxTree<T= T>,
-    {
-    state: &'p mut Parser<'s, T, L, ST::Ctx>,
+pub struct ParserIter<'s, 'p, T: TokenType, ST: SyntaxTree<T=T>> {
+    state: &'p mut Parser<'s, T>,
+    _type: PhantomData<ST>,
 }
 
-impl<'s, 'p, T, L,ST> Iterator for ParserIter<'s, 'p, T, L, ST> 
-    where
-        T: TokenType,
-        L: Lexer<'s, T= T>,
-        ST: SyntaxTree<T= T>,
-    {
+impl<'s, 'p, T: TokenType, ST: SyntaxTree<T=T>> Iterator for ParserIter<'s, 'p, T, ST> {
     type Item = ST;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -186,7 +156,7 @@ impl<'s, 'p, T, L,ST> Iterator for ParserIter<'s, 'p, T, L, ST>
 /// This trait is meant to be only used internally by the [`SyntaxTree`] nodes.
 pub trait ParserState<'s> {
     type T: TokenType;
-    type Ctx;
+
     /// Push the current position to the stack so it can be restored later
     ///
     /// Returns false if the stack is full
@@ -209,17 +179,37 @@ pub trait ParserState<'s> {
 
     /// Create a syntax error for an unexpected end of file
     fn unexpected_eof(&self) -> SyntaxError;
+
+    /// Parse a token of a specific type
+    #[inline(never)]
+    fn parse_token( &mut self, ty: Self::T) -> SyntaxResult<Token<Self::T>> {
+        let token = match self.consume_token() {
+            Some(token) => token,
+            None => return self.unexpected_eof().into(),
+        };
+        if token.ty == ty {
+            return Ok(token);
+        }
+        token.unexpected().into()
+    }
+
+    #[inline(never)]
+    fn parse_token_match( &mut self, ty: Self::T, match_lit: &'static str) -> SyntaxResult<Token<Self::T>> {
+        let token = match self.consume_token() {
+            Some(token) => token,
+            None => return self.unexpected_eof().into(),
+        };
+        if token.ty == ty {
+            if self.get_src(&token) == match_lit {
+                return Ok(token);
+            }
+        }
+        token.unexpected().into()
+    }
 }
 
-impl<'s, T, L, Ctx> ParserState<'s> for Parser<'s, T, L, Ctx> 
-    where
-        T: TokenType,
-        L: Lexer<'s, T = T>,
-        // ST: SyntaxTree<'s, T = T>,
-    {
-
+impl<'s, T: TokenType> ParserState<'s> for Parser<'s, T> {
     type T = T;
-    type Ctx = Ctx;
 
     fn push_state(&mut self) -> SyntaxResult<()> {
         if self.pos_stack.len() >= self.max_stack_size {
