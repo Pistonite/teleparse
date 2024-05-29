@@ -1,4 +1,5 @@
-// #[test]
-// fn macrotest() {
-//     macrotest::expand("tests/expand/*.rs");
-// }
+#[test]
+fn macro_expand() {
+    macrotest::expand("tests/expand/*.rs");
+}
+

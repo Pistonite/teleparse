@@ -1,5 +1,7 @@
 //! Token related types and utils
 //!
+use teleparse_macros::ToSpan;
+
 use std::fmt::Debug;
 use std::hash::Hash;
 use std::ops::{Range, BitAnd, BitOr, Not};
@@ -285,6 +287,13 @@ impl Span {
     pub fn new(lo: Pos, hi: Pos) -> Self {
         Self { lo, hi }
     }
+    pub fn get_src<'s>(&self, src: &'s str) -> &'s str {
+        if self.hi <= self.lo {
+            return "";
+        }
+        let hi = self.hi.min(src.len());
+        &src[self.lo..hi]
+    }
 }
 
 impl Debug for Span {
@@ -297,11 +306,26 @@ impl Debug for Span {
     }
 }
 
+/// Trait for types that can be converted to a [`Span`]
+///
+/// Tokens and derived SyntaxTree nodes all implement this trait
+pub trait ToSpan {
+    /// Get the span of this type
+    fn span(&self) -> Span;
+}
+
+impl ToSpan for Span {
+    #[inline]
+    fn span(&self) -> Span {
+        *self
+    }
+}
+
 /// One token in the lexer output
 ///
 /// Each token stores the type and position of it in the source, but
 /// not the actual source itself
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ToSpan)]
 pub struct Token<T: TokenType> {
     /// Position of this token in the source
     pub span: Span,
@@ -322,13 +346,9 @@ impl<T: TokenType> Token<T> {
     }
 
     /// Get the source of this token
+    #[inline]
     pub fn get_src<'s>(&self, src: &'s str) -> &'s str {
-        let Span { lo, hi } = self.span;
-        if hi <= lo {
-            return "";
-        }
-        let hi = hi.min(src.len());
-        &src[lo..hi]
+        self.span.get_src(src)
     }
 
     /// Create an unexpected token error

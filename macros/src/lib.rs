@@ -5,7 +5,7 @@
 mod prelude;
 use prelude::*;
 
-mod lexer_derive_impl;
+mod node_derive_impl;
 mod token_type_derive_impl;
 mod syntax_tree_derive_impl;
 
@@ -25,9 +25,9 @@ fn teleparse_derive_internal(ident: &syn::Ident, input: TokenStream) -> syn::Res
         "TokenType" => {
             token_type_derive_impl::expand(input, ident)
         },
-        // "Lexer" => {
-        //     lexer_derive_impl::expand(input, ident)
-        // },
+        "Node" => {
+            node_derive_impl::expand(input, ident)
+        },
         "SyntaxTree" => {
             syntax_tree_derive_impl::expand(input, ident)
         },
@@ -37,32 +37,10 @@ fn teleparse_derive_internal(ident: &syn::Ident, input: TokenStream) -> syn::Res
     Ok(out)
 }
 
-// /// Used internally in `llnparse` to ensure that a regex literal is valid
-// #[proc_macro]
-// pub fn checked_regex_rule(input: TokenStream) -> TokenStream {
-//     let regex = {
-//         let input = input.clone();
-//         parse_macro_input!(input as syn::LitStr)
-//     };
-//     let result = checked_regex_rule_internal(&regex);
-//     from_result_keep_input(quote!{#regex}, result)
-// }
-//
-// fn checked_regex_rule_internal(input: &syn::LitStr) -> syn::Result<TokenStream2> {
-//     let regex = input.value();
-//     if !regex.starts_with("^") {
-//         syn_error!(input, "expected a regular expression starting with `^`, because it always needs to match the beginning of the remaining input");
-//     }
-//     let regex = match Regex::new(&regex) {
-//         Err(e) => {
-//             syn_error!(input, e.to_string());
-//         },
-//         Ok(x) => x
-//     };
-//     if regex.find("").is_some() {
-//         syn_error!(input, "the rule regular expression must not match the empty string");
-//     }
-//     Ok(quote! { #input })
-// }
-//
-//
+mod derive_to_span_impl;
+
+/// Derive ToSpan from a type that stores a ToSpan as its first thing
+#[proc_macro_derive(ToSpan)]
+pub fn derive_to_span(input: TokenStream) -> TokenStream {
+    derive_to_span_impl::expand(input)
+}

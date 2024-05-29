@@ -58,26 +58,71 @@ impl ::core::hash::Hash for TokenType {
 #[automatically_derived]
 pub struct Integer(pub teleparse::Token<TokenType>);
 #[automatically_derived]
+impl ::core::fmt::Debug for Integer {
+    #[inline]
+    fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+        ::core::fmt::Formatter::debug_tuple_field1_finish(f, "Integer", &&self.0)
+    }
+}
+#[automatically_derived]
+impl ::core::clone::Clone for Integer {
+    #[inline]
+    fn clone(&self) -> Integer {
+        let _: ::core::clone::AssertParamIsClone<teleparse::Token<TokenType>>;
+        *self
+    }
+}
+#[automatically_derived]
+impl ::core::marker::Copy for Integer {}
+#[automatically_derived]
+impl ::core::marker::StructuralPartialEq for Integer {}
+#[automatically_derived]
+impl ::core::cmp::PartialEq for Integer {
+    #[inline]
+    fn eq(&self, other: &Integer) -> bool {
+        self.0 == other.0
+    }
+}
+#[automatically_derived]
+impl ::core::cmp::Eq for Integer {
+    #[inline]
+    #[doc(hidden)]
+    #[coverage(off)]
+    fn assert_receiver_is_total_eq(&self) -> () {
+        let _: ::core::cmp::AssertParamIsEq<teleparse::Token<TokenType>>;
+    }
+}
+#[automatically_derived]
+impl ::core::hash::Hash for Integer {
+    #[inline]
+    fn hash<__H: ::core::hash::Hasher>(&self, state: &mut __H) -> () {
+        ::core::hash::Hash::hash(&self.0, state)
+    }
+}
+#[automatically_derived]
+impl teleparse::ToSpan for Integer {
+    #[inline]
+    fn span(&self) -> teleparse::Span {
+        self.0.span()
+    }
+}
+#[automatically_derived]
 const _: () = {
-    use teleparse::{Token, Lexer, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::parser::ParserState;
     impl SyntaxTree for Integer {
         type T = TokenType;
-        type Ctx = ();
         type AST = Token<TokenType>;
         #[inline]
-        fn span_of(ast: &Self::AST) -> Span {
-            ast.span
-        }
-        #[inline]
-        fn try_parse_ast<'s, L: Lexer<'s, T = Self::T>>(
-            parser: &mut Parser<'s, Self::T, L, Self::Ctx>,
+        fn try_parse_ast<'s>(
+            parser: &mut Parser<'s, Self::T>,
         ) -> SyntaxResult<Self::AST> {
-            teleparse::imp::token::parse_token(TokenType::Integer, parser)
+            parser.parse_token(TokenType::Integer)
         }
         #[inline]
-        fn into_parse_tree<'s, L: Lexer<'s, T = Self::T>>(
+        fn into_parse_tree<'s>(
             ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T, L, Self::Ctx>,
+            _parser: &mut Parser<'s, Self::T>,
         ) -> Self {
             Self(ast)
         }
@@ -87,26 +132,71 @@ const _: () = {
 #[automatically_derived]
 pub struct OpAdd(pub teleparse::Token<TokenType>);
 #[automatically_derived]
+impl ::core::fmt::Debug for OpAdd {
+    #[inline]
+    fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+        ::core::fmt::Formatter::debug_tuple_field1_finish(f, "OpAdd", &&self.0)
+    }
+}
+#[automatically_derived]
+impl ::core::clone::Clone for OpAdd {
+    #[inline]
+    fn clone(&self) -> OpAdd {
+        let _: ::core::clone::AssertParamIsClone<teleparse::Token<TokenType>>;
+        *self
+    }
+}
+#[automatically_derived]
+impl ::core::marker::Copy for OpAdd {}
+#[automatically_derived]
+impl ::core::marker::StructuralPartialEq for OpAdd {}
+#[automatically_derived]
+impl ::core::cmp::PartialEq for OpAdd {
+    #[inline]
+    fn eq(&self, other: &OpAdd) -> bool {
+        self.0 == other.0
+    }
+}
+#[automatically_derived]
+impl ::core::cmp::Eq for OpAdd {
+    #[inline]
+    #[doc(hidden)]
+    #[coverage(off)]
+    fn assert_receiver_is_total_eq(&self) -> () {
+        let _: ::core::cmp::AssertParamIsEq<teleparse::Token<TokenType>>;
+    }
+}
+#[automatically_derived]
+impl ::core::hash::Hash for OpAdd {
+    #[inline]
+    fn hash<__H: ::core::hash::Hasher>(&self, state: &mut __H) -> () {
+        ::core::hash::Hash::hash(&self.0, state)
+    }
+}
+#[automatically_derived]
+impl teleparse::ToSpan for OpAdd {
+    #[inline]
+    fn span(&self) -> teleparse::Span {
+        self.0.span()
+    }
+}
+#[automatically_derived]
 const _: () = {
-    use teleparse::{Token, Lexer, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::parser::ParserState;
     impl SyntaxTree for OpAdd {
         type T = TokenType;
-        type Ctx = ();
         type AST = Token<TokenType>;
         #[inline]
-        fn span_of(ast: &Self::AST) -> Span {
-            ast.span
-        }
-        #[inline]
-        fn try_parse_ast<'s, L: Lexer<'s, T = Self::T>>(
-            parser: &mut Parser<'s, Self::T, L, Self::Ctx>,
+        fn try_parse_ast<'s>(
+            parser: &mut Parser<'s, Self::T>,
         ) -> SyntaxResult<Self::AST> {
-            teleparse::imp::token::parse_token_match(TokenType::Operator, "+", parser)
+            parser.parse_token_match(TokenType::Operator, "+")
         }
         #[inline]
-        fn into_parse_tree<'s, L: Lexer<'s, T = Self::T>>(
+        fn into_parse_tree<'s>(
             ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T, L, Self::Ctx>,
+            _parser: &mut Parser<'s, Self::T>,
         ) -> Self {
             Self(ast)
         }
@@ -116,26 +206,71 @@ const _: () = {
 #[automatically_derived]
 pub struct OpSub(pub teleparse::Token<TokenType>);
 #[automatically_derived]
+impl ::core::fmt::Debug for OpSub {
+    #[inline]
+    fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+        ::core::fmt::Formatter::debug_tuple_field1_finish(f, "OpSub", &&self.0)
+    }
+}
+#[automatically_derived]
+impl ::core::clone::Clone for OpSub {
+    #[inline]
+    fn clone(&self) -> OpSub {
+        let _: ::core::clone::AssertParamIsClone<teleparse::Token<TokenType>>;
+        *self
+    }
+}
+#[automatically_derived]
+impl ::core::marker::Copy for OpSub {}
+#[automatically_derived]
+impl ::core::marker::StructuralPartialEq for OpSub {}
+#[automatically_derived]
+impl ::core::cmp::PartialEq for OpSub {
+    #[inline]
+    fn eq(&self, other: &OpSub) -> bool {
+        self.0 == other.0
+    }
+}
+#[automatically_derived]
+impl ::core::cmp::Eq for OpSub {
+    #[inline]
+    #[doc(hidden)]
+    #[coverage(off)]
+    fn assert_receiver_is_total_eq(&self) -> () {
+        let _: ::core::cmp::AssertParamIsEq<teleparse::Token<TokenType>>;
+    }
+}
+#[automatically_derived]
+impl ::core::hash::Hash for OpSub {
+    #[inline]
+    fn hash<__H: ::core::hash::Hasher>(&self, state: &mut __H) -> () {
+        ::core::hash::Hash::hash(&self.0, state)
+    }
+}
+#[automatically_derived]
+impl teleparse::ToSpan for OpSub {
+    #[inline]
+    fn span(&self) -> teleparse::Span {
+        self.0.span()
+    }
+}
+#[automatically_derived]
 const _: () = {
-    use teleparse::{Token, Lexer, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::parser::ParserState;
     impl SyntaxTree for OpSub {
         type T = TokenType;
-        type Ctx = ();
         type AST = Token<TokenType>;
         #[inline]
-        fn span_of(ast: &Self::AST) -> Span {
-            ast.span
-        }
-        #[inline]
-        fn try_parse_ast<'s, L: Lexer<'s, T = Self::T>>(
-            parser: &mut Parser<'s, Self::T, L, Self::Ctx>,
+        fn try_parse_ast<'s>(
+            parser: &mut Parser<'s, Self::T>,
         ) -> SyntaxResult<Self::AST> {
-            teleparse::imp::token::parse_token_match(TokenType::Operator, "-", parser)
+            parser.parse_token_match(TokenType::Operator, "-")
         }
         #[inline]
-        fn into_parse_tree<'s, L: Lexer<'s, T = Self::T>>(
+        fn into_parse_tree<'s>(
             ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T, L, Self::Ctx>,
+            _parser: &mut Parser<'s, Self::T>,
         ) -> Self {
             Self(ast)
         }
@@ -145,26 +280,71 @@ const _: () = {
 #[automatically_derived]
 pub struct OpMul(pub teleparse::Token<TokenType>);
 #[automatically_derived]
+impl ::core::fmt::Debug for OpMul {
+    #[inline]
+    fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+        ::core::fmt::Formatter::debug_tuple_field1_finish(f, "OpMul", &&self.0)
+    }
+}
+#[automatically_derived]
+impl ::core::clone::Clone for OpMul {
+    #[inline]
+    fn clone(&self) -> OpMul {
+        let _: ::core::clone::AssertParamIsClone<teleparse::Token<TokenType>>;
+        *self
+    }
+}
+#[automatically_derived]
+impl ::core::marker::Copy for OpMul {}
+#[automatically_derived]
+impl ::core::marker::StructuralPartialEq for OpMul {}
+#[automatically_derived]
+impl ::core::cmp::PartialEq for OpMul {
+    #[inline]
+    fn eq(&self, other: &OpMul) -> bool {
+        self.0 == other.0
+    }
+}
+#[automatically_derived]
+impl ::core::cmp::Eq for OpMul {
+    #[inline]
+    #[doc(hidden)]
+    #[coverage(off)]
+    fn assert_receiver_is_total_eq(&self) -> () {
+        let _: ::core::cmp::AssertParamIsEq<teleparse::Token<TokenType>>;
+    }
+}
+#[automatically_derived]
+impl ::core::hash::Hash for OpMul {
+    #[inline]
+    fn hash<__H: ::core::hash::Hasher>(&self, state: &mut __H) -> () {
+        ::core::hash::Hash::hash(&self.0, state)
+    }
+}
+#[automatically_derived]
+impl teleparse::ToSpan for OpMul {
+    #[inline]
+    fn span(&self) -> teleparse::Span {
+        self.0.span()
+    }
+}
+#[automatically_derived]
 const _: () = {
-    use teleparse::{Token, Lexer, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::parser::ParserState;
     impl SyntaxTree for OpMul {
         type T = TokenType;
-        type Ctx = ();
         type AST = Token<TokenType>;
         #[inline]
-        fn span_of(ast: &Self::AST) -> Span {
-            ast.span
-        }
-        #[inline]
-        fn try_parse_ast<'s, L: Lexer<'s, T = Self::T>>(
-            parser: &mut Parser<'s, Self::T, L, Self::Ctx>,
+        fn try_parse_ast<'s>(
+            parser: &mut Parser<'s, Self::T>,
         ) -> SyntaxResult<Self::AST> {
-            teleparse::imp::token::parse_token_match(TokenType::Operator, "*", parser)
+            parser.parse_token_match(TokenType::Operator, "*")
         }
         #[inline]
-        fn into_parse_tree<'s, L: Lexer<'s, T = Self::T>>(
+        fn into_parse_tree<'s>(
             ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T, L, Self::Ctx>,
+            _parser: &mut Parser<'s, Self::T>,
         ) -> Self {
             Self(ast)
         }
@@ -174,26 +354,71 @@ const _: () = {
 #[automatically_derived]
 pub struct OpDiv(pub teleparse::Token<TokenType>);
 #[automatically_derived]
+impl ::core::fmt::Debug for OpDiv {
+    #[inline]
+    fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+        ::core::fmt::Formatter::debug_tuple_field1_finish(f, "OpDiv", &&self.0)
+    }
+}
+#[automatically_derived]
+impl ::core::clone::Clone for OpDiv {
+    #[inline]
+    fn clone(&self) -> OpDiv {
+        let _: ::core::clone::AssertParamIsClone<teleparse::Token<TokenType>>;
+        *self
+    }
+}
+#[automatically_derived]
+impl ::core::marker::Copy for OpDiv {}
+#[automatically_derived]
+impl ::core::marker::StructuralPartialEq for OpDiv {}
+#[automatically_derived]
+impl ::core::cmp::PartialEq for OpDiv {
+    #[inline]
+    fn eq(&self, other: &OpDiv) -> bool {
+        self.0 == other.0
+    }
+}
+#[automatically_derived]
+impl ::core::cmp::Eq for OpDiv {
+    #[inline]
+    #[doc(hidden)]
+    #[coverage(off)]
+    fn assert_receiver_is_total_eq(&self) -> () {
+        let _: ::core::cmp::AssertParamIsEq<teleparse::Token<TokenType>>;
+    }
+}
+#[automatically_derived]
+impl ::core::hash::Hash for OpDiv {
+    #[inline]
+    fn hash<__H: ::core::hash::Hasher>(&self, state: &mut __H) -> () {
+        ::core::hash::Hash::hash(&self.0, state)
+    }
+}
+#[automatically_derived]
+impl teleparse::ToSpan for OpDiv {
+    #[inline]
+    fn span(&self) -> teleparse::Span {
+        self.0.span()
+    }
+}
+#[automatically_derived]
 const _: () = {
-    use teleparse::{Token, Lexer, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::parser::ParserState;
     impl SyntaxTree for OpDiv {
         type T = TokenType;
-        type Ctx = ();
         type AST = Token<TokenType>;
         #[inline]
-        fn span_of(ast: &Self::AST) -> Span {
-            ast.span
-        }
-        #[inline]
-        fn try_parse_ast<'s, L: Lexer<'s, T = Self::T>>(
-            parser: &mut Parser<'s, Self::T, L, Self::Ctx>,
+        fn try_parse_ast<'s>(
+            parser: &mut Parser<'s, Self::T>,
         ) -> SyntaxResult<Self::AST> {
-            teleparse::imp::token::parse_token_match(TokenType::Operator, "/", parser)
+            parser.parse_token_match(TokenType::Operator, "/")
         }
         #[inline]
-        fn into_parse_tree<'s, L: Lexer<'s, T = Self::T>>(
+        fn into_parse_tree<'s>(
             ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T, L, Self::Ctx>,
+            _parser: &mut Parser<'s, Self::T>,
         ) -> Self {
             Self(ast)
         }
@@ -203,26 +428,71 @@ const _: () = {
 #[automatically_derived]
 pub struct ParamOpen(pub teleparse::Token<TokenType>);
 #[automatically_derived]
+impl ::core::fmt::Debug for ParamOpen {
+    #[inline]
+    fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+        ::core::fmt::Formatter::debug_tuple_field1_finish(f, "ParamOpen", &&self.0)
+    }
+}
+#[automatically_derived]
+impl ::core::clone::Clone for ParamOpen {
+    #[inline]
+    fn clone(&self) -> ParamOpen {
+        let _: ::core::clone::AssertParamIsClone<teleparse::Token<TokenType>>;
+        *self
+    }
+}
+#[automatically_derived]
+impl ::core::marker::Copy for ParamOpen {}
+#[automatically_derived]
+impl ::core::marker::StructuralPartialEq for ParamOpen {}
+#[automatically_derived]
+impl ::core::cmp::PartialEq for ParamOpen {
+    #[inline]
+    fn eq(&self, other: &ParamOpen) -> bool {
+        self.0 == other.0
+    }
+}
+#[automatically_derived]
+impl ::core::cmp::Eq for ParamOpen {
+    #[inline]
+    #[doc(hidden)]
+    #[coverage(off)]
+    fn assert_receiver_is_total_eq(&self) -> () {
+        let _: ::core::cmp::AssertParamIsEq<teleparse::Token<TokenType>>;
+    }
+}
+#[automatically_derived]
+impl ::core::hash::Hash for ParamOpen {
+    #[inline]
+    fn hash<__H: ::core::hash::Hasher>(&self, state: &mut __H) -> () {
+        ::core::hash::Hash::hash(&self.0, state)
+    }
+}
+#[automatically_derived]
+impl teleparse::ToSpan for ParamOpen {
+    #[inline]
+    fn span(&self) -> teleparse::Span {
+        self.0.span()
+    }
+}
+#[automatically_derived]
 const _: () = {
-    use teleparse::{Token, Lexer, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::parser::ParserState;
     impl SyntaxTree for ParamOpen {
         type T = TokenType;
-        type Ctx = ();
         type AST = Token<TokenType>;
         #[inline]
-        fn span_of(ast: &Self::AST) -> Span {
-            ast.span
-        }
-        #[inline]
-        fn try_parse_ast<'s, L: Lexer<'s, T = Self::T>>(
-            parser: &mut Parser<'s, Self::T, L, Self::Ctx>,
+        fn try_parse_ast<'s>(
+            parser: &mut Parser<'s, Self::T>,
         ) -> SyntaxResult<Self::AST> {
-            teleparse::imp::token::parse_token_match(TokenType::Param, "(", parser)
+            parser.parse_token_match(TokenType::Param, "(")
         }
         #[inline]
-        fn into_parse_tree<'s, L: Lexer<'s, T = Self::T>>(
+        fn into_parse_tree<'s>(
             ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T, L, Self::Ctx>,
+            _parser: &mut Parser<'s, Self::T>,
         ) -> Self {
             Self(ast)
         }
@@ -232,26 +502,71 @@ const _: () = {
 #[automatically_derived]
 pub struct ParamClose(pub teleparse::Token<TokenType>);
 #[automatically_derived]
+impl ::core::fmt::Debug for ParamClose {
+    #[inline]
+    fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+        ::core::fmt::Formatter::debug_tuple_field1_finish(f, "ParamClose", &&self.0)
+    }
+}
+#[automatically_derived]
+impl ::core::clone::Clone for ParamClose {
+    #[inline]
+    fn clone(&self) -> ParamClose {
+        let _: ::core::clone::AssertParamIsClone<teleparse::Token<TokenType>>;
+        *self
+    }
+}
+#[automatically_derived]
+impl ::core::marker::Copy for ParamClose {}
+#[automatically_derived]
+impl ::core::marker::StructuralPartialEq for ParamClose {}
+#[automatically_derived]
+impl ::core::cmp::PartialEq for ParamClose {
+    #[inline]
+    fn eq(&self, other: &ParamClose) -> bool {
+        self.0 == other.0
+    }
+}
+#[automatically_derived]
+impl ::core::cmp::Eq for ParamClose {
+    #[inline]
+    #[doc(hidden)]
+    #[coverage(off)]
+    fn assert_receiver_is_total_eq(&self) -> () {
+        let _: ::core::cmp::AssertParamIsEq<teleparse::Token<TokenType>>;
+    }
+}
+#[automatically_derived]
+impl ::core::hash::Hash for ParamClose {
+    #[inline]
+    fn hash<__H: ::core::hash::Hasher>(&self, state: &mut __H) -> () {
+        ::core::hash::Hash::hash(&self.0, state)
+    }
+}
+#[automatically_derived]
+impl teleparse::ToSpan for ParamClose {
+    #[inline]
+    fn span(&self) -> teleparse::Span {
+        self.0.span()
+    }
+}
+#[automatically_derived]
 const _: () = {
-    use teleparse::{Token, Lexer, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::parser::ParserState;
     impl SyntaxTree for ParamClose {
         type T = TokenType;
-        type Ctx = ();
         type AST = Token<TokenType>;
         #[inline]
-        fn span_of(ast: &Self::AST) -> Span {
-            ast.span
-        }
-        #[inline]
-        fn try_parse_ast<'s, L: Lexer<'s, T = Self::T>>(
-            parser: &mut Parser<'s, Self::T, L, Self::Ctx>,
+        fn try_parse_ast<'s>(
+            parser: &mut Parser<'s, Self::T>,
         ) -> SyntaxResult<Self::AST> {
-            teleparse::imp::token::parse_token_match(TokenType::Param, ")", parser)
+            parser.parse_token_match(TokenType::Param, ")")
         }
         #[inline]
-        fn into_parse_tree<'s, L: Lexer<'s, T = Self::T>>(
+        fn into_parse_tree<'s>(
             ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T, L, Self::Ctx>,
+            _parser: &mut Parser<'s, Self::T>,
         ) -> Self {
             Self(ast)
         }
@@ -263,6 +578,7 @@ const _: () = {
     impl teleparse::TokenType for TokenType {
         type Repr = u8;
         type Lexer<'s> = DerivedLexer<'s>;
+        type Ctx = ();
         #[inline]
         fn should_extract(&self) -> bool {
             match self {
@@ -317,14 +633,17 @@ const _: () = {
     impl<'s> teleparse::Lexer<'s> for DerivedLexer<'s> {
         type T = TokenType;
         #[inline]
-        fn new(source: &'s str) -> Self {
-            Self(teleparse::lexer::LexerState::new(source), derived_lexer_rules())
-        }
-        #[inline]
         fn next(
             &mut self,
         ) -> (Option<teleparse::Span>, Option<teleparse::Token<Self::T>>) {
             self.0.next(self.1)
+        }
+    }
+    #[doc(hidden)]
+    impl<'s> DerivedLexer<'s> {
+        #[inline]
+        fn new(source: &'s str) -> Self {
+            Self(teleparse::lexer::LexerState::new(source), derived_lexer_rules())
         }
     }
 };

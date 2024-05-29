@@ -1,14 +1,13 @@
 use crate::{
-    Parser, Span, SyntaxError, SyntaxErrorKind, SyntaxResult, Token,
-    TokenStorage, TokenType, TokenTypeNoCtx,
+    token::ToSpan, Parser, Span, SyntaxError, SyntaxErrorKind, SyntaxResult, Token, TokenStorage, TokenType, TokenTypeNoCtx
 };
 use std::{collections::HashSet, ops::Deref};
 
 type CtxOf<T> = <T as TokenType>::Ctx;
 
-pub trait SyntaxTree: Sized {
+pub trait SyntaxTree: Sized + ToSpan {
     type T: TokenType;
-    type AST;
+    type AST: ToSpan;
 
     fn parse_with_context( source: &str, context: CtxOf<Self::T>) -> (Option<Self>, CtxOf<Self::T>) {
         let mut parser = Self::T::parser_with_context(source, context);
@@ -22,7 +21,7 @@ pub trait SyntaxTree: Sized {
         (result, parser.context)
     }
 
-    fn span_of(ast: &Self::AST) -> Span;
+    // fn span_of(ast: &Self::AST) -> Span;
     //
     // fn start_set() -> HashSet<Start<Self::T>>;
 

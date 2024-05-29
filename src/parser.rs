@@ -171,6 +171,9 @@ pub trait ParserState<'s> {
     /// Get the source code of a token
     fn get_src(&self, token: &Token<Self::T>) -> &'s str;
 
+    /// Get the source code of a span
+    fn get_src_span(&self, span: Span) -> &'s str;
+
     /// Get an empty span at the current location
     fn current_span(&self) -> Span;
 
@@ -227,16 +230,24 @@ impl<'s, T: TokenType> ParserState<'s> for Parser<'s, T> {
         self.pos_stack.pop();
     }
 
+    #[inline]
     fn restore_state(&mut self) {
         if let Some(pos) = self.pos_stack.last() {
             self.idx = *pos;
         }
     }
 
+    #[inline]
     fn get_src(&self, token: &Token<T>) -> &'s str {
         token.get_src(self.source)
     }
 
+    #[inline]
+    fn get_src_span(&self, span: Span) -> &'s str {
+        span.get_src(self.source)
+    }
+
+    #[inline]
     fn current_span(&self) -> Span {
         Span::new(self.idx, self.idx)
     }

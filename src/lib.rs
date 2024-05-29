@@ -4,13 +4,14 @@
 extern crate self as teleparse;
 
 // re-export user-facing proc-macros
-pub use teleparse_macros::teleparse_derive;
+pub use teleparse_macros::{teleparse_derive, ToSpan};
 
 /// prelude for all traits and common includes when working with this library
 pub mod prelude {
     pub use crate::teleparse_derive;
 
     // traits
+    pub use crate::ToSpan as _;
     pub use crate::TokenType as _;
     pub use crate::TokenTypeNoCtx as _;
     pub use crate::Lexer as _;
@@ -24,10 +25,10 @@ pub mod prelude {
 
 }
 
-// pub mod imp;
+pub mod node;
 
 pub mod token;
-pub use token::{Pos, Span, Token, TokenType, TokenTypeNoCtx, TokenStorage};
+pub use token::{Pos, Span, ToSpan, Token, TokenType, TokenTypeNoCtx, TokenStorage};
 
 // lexer re-exports
 pub mod lexer;

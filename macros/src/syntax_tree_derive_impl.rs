@@ -1,6 +1,5 @@
 use crate::*;
 
-/// Derive the `Lexer` trait for a struct that has a LexerState field
 pub fn expand(input: TokenStream, derive_ident: &syn::Ident) -> TokenStream {
     let mut derive_input = {
         let input = input.clone();

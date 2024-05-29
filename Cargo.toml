@@ -8,6 +8,7 @@ version = "0.0.1"
 edition = "2021"
 description = "teleparse"
 license = "MIT"
+exclude = ["**/*.expanded.rs"]
 
 [dependencies]
 bit-set = "0.5.3"

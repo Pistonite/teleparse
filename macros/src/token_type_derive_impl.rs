@@ -267,13 +267,6 @@ fn expand_internal(
             acc.extend(expr);
             acc
         });
-    let no_ctx_impl = if is_unit_type(&context_ty) {
-        quote! {
-            impl #teleparse::TokenTypeNoCtx for #enum_ident { }
-        }
-    } else {
-        quote! { }
-    };
     let out = quote! {
         #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
         #[repr(#repr)]
@@ -419,18 +412,15 @@ fn derive_terminal(
     quote! {
         #[doc = #doc]
         #[automatically_derived]
-        #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+        #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, #teleparse::ToSpan)]
         #vis struct #terminal_ident(pub #teleparse::Token<#enum_ident>);
         #[automatically_derived]
         const _: () = {
-            use #teleparse::{Token, Parser, SyntaxResult, SyntaxTree};
+            use #teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
             use #teleparse::parser::ParserState;
             impl SyntaxTree for #terminal_ident {
                 type T = #enum_ident;
                 type AST = Token<#enum_ident>;
-
-                #[inline]
-                fn span_of(ast: &Self::AST) -> Span { ast.span }
 
                 #[inline]
                 fn try_parse_ast<'s>(parser: &mut Parser<'s, Self::T>) -> SyntaxResult<Self::AST> {

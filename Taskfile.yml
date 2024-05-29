@@ -12,14 +12,10 @@ tasks:
     desc: Dev inner loop. Run tests in watch mode
     cmds:
       - cargo watch -x test
-  #   deps:
-  #     - _doc:watch
-  #     - _doc:serve
-  #
-  # _doc:watch:
-  #   cmds:
-  #     - cargo watch -x doc
-  #
-  # _doc:serve:
-  #   cmds:
-  #     - npx live-server target/doc
+
+  refresh:
+    desc: Refresh macro tests
+    env:
+      MACROTEST: overwrite
+    cmds:
+      - cargo test --test macrotest
