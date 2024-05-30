@@ -21,6 +21,7 @@ pub trait Root: SyntaxTree + 'static {
 }
 
 pub struct RootMetadata<ST: Root>{
+    pub is_ll1: bool,
     pub start_table: SyntaxTreeTable<ST::T>,
     pub follow_table: SyntaxTreeTable<ST::T>,
 }
@@ -44,6 +45,10 @@ impl<T: TokenTypeNoCtx, AST, ST: Root<T=T, AST=AST>> RootNoCtx for ST {
         result
     }
 }
+
+/// Marker trait for LL1 grammar
+pub trait LL1 {}
+
 /// Macro to derive [`Root`] for generated Terminal types.
 /// This is used internally in tests and examples. Library users
 /// should simply `#[derive(Root)]` instead.
@@ -66,13 +71,15 @@ macro_rules! derive_root_impl {
             METADATA.get_or_init(|| {
                 let mut start_table = $crate::table::SyntaxTreeTable::default();
                 let mut lit_table = $crate::table::LitTable::default();
-                Self::build_start_table(&mut start_table, &mut lit_table);
+                let mut no_first_first_collision = Self::build_start_table(&mut start_table, &mut lit_table);
                 let mut follow_table = $crate::table::SyntaxTreeTable::default();
                 // the root's follow table is EOF
                 let mut follows = $crate::table::TermSet::default();
                 follows.insert_eof();
-                Self::build_follow_table(&start_table, &mut follow_table, &follows);
+
+                let (_, no_first_follow_collsion) = Self::build_follow_table(&start_table, &mut follow_table, &follows);
                 $crate::root::RootMetadata {
+                    is_ll1: no_first_first_collision && no_first_follow_collsion,
                     start_table,
                     follow_table,
                 }

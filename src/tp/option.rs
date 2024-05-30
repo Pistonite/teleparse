@@ -21,8 +21,8 @@ impl<ST: SyntaxTree + 'static> SyntaxTree for Option<ST> {
     type AST = Result<ST::AST, Span>;
 
     #[inline]
-    fn build_start_table( s_table: &mut SyntaxTreeTable<Self::T>, lits: &mut LitTable) {
-        build_start_table_impl::<ST>(TypeId::of::<Self>(), s_table, lits);
+    fn build_start_table( s_table: &mut SyntaxTreeTable<Self::T>, lits: &mut LitTable)-> bool {
+        build_start_table_impl::<ST>(TypeId::of::<Self>(), s_table, lits)
     }
 
     #[inline]
@@ -30,7 +30,7 @@ impl<ST: SyntaxTree + 'static> SyntaxTree for Option<ST> {
         s_table: &'s SyntaxTreeTable<Self::T>, 
         f_table: &mut SyntaxTreeTable<Self::T>,
         follows: &TermSet<Self::T>
-    ) -> Cow<'s, TermSet<Self::T>> {
+    ) -> (Cow<'s, TermSet<Self::T>>, bool) {
         build_follow_table_impl::<ST>(TypeId::of::<Self>(), s_table, f_table, follows)
     }
 
@@ -64,8 +64,8 @@ impl<ST: SyntaxTree + 'static> SyntaxTree for Exists<ST> {
     type AST = Result<ST::AST, Span>;
 
     #[inline]
-    fn build_start_table( s_table: &mut SyntaxTreeTable<Self::T>, lits: &mut LitTable) {
-        build_start_table_impl::<ST>(TypeId::of::<Self>(), s_table, lits);
+    fn build_start_table( s_table: &mut SyntaxTreeTable<Self::T>, lits: &mut LitTable)-> bool {
+        build_start_table_impl::<ST>(TypeId::of::<Self>(), s_table, lits)
     }
 
     #[inline]
@@ -73,7 +73,7 @@ impl<ST: SyntaxTree + 'static> SyntaxTree for Exists<ST> {
         s_table: &'s SyntaxTreeTable<Self::T>, 
         f_table: &mut SyntaxTreeTable<Self::T>,
         follows: &TermSet<Self::T>
-    ) -> Cow<'s, TermSet<Self::T>> {
+    ) -> (Cow<'s, TermSet<Self::T>>, bool) {
         build_follow_table_impl::<ST>(TypeId::of::<Self>(), s_table, f_table, follows)
     }
 
@@ -102,15 +102,18 @@ impl<ST: SyntaxTree + 'static> SyntaxTree for Exists<ST> {
     }
 }
 
-fn build_start_table_impl<ST: SyntaxTree + 'static>(t: TypeId, s_table: &mut SyntaxTreeTable<ST::T>, lits: &mut LitTable) {
+fn build_start_table_impl<ST: SyntaxTree + 'static>(t: TypeId, s_table: &mut SyntaxTreeTable<ST::T>, lits: &mut LitTable) -> bool {
     s_table.init(t, |s_table| {
         let mut set = TermSet::default();
-        // option => ε | ST
+        // option => ST | e
         ST::build_start_table(s_table, lits);
+        let start = s_table.get(TypeId::of::<ST>());
+        // because second variant is e, FIRST(ST) having e will have FIRST collision
+        let is_ll1 = !start.contains_eof();
         set.insert_eof();
-        set.union(&s_table.get(TypeId::of::<ST>()));
-        set
-    });
+        set.union(&start);
+        (set, is_ll1)
+    })
 }
 
 fn build_follow_table_impl<'s, ST: SyntaxTree + 'static>(
@@ -118,17 +121,16 @@ fn build_follow_table_impl<'s, ST: SyntaxTree + 'static>(
     s_table: &'s SyntaxTreeTable<ST::T>, 
     f_table: &mut SyntaxTreeTable<ST::T>,
     follows: &TermSet<ST::T>
-) -> Cow<'s, TermSet<ST::T>> {
+) -> (Cow<'s, TermSet<ST::T>>, bool) {
     f_table.get_mut(t).union(follows);
     // the follow set for something before this
     // is (ST | e) <follow>
     // however the final set only has e if follow has e
-    let mut set = follows.clone();
-    set.union(&s_table.get(t));
-    if !follows.contains_eof() {
-        set.remove_eof();
-    }
-    Cow::Owned(set)
+    let mut prev_follow = s_table.get(t).into_owned();
+    prev_follow.remove_eof();
+    let is_ll1 = !prev_follow.intersects(follows);
+    prev_follow.union(follows);
+    (Cow::Owned(prev_follow), is_ll1)
 }
     fn try_parse_ast_impl<'s, ST: SyntaxTree>(
         parser: &mut Parser<'s, ST::T>,

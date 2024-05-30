@@ -1,27 +1,22 @@
-use std::{any::TypeId, collections::{BTreeSet, HashMap, HashSet}, rc::Rc, sync::{Arc, OnceLock}};
 use std::borrow::Cow;
 
-use crate::{
-    table::{SyntaxTreeTable, LitTable, TermSet}, Parser, SyntaxResult, ToSpan, Token, TokenType, TokenTypeNoCtx
-};
+use crate::table::{SyntaxTreeTable, LitTable, TermSet};
+use crate::{Parser, SyntaxResult, ToSpan, TokenType};
 
-type CtxOf<T> = <T as TokenType>::Ctx;
 
 pub trait SyntaxTree: Sized + ToSpan {
     type T: TokenType;
     type AST: ToSpan;
 
-    fn build_start_table(s_table: &mut SyntaxTreeTable<Self::T>, lits: &mut LitTable);
+    fn build_start_table(
+        s_table: &mut SyntaxTreeTable<Self::T>, 
+        lits: &mut LitTable) -> bool; // is_ll1
 
     fn build_follow_table<'s>(
         s_table: &'s SyntaxTreeTable<Self::T>, 
         f_table: &mut SyntaxTreeTable<Self::T>,
         follows: &TermSet<Self::T>
-        ) -> Cow<'s, TermSet<Self::T>>;
-
-    // fn span_of(ast: &Self::AST) -> Span;
-    //
-    // fn start_set() -> HashSet<Start<Self::T>>;
+        ) -> (Cow<'s, TermSet<Self::T>>, bool); // is_ll1
 
     /// Attempt to parse one AST node
     ///

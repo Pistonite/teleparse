@@ -448,12 +448,12 @@ fn derive_terminal(
                 type T = #enum_ident;
                 type AST = Token<#enum_ident>;
 
-                fn build_start_table(s_table: &mut SyntaxTreeTable<Self::T>, lits: &mut LitTable) {
+                fn build_start_table(s_table: &mut SyntaxTreeTable<Self::T>, lits: &mut LitTable) -> bool{
                     let t = ::core::any::TypeId::of::<Self>();
                     s_table.init(t, |_| {
                         let mut set = TermSet::default();
                         #s_table_insert_impl
-                        set
+                        (set, true)
                     })
                 }
 
@@ -461,10 +461,10 @@ fn derive_terminal(
                     s_table: &'s SyntaxTreeTable<Self::T>, 
                     f_table: &mut SyntaxTreeTable<Self::T>,
                     follows: &TermSet<Self::T>,
-                ) -> ::std::borrow::Cow<'s, TermSet<Self::T>> {
+                ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
                     let t = ::core::any::TypeId::of::<Self>();
                     f_table.get_mut(t).union(follows);
-                    s_table.get(t)
+                    (s_table.get(t), true)
                 }
 
                 #[inline]

@@ -46,8 +46,8 @@ macro_rules! ast_passthrough {
     #[inline]
     fn build_start_table(
         s_table: &mut crate::table::SyntaxTreeTable<Self::T>,
-        lits: &mut crate::table::LitTable) {
-        ST::build_start_table(s_table, lits);
+        lits: &mut crate::table::LitTable) -> bool{
+        ST::build_start_table(s_table, lits)
         }
 
     #[inline]
@@ -55,7 +55,7 @@ macro_rules! ast_passthrough {
         s_table: &'s crate::table::SyntaxTreeTable<Self::T>, 
         f_table: &mut crate::table::SyntaxTreeTable<Self::T>,
         follows: &crate::table::TermSet<Self::T>
-        ) -> std::borrow::Cow<'s, crate::table::TermSet<Self::T>> {
+        ) -> (std::borrow::Cow<'s, crate::table::TermSet<Self::T>>, bool) {
         ST::build_follow_table(s_table, f_table, follows)
         }
     #[inline]

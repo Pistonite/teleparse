@@ -60,12 +60,13 @@ impl<T: TokenType> SyntaxTreeTable<T> {
     }
 
     #[inline]
-    pub fn init<F: FnOnce(&mut Self) -> TermSet<T>>(&mut self, st: TypeId, f: F) {
+    pub fn init<F: FnOnce(&mut Self) -> (TermSet<T>, bool)>(&mut self, st: TypeId, f: F) -> bool{
         if self.map.contains_key(&st) {
-            return;
+            return true;
         }
-        let set = f(self);
+        let (set, is_ll1) = f(self);
         self.map.insert(st, set);
+        is_ll1
     }
 }
 
@@ -138,6 +139,18 @@ impl<T: TokenType> TermSet<T> {
         }
     }
 
+    pub fn intersects(&self, other: &Self) -> bool {
+        if self.contains_eof && other.contains_eof {
+            return true;
+        }
+        for (set, other_set) in self.array.borrow().iter().zip(other.array.borrow().iter()) {
+            if set.intersects(other_set) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     #[inline]
     fn get(&self, ty: T) -> &LitSet {
         &self.array.borrow()[ty.id()]
@@ -197,6 +210,18 @@ impl LitSet {
             (s, _) => {
                 *s= Self::Any;
             }
+        }
+    }
+
+    pub fn intersects(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Match(set), Self::Match(other_set)) => {
+                set.iter().any(|lit| {
+                    let lit: &str = lit;
+                    other_set.contains(lit)
+                })
+            }
+            (Self::Any, _) | (_, Self::Any) => true,
         }
     }
 
