@@ -2,9 +2,10 @@
 //!
 use teleparse_macros::ToSpan;
 
+use std::borrow::{Borrow, BorrowMut};
 use std::fmt::Debug;
 use std::hash::Hash;
-use std::ops::{Range, BitAnd, BitOr, Not};
+use std::ops::{BitAnd, BitOr, Not, Range};
 
 use num::{Integer, Unsigned};
 
@@ -13,6 +14,7 @@ pub use token_set::*;
 mod token_storage;
 pub use token_storage::*;
 
+use crate::table::LitSet;
 use crate::{Lexer, Parser, SyntaxError, SyntaxErrorKind};
 
 /// Trait for token types, derivable with [`#[teleparse_derive(TokenType)]`](crate::teleparse_derive)
@@ -210,27 +212,32 @@ use crate::{Lexer, Parser, SyntaxError, SyntaxErrorKind};
 /// ```
 pub trait TokenType: Debug + Clone + Copy + PartialEq + Eq + Hash {
     /// Bitflag representation of the token type. This could be u8, u16, u32, u64, or u128
-    type Repr: Unsigned + Integer + BitAnd<Output = Self::Repr> + BitOr<Output = Self::Repr> + Not<Output = Self::Repr> + Copy;
+    type Bit: Unsigned + Integer + BitAnd<Output = Self::Bit> + BitOr<Output = Self::Bit> + Not<Output = Self::Bit> + Copy;
 
     /// Lexer associated with this TokenType
     type Lexer<'s>: Lexer<'s, T = Self>;
 
+    type Follow: Default + Clone + Borrow<[LitSet]> + BorrowMut<[LitSet]>;
+
     /// Context type associated with parsing this TokenType and SyntaxTree
     type Ctx;
 
-    /// Whether this token should be excluded from AST, but still has value.
-    ///
-    /// One example is comments
-    fn should_extract(&self) -> bool;
+    /// Get the id of this token type (ordinal)
+    fn id(&self) -> usize;
 
     /// Convert to numeric representation for use in bit set
-    fn to_repr(&self) -> Self::Repr;
+    fn to_bit(&self) -> Self::Bit;
 
     /// Get the first type. Used to iterate over all types
     fn first() -> Self;
 
     /// Get the next type. Used to iterate over all types
     fn next(&self) -> Option<Self>;
+
+    /// Whether this token should be excluded from AST, but still has value.
+    ///
+    /// One example is comments
+    fn should_extract(&self) -> bool;
 
     /// Create a lexer for parsing this token type
     fn lexer<'s>(source: &'s str) -> Self::Lexer<'s>;
@@ -351,10 +358,25 @@ impl<T: TokenType> Token<T> {
         self.span.get_src(src)
     }
 
+    /// Get the content of this token as a `TokenSrc`
+    #[inline]
+    pub fn to_src<'s>(&self, src: &'s str) -> TokenSrc<'s, T> {
+        TokenSrc {
+            ty: self.ty,
+            src: self.get_src(src),
+        }
+    }
+
     /// Create an unexpected token error
-    pub fn unexpected(self) -> SyntaxError {
+    pub fn unexpected(self) -> SyntaxError<T> {
         SyntaxError::new(self.span, SyntaxErrorKind::UnexpectedToken)
     }
+}
+
+/// Holder of a token type + the source code spanning that token
+pub struct TokenSrc<'s, T: TokenType> {
+    pub ty: T,
+    pub src: &'s str,
 }
 
 #[cfg(test)]

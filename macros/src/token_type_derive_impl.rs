@@ -26,43 +26,50 @@ fn expand_internal(
             #teleparse::lexer::LexerRule::ignore(#ignore),
         });
     }
+    let (variant_attrs, enum_data) = {
+        // strip attributes early for better error experience
+        let mut variant_attrs = Vec::new();
+        // has to be enum
+        match &mut input.data {
+            syn::Data::Enum(data) => {
+            for variant in &mut data.variants {
+                variant_attrs.push(strip_take_attrs(&mut variant.attrs));
+            }
+            },
+            _ => syn_error!(input, "TokenType can only be derived for enums"),
+        };
 
-    // has to be enum
-    let enum_data = match &mut input.data {
-        syn::Data::Enum(data) => data,
-        _ => syn_error!(input, "TokenType can only be derived for enums"),
+        let enum_data = match &input.data {
+            syn::Data::Enum(data) => data,
+            _ => unreachable!(),
+        };
+
+        (variant_attrs, enum_data)
     };
     if !input.generics.params.is_empty() {
         syn_error!(input, "TokenType derive cannot be used with generics")
     }
-    let (repr, repr_str) = match enum_data.variants.len() {
+    let (repr_ty, repr_one) = match enum_data.variants.len() {
         0 => syn_error!(
             input,
             "TokenType derive cannot be used with enums with no variants"
         ),
-        1..=8 => (quote!(u8), "u8"),
-        9..=16 => (quote!(u16), "u16"),
-        17..=32 => (quote!(u32), "u32"),
-        33..=64 => (quote!(u64), "u64"),
-        65..=128 => (quote!(u128), "u128"),
+        1..=8 => (quote!(u8), "1u8"),
+        9..=16 => (quote!(u16), "1u16"),
+        17..=32 => (quote!(u32), "1u32"),
+        33..=64 => (quote!(u64), "1u64"),
+        65..=128 => (quote!(u128), "1u128"),
         _ => syn_error!(input, "TokenType derive can have at most 128 variants"),
     };
-
-    // strip attributes early for better error experience
-    let variant_attrs = enum_data
-        .variants
-        .iter_mut()
-        .map(|v| strip_take_attrs(&mut v.attrs))
-        .collect::<Vec<_>>();
+    let repr_one = syn::LitInt::new(repr_one, Span::call_site());
 
     let enum_ident = &input.ident;
     let enum_vis = &input.vis;
     // parse enum body
-    let mut x = 1u128;
     let mut enum_body = TokenStream2::new();
     let mut should_extract_match_clauses = TokenStream2::new();
     let mut extra_derives = TokenStream2::new();
-    for (variant, attrs) in enum_data.variants.iter_mut().zip(variant_attrs) {
+    for (i, (variant, attrs)) in enum_data.variants.iter().zip(variant_attrs).enumerate() {
         if !matches!(variant.fields, syn::Fields::Unit) {
             syn_error!(variant, "TokenType derive must be used with enums with only unit variants, as integer representation will be generated");
         }
@@ -74,13 +81,10 @@ fn expand_internal(
             );
         }
 
-        // make enum body
         let variant_ident = &variant.ident;
-        let num = syn::LitInt::new(&format!("0x{x:x}{repr_str}"), Span::call_site());
         enum_body.extend(quote! {
-            #variant_ident = #num,
+            #variant_ident = #i,
         });
-        x <<= 1;
 
         // check for attributes
         let mut terminal = None;
@@ -258,6 +262,7 @@ fn expand_internal(
         }
     }
     // variants size checked when determining repr
+    let enum_len = enum_data.variants.len();
     let enum_first_variant = &enum_data.variants.first().unwrap().ident;
     let enum_last_variant = &enum_data.variants.last().unwrap().ident;
     let rule_count = rule_exprs.len();
@@ -269,7 +274,7 @@ fn expand_internal(
         });
     let out = quote! {
         #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-        #[repr(#repr)]
+        #[repr(usize)]
         #enum_vis enum #enum_ident {
             #enum_body
         }
@@ -278,9 +283,35 @@ fn expand_internal(
         const _: () = {
             use #teleparse::Lexer as _;
             impl #teleparse::TokenType for #enum_ident {
-                type Repr = #repr;
+                type Bit = #repr_ty;
                 type Lexer<'s> = DerivedLexer<'s>;
+                type Follow = [ #teleparse::table::LitSet; #enum_len];
                 type Ctx = #context_ty;
+
+                #[inline]
+                fn id(&self) -> usize {
+                    *self as usize
+                }
+
+                #[inline]
+                fn to_bit(&self) -> Self::Bit {
+                    (1 << self.id()) as Self::Bit
+                }
+
+                #[inline]
+                fn first() -> Self {
+                    Self::#enum_first_variant
+                }
+
+                fn next(&self) -> Option<Self> {
+                    match self {
+                        Self::#enum_last_variant => None,
+                        _ => {
+                            let next = self.id() + 1;
+                            Some(unsafe { std::mem::transmute(next) })
+                        }
+                    }
+                }
 
                 #[inline]
                 fn should_extract(&self) -> bool {
@@ -289,24 +320,8 @@ fn expand_internal(
                         _ => false
                     }
                 }
+
                 #[inline]
-                fn to_repr(&self) -> Self::Repr {
-                    *self as Self::Repr
-                }
-                #[inline]
-                fn first() -> Self {
-                    Self::#enum_first_variant
-                }
-                fn next(&self) -> Option<Self> {
-                    match self {
-                        Self::#enum_last_variant => None,
-                        _ => {
-                            let repr = self.to_repr();
-                            let next = repr << 1;
-                            Some(unsafe { std::mem::transmute(next) })
-                        }
-                    }
-                }
                 fn lexer<'s>(source: &'s str) -> Self::Lexer<'s> {
                     DerivedLexer::new(source)
                 }
@@ -403,10 +418,19 @@ fn derive_terminal(
     let teleparse = crate_ident();
     let parse_impl = match match_lit {
         Some(match_lit) => quote! {
-            parser.parse_token_match(#enum_ident::#variant_ident, #match_lit)
+            parser.parse_token_match(#enum_ident::#variant_ident, follows, #match_lit)
         },
         None => quote! {
-            parser.parse_token(#enum_ident::#variant_ident)
+            parser.parse_token(#enum_ident::#variant_ident, follows)
+        },
+    };
+    let s_table_insert_impl = match match_lit {
+        Some(match_lit) => quote! {
+            let lit = lits.get_or_add(#match_lit);
+            s_table.get_mut(t).insert_token_type_match(#enum_ident::#variant_ident, lit);
+        },
+        None => quote! {
+            s_table.get_mut(t).insert_token_type(#enum_ident::#variant_ident);
         },
     };
     quote! {
@@ -418,13 +442,40 @@ fn derive_terminal(
         const _: () = {
             use #teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
             use #teleparse::parser::ParserState;
+            use #teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
+            use core::ops::Deref;
             impl SyntaxTree for #terminal_ident {
                 type T = #enum_ident;
                 type AST = Token<#enum_ident>;
 
+                fn build_start_table(s_table: &mut SyntaxTreeTable<Self::T>, lits: &mut LitTable) {
+                    let t = ::core::any::TypeId::of::<Self>();
+                    if let Some(set) = s_table.init(t) {
+                        // update start table only once
+                        #s_table_insert_impl
+                    }
+                }
+
+                fn build_follow_table<'s>(
+                    s_table: &'s SyntaxTreeTable<Self::T>, 
+                    f_table: &mut SyntaxTreeTable<Self::T>,
+                    follows: &TermSet<Self::T>,
+                ) -> ::std::borrow::Cow<'s, TermSet<Self::T>> {
+                    let t = ::core::any::TypeId::of::<Self>();
+                    f_table.get_mut(t).union(follows);
+                    s_table.get(t)
+                }
+
                 #[inline]
-                fn try_parse_ast<'s>(parser: &mut Parser<'s, Self::T>) -> SyntaxResult<Self::AST> {
-                    #parse_impl
+                fn try_parse_ast<'s>(parser: &mut Parser<'s, Self::T>, f_table: &SyntaxTreeTable<Self::T>) -> SyntaxResult<Self::T, Self::AST> {
+                    let t = ::core::any::TypeId::of::<Self>();
+                    let f= f_table.get(t);
+                    let follows = f.deref();
+                    let result = #parse_impl;
+                    match result {
+                        Ok(ast) => Ok(ast),
+                        Err(e) => e.into(),
+                    }
                 }
 
                 #[inline]

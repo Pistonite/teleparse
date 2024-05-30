@@ -1,11 +1,10 @@
-
-//! string-based syntax tree nodes ([`Quote`], [`Parse`], [`Pod`])
+//! string-based syntax tree nodes ([`Quote`], [`Parse`], [`ParseDefault`])
 use std::marker::PhantomData;
 use std::str::FromStr;
 
 use crate::prelude::*;
 use crate::parser::ParserState;
-use crate::{Parser, SyntaxResult, SyntaxTree};
+use crate::{Parser, SyntaxTree};
 
 use super::{ast_passthrough, Node};
 
@@ -46,9 +45,9 @@ impl<S: FromStr, ST: SyntaxTree> SyntaxTree for Parse<S, ST> {
 
 /// Parse-or-default. Node that stores a parsed value from a string or the default value if parse failed
 #[teleparse_derive(Node)]
-pub struct Pod<S: FromStr + Default, ST: SyntaxTree>(Node<S>, PhantomData<ST>);
+pub struct ParseDefault<S: FromStr + Default, ST: SyntaxTree>(Node<S>, PhantomData<ST>);
 
-impl<S: FromStr + Default, ST: SyntaxTree> SyntaxTree for Pod<S, ST> {
+impl<S: FromStr + Default, ST: SyntaxTree> SyntaxTree for ParseDefault<S, ST> {
     ast_passthrough!();
 
     #[inline]

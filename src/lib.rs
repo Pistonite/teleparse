@@ -16,7 +16,8 @@ pub mod prelude {
     pub use crate::TokenTypeNoCtx as _;
     pub use crate::Lexer as _;
     pub use crate::SyntaxTree as _;
-    pub use crate::SyntaxTreeNoCtx as _;
+    pub use crate::Root as _;
+    pub use crate::RootNoCtx as _;
 
     // util
     pub use crate::{
@@ -41,3 +42,5 @@ pub use syntax_tree::*;
 mod syntax_error;
 pub use syntax_error::*;
 
+
+pub mod table;

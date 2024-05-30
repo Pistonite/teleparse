@@ -4,37 +4,37 @@ use super::TokenType;
 
 /// Efficiently stores multiple token types as a bit set
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct TokenTySet<T: TokenType>(T::Repr);
+pub struct TokenTySet<T: TokenType>(T::Bit);
 
 impl<T: TokenType> TokenTySet<T> {
     /// Create a new empty set
     #[inline]
     pub fn new() -> Self {
-        Self(T::Repr::zero())
+        Self(T::Bit::zero())
     }
 
     /// Insert a token type into the set
     #[inline]
     pub fn insert(&mut self, token_type: T) {
-        self.0 = self.0 | token_type.to_repr();
+        self.0 = self.0 | token_type.to_bit();
     }
 
     /// Remove a token type from the set
     #[inline]
     pub fn remove(&mut self, token_type: T) {
-        self.0 = self.0 & !token_type.to_repr();
+        self.0 = self.0 & !token_type.to_bit();
     }
 
     /// Check if the set contains a token type
     #[inline]
     pub fn contains(&self, token_type: T) -> bool {
-        self.0 & token_type.to_repr() != T::Repr::zero()
+        self.0 & token_type.to_bit() != T::Bit::zero()
     }
 
     /// Check if the set is empty
     #[inline]
     pub fn is_empty(&self) -> bool {
-        self.0 == T::Repr::zero()
+        self.0 == T::Bit::zero()
     }
 }
 
@@ -48,13 +48,13 @@ impl<T: TokenType> IntoIterator for TokenTySet<T> {
 
 /// Iterator for a [`TokenTySet`]
 pub struct TokenTySetIter<T: TokenType> {
-    set: T::Repr,
+    set: T::Bit,
     cur: Option<T>,
     done: bool,
 }
 
 impl<T: TokenType> TokenTySetIter<T> {
-    pub fn from(repr: T::Repr) -> Self {
+    pub fn from(repr: T::Bit) -> Self {
         Self {
             set: repr,
             cur: None,
@@ -79,7 +79,7 @@ impl<T: TokenType> Iterator for TokenTySetIter<T> {
                 }
             }
         };
-        while self.set & next.to_repr() == T::Repr::zero() {
+        while self.set & next.to_bit() == T::Bit::zero() {
             next = match next.next() {
                 Some(next) => next,
                 None => {
