@@ -33,8 +33,9 @@ pub type SyntaxResult<T, O> = Result<O, SyntaxErrors<T, O>>;
 /// Internal trait for mapping the result of a parsing setup
 pub trait SyntaxResultExt<T: TokenType, O> {
     fn map_ext<O2, F: FnOnce(O) -> O2>(self, f: F) -> SyntaxResult<T, O2>;
-    //
+    
     // fn as_value(&self) -> Option<&O>;
+    // /// Convert the result into the value if it's success or partial success
     // fn into_value(self) -> Option<O>;
     //
     // fn has_value(&self) -> bool {
@@ -53,15 +54,15 @@ impl<T: TokenType, O> SyntaxResultExt<T, O> for SyntaxResult<T, O> {
             }
         }
     }
-    //
-    // fn as_value(&self) -> Option<&ST> {
+    
+    // fn as_value(&self) -> Option<&O> {
     //     match &self {
     //         Ok(tree) => Some(tree),
     //         Err(errors) => errors.obj.as_ref(),
     //     }
     // }
     //
-    //  fn into_value(self) -> Option<ST> {
+    //  fn into_value(self) -> Option<O> {
     //     match self {
     //         Ok(tree) => Some(tree),
     //         Err(errors) => errors.obj,
@@ -134,6 +135,7 @@ impl<T: TokenType, O> SyntaxErrors<T, O> {
     }
         
         /// Map the internal object to another type
+        #[inline]
         pub fn map<O2, F: FnOnce(O) -> O2>(self, f: F) -> SyntaxErrors<T, O2> {
         SyntaxErrors {
             obj: self.obj.map(f),

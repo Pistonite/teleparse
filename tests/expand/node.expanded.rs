@@ -8,6 +8,14 @@ impl<S: From<String>, ST: SyntaxTree> teleparse::ToSpan for Quote<S, ST> {
     }
 }
 #[automatically_derived]
+impl<S: From<String>, ST: SyntaxTree> ::core::convert::From<teleparse::tp::Node<S>>
+for Quote<S, ST> {
+    #[inline]
+    fn from(node: teleparse::tp::Node<S>) -> Self {
+        Self(node, ::core::default::Default::default())
+    }
+}
+#[automatically_derived]
 impl<S: From<String>, ST: SyntaxTree> ::core::ops::Deref for Quote<S, ST> {
     type Target = S;
     #[inline]
@@ -31,6 +39,13 @@ impl teleparse::ToSpan for Struct {
     #[inline]
     fn span(&self) -> teleparse::Span {
         self.field.span()
+    }
+}
+#[automatically_derived]
+impl ::core::convert::From<teleparse::tp::Node<String>> for Struct {
+    #[inline]
+    fn from(node: teleparse::tp::Node<String>) -> Self {
+        Self { field }
     }
 }
 #[automatically_derived]

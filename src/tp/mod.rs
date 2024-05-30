@@ -7,7 +7,7 @@ use crate::{Span, ToSpan};
 
 // pub mod blanket;
 pub mod iter;
-// pub mod option;
+pub mod option;
 pub mod string;
 pub use string::*;
 
@@ -60,8 +60,8 @@ macro_rules! ast_passthrough {
         }
     #[inline]
     fn try_parse_ast<'s>(parser: &mut crate::Parser<'s, Self::T>
-        , f_table: &crate::table::SyntaxTreeTable<Self::T>) -> crate::SyntaxResult<Self::T, Self::AST> {
-        ST::try_parse_ast(parser, f_table)
+        , f_table: &crate::table::SyntaxTreeTable<Self::T>, should_recover: bool) -> crate::SyntaxResult<Self::T, Self::AST> {
+        ST::try_parse_ast(parser, f_table, should_recover)
     }
     };
 }

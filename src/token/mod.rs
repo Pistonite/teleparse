@@ -66,6 +66,7 @@ use crate::{Lexer, Parser, SyntaxError, SyntaxErrorKind};
 ///     #[teleparse(regex(r#"^\d+"#), terminal(Integer))]
 ///     Integer,
 /// }
+/// derive_root!(Integer); // only needed for `Integer::parse`
 ///
 /// # fn main() {
 /// let source = "123";
@@ -84,6 +85,7 @@ use crate::{Lexer, Parser, SyntaxError, SyntaxErrorKind};
 ///     #[teleparse(terminal(Zero = "0"))]
 ///     Integer,
 /// }
+/// derive_root!(Zero); // only needed for `Zero::parse`
 ///
 /// # fn main() {
 /// let source = "0";
@@ -148,6 +150,9 @@ use crate::{Lexer, Parser, SyntaxError, SyntaxErrorKind};
 ///     #[teleparse(regex(r#"^\w+"#), terminal(Word, Secret = "rust"))]
 ///     Word,
 /// }
+/// derive_root!(Word);
+/// derive_root!(Secret);
+///
 /// # fn main() {
 /// let source = "rust";
 /// // Word can be parsed

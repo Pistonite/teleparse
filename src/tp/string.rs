@@ -1,6 +1,7 @@
 //! string-based syntax tree nodes ([`Quote`], [`Parse`], [`ParseDefault`])
 use std::marker::PhantomData;
 use std::str::FromStr;
+use std::string::String as StdString;
 
 use crate::prelude::*;
 use crate::parser::ParserState;
@@ -10,12 +11,12 @@ use super::{ast_passthrough, Node};
 
 /// Node that stores stringified source code
 #[teleparse_derive(Node)]
-pub struct Quote<S: From<String>, ST: SyntaxTree>(Node<S>, PhantomData<ST>);
+pub struct Quote<S: From<StdString>, ST: SyntaxTree>(Node<S>, PhantomData<ST>);
 
 /// Alias for `Quote<String, ST>`
-pub type QuoStr<ST> = Quote<String, ST>;
+pub type String<ST> = Quote<StdString, ST>;
 
-impl<S: From<String>, ST: SyntaxTree> SyntaxTree for Quote<S, ST> {
+impl<S: From<StdString>, ST: SyntaxTree> SyntaxTree for Quote<S, ST> {
     ast_passthrough!();
 
     #[inline]

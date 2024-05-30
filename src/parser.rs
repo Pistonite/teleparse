@@ -1,6 +1,7 @@
 use std::marker::PhantomData;
 
-use crate::{table::{SyntaxTreeTable, TermSet}, token::TokenSrc, Lexer, Root, RootMetadata, Span, SyntaxError, SyntaxErrorKind, SyntaxResult, SyntaxResultExt, SyntaxTree, Token, TokenStorage, TokenType};
+use crate::{table::{SyntaxTreeTable, TermSet}, token::TokenSrc, Lexer, Root, Span, SyntaxError, SyntaxErrorKind, SyntaxResult, SyntaxResultExt, SyntaxTree, Token, TokenStorage, TokenType};
+use crate::root::RootMetadata;
 
 pub struct Parser<'s, T: TokenType> {
     /// The context
@@ -111,7 +112,7 @@ impl<'s, T: TokenType> Parser<'s, T> {
 
     /// Internally parse a syntax tree node from the state and apply semantic info
     fn try_parse_internal <ST: SyntaxTree<T=T>> (&mut self, f_table: &SyntaxTreeTable<T>) -> SyntaxResult<T, ST> {
-        ST::try_parse_ast(self, f_table).map_ext(|ast| {
+        ST::try_parse_ast(self, f_table, true).map_ext(|ast| {
             ST::into_parse_tree(ast, self)
         })
     }

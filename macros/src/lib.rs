@@ -44,3 +44,11 @@ mod derive_to_span_impl;
 pub fn derive_to_span(input: TokenStream) -> TokenStream {
     derive_to_span_impl::expand(input)
 }
+
+mod derive_root_impl;
+
+/// Derive Root from a SyntaxTree type
+#[proc_macro_derive(Root)]
+pub fn derive_root(input: TokenStream) -> TokenStream {
+    derive_root_impl::expand(input)
+}

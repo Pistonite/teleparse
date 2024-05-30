@@ -70,9 +70,9 @@ fn expand_internal(input: &mut syn::DeriveInput, _derive_ident: &syn::Ident) -> 
         #[derive(#teleparse::ToSpan)]
         #input
         #[automatically_derived]
-        impl #impl_generics ::core::convert::From<#teleparse::node::Node<#target_ty>> for #ident #ty_generics #where_clause {
+        impl #impl_generics ::core::convert::From<#teleparse::tp::Node<#target_ty>> for #ident #ty_generics #where_clause {
             #[inline]
-            fn from(node: #teleparse::node::Node<#target_ty>) -> Self {
+            fn from(node: #teleparse::tp::Node<#target_ty>) -> Self {
                 #from_body
             }
         }

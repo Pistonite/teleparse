@@ -27,9 +27,16 @@ impl LitTable {
 }
 
 
-#[derive(Default)]
 pub struct SyntaxTreeTable<T: TokenType> {
     map: BTreeMap<TypeId, TermSet<T>>,
+}
+
+impl<T: TokenType> Default for SyntaxTreeTable<T> {
+    fn default() -> Self {
+        Self {
+            map: BTreeMap::new(),
+        }
+    }
 }
 
 impl<T: TokenType> SyntaxTreeTable<T> {
@@ -53,11 +60,12 @@ impl<T: TokenType> SyntaxTreeTable<T> {
     }
 
     #[inline]
-    pub fn init(&mut self, st: TypeId)-> Option<&mut TermSet<T>> {
-        match self.map.entry(st) {
-            Entry::Occupied(_) => None,
-            Entry::Vacant(v) => Some(v.insert(TermSet::default()))
+    pub fn init<F: FnOnce(&mut Self) -> TermSet<T>>(&mut self, st: TypeId, f: F) {
+        if self.map.contains_key(&st) {
+            return;
         }
+        let set = f(self);
+        self.map.insert(st, set);
     }
 }
 
@@ -101,6 +109,16 @@ impl<T: TokenType> TermSet<T> {
     #[inline]
     pub fn insert_eof(&mut self) {
         self.contains_eof = true;
+    }
+
+    #[inline]
+    pub fn contains_eof(&self) -> bool {
+        self.contains_eof
+    }
+
+    #[inline]
+    pub fn remove_eof(&mut self) {
+        self.contains_eof = false;
     }
 
     #[inline]

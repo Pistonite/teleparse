@@ -1,9 +1,9 @@
 use teleparse::prelude::*;
-#[repr(u8)]
+#[repr(usize)]
 pub enum TokenType {
-    Integer = 0x1u8,
-    Operator = 0x2u8,
-    Param = 0x4u8,
+    Integer = 0usize,
+    Operator = 1usize,
+    Param = 2usize,
 }
 #[automatically_derived]
 impl ::core::fmt::Debug for TokenType {
@@ -110,14 +110,49 @@ impl teleparse::ToSpan for Integer {
 const _: () = {
     use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
     use teleparse::parser::ParserState;
+    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
+    use core::ops::Deref;
     impl SyntaxTree for Integer {
         type T = TokenType;
         type AST = Token<TokenType>;
+        fn build_start_table(
+            s_table: &mut SyntaxTreeTable<Self::T>,
+            lits: &mut LitTable,
+        ) {
+            let t = ::core::any::TypeId::of::<Self>();
+            s_table
+                .init(
+                    t,
+                    |_| {
+                        let mut set = TermSet::default();
+                        set.insert_token_type(TokenType::Integer);
+                        set
+                    },
+                )
+        }
+        fn build_follow_table<'s>(
+            s_table: &'s SyntaxTreeTable<Self::T>,
+            f_table: &mut SyntaxTreeTable<Self::T>,
+            follows: &TermSet<Self::T>,
+        ) -> ::std::borrow::Cow<'s, TermSet<Self::T>> {
+            let t = ::core::any::TypeId::of::<Self>();
+            f_table.get_mut(t).union(follows);
+            s_table.get(t)
+        }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-        ) -> SyntaxResult<Self::AST> {
-            parser.parse_token(TokenType::Integer)
+            f_table: &SyntaxTreeTable<Self::T>,
+            _should_recover: bool,
+        ) -> SyntaxResult<Self::T, Self::AST> {
+            let t = ::core::any::TypeId::of::<Self>();
+            let f = f_table.get(t);
+            let follows = f.deref();
+            let result = parser.parse_token(TokenType::Integer, follows);
+            match result {
+                Ok(ast) => Ok(ast),
+                Err(e) => e.into(),
+            }
         }
         #[inline]
         fn into_parse_tree<'s>(
@@ -184,14 +219,50 @@ impl teleparse::ToSpan for OpAdd {
 const _: () = {
     use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
     use teleparse::parser::ParserState;
+    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
+    use core::ops::Deref;
     impl SyntaxTree for OpAdd {
         type T = TokenType;
         type AST = Token<TokenType>;
+        fn build_start_table(
+            s_table: &mut SyntaxTreeTable<Self::T>,
+            lits: &mut LitTable,
+        ) {
+            let t = ::core::any::TypeId::of::<Self>();
+            s_table
+                .init(
+                    t,
+                    |_| {
+                        let mut set = TermSet::default();
+                        let lit = lits.get_or_add("+");
+                        set.insert_token_type_match(TokenType::Operator, lit);
+                        set
+                    },
+                )
+        }
+        fn build_follow_table<'s>(
+            s_table: &'s SyntaxTreeTable<Self::T>,
+            f_table: &mut SyntaxTreeTable<Self::T>,
+            follows: &TermSet<Self::T>,
+        ) -> ::std::borrow::Cow<'s, TermSet<Self::T>> {
+            let t = ::core::any::TypeId::of::<Self>();
+            f_table.get_mut(t).union(follows);
+            s_table.get(t)
+        }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-        ) -> SyntaxResult<Self::AST> {
-            parser.parse_token_match(TokenType::Operator, "+")
+            f_table: &SyntaxTreeTable<Self::T>,
+            _should_recover: bool,
+        ) -> SyntaxResult<Self::T, Self::AST> {
+            let t = ::core::any::TypeId::of::<Self>();
+            let f = f_table.get(t);
+            let follows = f.deref();
+            let result = parser.parse_token_match(TokenType::Operator, follows, "+");
+            match result {
+                Ok(ast) => Ok(ast),
+                Err(e) => e.into(),
+            }
         }
         #[inline]
         fn into_parse_tree<'s>(
@@ -258,14 +329,50 @@ impl teleparse::ToSpan for OpSub {
 const _: () = {
     use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
     use teleparse::parser::ParserState;
+    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
+    use core::ops::Deref;
     impl SyntaxTree for OpSub {
         type T = TokenType;
         type AST = Token<TokenType>;
+        fn build_start_table(
+            s_table: &mut SyntaxTreeTable<Self::T>,
+            lits: &mut LitTable,
+        ) {
+            let t = ::core::any::TypeId::of::<Self>();
+            s_table
+                .init(
+                    t,
+                    |_| {
+                        let mut set = TermSet::default();
+                        let lit = lits.get_or_add("-");
+                        set.insert_token_type_match(TokenType::Operator, lit);
+                        set
+                    },
+                )
+        }
+        fn build_follow_table<'s>(
+            s_table: &'s SyntaxTreeTable<Self::T>,
+            f_table: &mut SyntaxTreeTable<Self::T>,
+            follows: &TermSet<Self::T>,
+        ) -> ::std::borrow::Cow<'s, TermSet<Self::T>> {
+            let t = ::core::any::TypeId::of::<Self>();
+            f_table.get_mut(t).union(follows);
+            s_table.get(t)
+        }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-        ) -> SyntaxResult<Self::AST> {
-            parser.parse_token_match(TokenType::Operator, "-")
+            f_table: &SyntaxTreeTable<Self::T>,
+            _should_recover: bool,
+        ) -> SyntaxResult<Self::T, Self::AST> {
+            let t = ::core::any::TypeId::of::<Self>();
+            let f = f_table.get(t);
+            let follows = f.deref();
+            let result = parser.parse_token_match(TokenType::Operator, follows, "-");
+            match result {
+                Ok(ast) => Ok(ast),
+                Err(e) => e.into(),
+            }
         }
         #[inline]
         fn into_parse_tree<'s>(
@@ -332,14 +439,50 @@ impl teleparse::ToSpan for OpMul {
 const _: () = {
     use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
     use teleparse::parser::ParserState;
+    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
+    use core::ops::Deref;
     impl SyntaxTree for OpMul {
         type T = TokenType;
         type AST = Token<TokenType>;
+        fn build_start_table(
+            s_table: &mut SyntaxTreeTable<Self::T>,
+            lits: &mut LitTable,
+        ) {
+            let t = ::core::any::TypeId::of::<Self>();
+            s_table
+                .init(
+                    t,
+                    |_| {
+                        let mut set = TermSet::default();
+                        let lit = lits.get_or_add("*");
+                        set.insert_token_type_match(TokenType::Operator, lit);
+                        set
+                    },
+                )
+        }
+        fn build_follow_table<'s>(
+            s_table: &'s SyntaxTreeTable<Self::T>,
+            f_table: &mut SyntaxTreeTable<Self::T>,
+            follows: &TermSet<Self::T>,
+        ) -> ::std::borrow::Cow<'s, TermSet<Self::T>> {
+            let t = ::core::any::TypeId::of::<Self>();
+            f_table.get_mut(t).union(follows);
+            s_table.get(t)
+        }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-        ) -> SyntaxResult<Self::AST> {
-            parser.parse_token_match(TokenType::Operator, "*")
+            f_table: &SyntaxTreeTable<Self::T>,
+            _should_recover: bool,
+        ) -> SyntaxResult<Self::T, Self::AST> {
+            let t = ::core::any::TypeId::of::<Self>();
+            let f = f_table.get(t);
+            let follows = f.deref();
+            let result = parser.parse_token_match(TokenType::Operator, follows, "*");
+            match result {
+                Ok(ast) => Ok(ast),
+                Err(e) => e.into(),
+            }
         }
         #[inline]
         fn into_parse_tree<'s>(
@@ -406,14 +549,50 @@ impl teleparse::ToSpan for OpDiv {
 const _: () = {
     use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
     use teleparse::parser::ParserState;
+    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
+    use core::ops::Deref;
     impl SyntaxTree for OpDiv {
         type T = TokenType;
         type AST = Token<TokenType>;
+        fn build_start_table(
+            s_table: &mut SyntaxTreeTable<Self::T>,
+            lits: &mut LitTable,
+        ) {
+            let t = ::core::any::TypeId::of::<Self>();
+            s_table
+                .init(
+                    t,
+                    |_| {
+                        let mut set = TermSet::default();
+                        let lit = lits.get_or_add("/");
+                        set.insert_token_type_match(TokenType::Operator, lit);
+                        set
+                    },
+                )
+        }
+        fn build_follow_table<'s>(
+            s_table: &'s SyntaxTreeTable<Self::T>,
+            f_table: &mut SyntaxTreeTable<Self::T>,
+            follows: &TermSet<Self::T>,
+        ) -> ::std::borrow::Cow<'s, TermSet<Self::T>> {
+            let t = ::core::any::TypeId::of::<Self>();
+            f_table.get_mut(t).union(follows);
+            s_table.get(t)
+        }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-        ) -> SyntaxResult<Self::AST> {
-            parser.parse_token_match(TokenType::Operator, "/")
+            f_table: &SyntaxTreeTable<Self::T>,
+            _should_recover: bool,
+        ) -> SyntaxResult<Self::T, Self::AST> {
+            let t = ::core::any::TypeId::of::<Self>();
+            let f = f_table.get(t);
+            let follows = f.deref();
+            let result = parser.parse_token_match(TokenType::Operator, follows, "/");
+            match result {
+                Ok(ast) => Ok(ast),
+                Err(e) => e.into(),
+            }
         }
         #[inline]
         fn into_parse_tree<'s>(
@@ -480,14 +659,50 @@ impl teleparse::ToSpan for ParamOpen {
 const _: () = {
     use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
     use teleparse::parser::ParserState;
+    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
+    use core::ops::Deref;
     impl SyntaxTree for ParamOpen {
         type T = TokenType;
         type AST = Token<TokenType>;
+        fn build_start_table(
+            s_table: &mut SyntaxTreeTable<Self::T>,
+            lits: &mut LitTable,
+        ) {
+            let t = ::core::any::TypeId::of::<Self>();
+            s_table
+                .init(
+                    t,
+                    |_| {
+                        let mut set = TermSet::default();
+                        let lit = lits.get_or_add("(");
+                        set.insert_token_type_match(TokenType::Param, lit);
+                        set
+                    },
+                )
+        }
+        fn build_follow_table<'s>(
+            s_table: &'s SyntaxTreeTable<Self::T>,
+            f_table: &mut SyntaxTreeTable<Self::T>,
+            follows: &TermSet<Self::T>,
+        ) -> ::std::borrow::Cow<'s, TermSet<Self::T>> {
+            let t = ::core::any::TypeId::of::<Self>();
+            f_table.get_mut(t).union(follows);
+            s_table.get(t)
+        }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-        ) -> SyntaxResult<Self::AST> {
-            parser.parse_token_match(TokenType::Param, "(")
+            f_table: &SyntaxTreeTable<Self::T>,
+            _should_recover: bool,
+        ) -> SyntaxResult<Self::T, Self::AST> {
+            let t = ::core::any::TypeId::of::<Self>();
+            let f = f_table.get(t);
+            let follows = f.deref();
+            let result = parser.parse_token_match(TokenType::Param, follows, "(");
+            match result {
+                Ok(ast) => Ok(ast),
+                Err(e) => e.into(),
+            }
         }
         #[inline]
         fn into_parse_tree<'s>(
@@ -554,14 +769,50 @@ impl teleparse::ToSpan for ParamClose {
 const _: () = {
     use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
     use teleparse::parser::ParserState;
+    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
+    use core::ops::Deref;
     impl SyntaxTree for ParamClose {
         type T = TokenType;
         type AST = Token<TokenType>;
+        fn build_start_table(
+            s_table: &mut SyntaxTreeTable<Self::T>,
+            lits: &mut LitTable,
+        ) {
+            let t = ::core::any::TypeId::of::<Self>();
+            s_table
+                .init(
+                    t,
+                    |_| {
+                        let mut set = TermSet::default();
+                        let lit = lits.get_or_add(")");
+                        set.insert_token_type_match(TokenType::Param, lit);
+                        set
+                    },
+                )
+        }
+        fn build_follow_table<'s>(
+            s_table: &'s SyntaxTreeTable<Self::T>,
+            f_table: &mut SyntaxTreeTable<Self::T>,
+            follows: &TermSet<Self::T>,
+        ) -> ::std::borrow::Cow<'s, TermSet<Self::T>> {
+            let t = ::core::any::TypeId::of::<Self>();
+            f_table.get_mut(t).union(follows);
+            s_table.get(t)
+        }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-        ) -> SyntaxResult<Self::AST> {
-            parser.parse_token_match(TokenType::Param, ")")
+            f_table: &SyntaxTreeTable<Self::T>,
+            _should_recover: bool,
+        ) -> SyntaxResult<Self::T, Self::AST> {
+            let t = ::core::any::TypeId::of::<Self>();
+            let f = f_table.get(t);
+            let follows = f.deref();
+            let result = parser.parse_token_match(TokenType::Param, follows, ")");
+            match result {
+                Ok(ast) => Ok(ast),
+                Err(e) => e.into(),
+            }
         }
         #[inline]
         fn into_parse_tree<'s>(
@@ -576,18 +827,17 @@ const _: () = {
 const _: () = {
     use teleparse::Lexer as _;
     impl teleparse::TokenType for TokenType {
-        type Repr = u8;
+        type Bit = u8;
         type Lexer<'s> = DerivedLexer<'s>;
+        type Follow = [teleparse::table::LitSet; 3usize];
         type Ctx = ();
         #[inline]
-        fn should_extract(&self) -> bool {
-            match self {
-                _ => false,
-            }
+        fn id(&self) -> usize {
+            *self as usize
         }
         #[inline]
-        fn to_repr(&self) -> Self::Repr {
-            *self as Self::Repr
+        fn to_bit(&self) -> Self::Bit {
+            (1 << self.id()) as Self::Bit
         }
         #[inline]
         fn first() -> Self {
@@ -597,12 +847,18 @@ const _: () = {
             match self {
                 Self::Param => None,
                 _ => {
-                    let repr = self.to_repr();
-                    let next = repr << 1;
+                    let next = self.id() + 1;
                     Some(unsafe { std::mem::transmute(next) })
                 }
             }
         }
+        #[inline]
+        fn should_extract(&self) -> bool {
+            match self {
+                _ => false,
+            }
+        }
+        #[inline]
         fn lexer<'s>(source: &'s str) -> Self::Lexer<'s> {
             DerivedLexer::new(source)
         }

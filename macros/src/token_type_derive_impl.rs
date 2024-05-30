@@ -427,10 +427,10 @@ fn derive_terminal(
     let s_table_insert_impl = match match_lit {
         Some(match_lit) => quote! {
             let lit = lits.get_or_add(#match_lit);
-            s_table.get_mut(t).insert_token_type_match(#enum_ident::#variant_ident, lit);
+            set.insert_token_type_match(#enum_ident::#variant_ident, lit);
         },
         None => quote! {
-            s_table.get_mut(t).insert_token_type(#enum_ident::#variant_ident);
+            set.insert_token_type(#enum_ident::#variant_ident);
         },
     };
     quote! {
@@ -450,10 +450,11 @@ fn derive_terminal(
 
                 fn build_start_table(s_table: &mut SyntaxTreeTable<Self::T>, lits: &mut LitTable) {
                     let t = ::core::any::TypeId::of::<Self>();
-                    if let Some(set) = s_table.init(t) {
-                        // update start table only once
+                    s_table.init(t, |_| {
+                        let mut set = TermSet::default();
                         #s_table_insert_impl
-                    }
+                        set
+                    })
                 }
 
                 fn build_follow_table<'s>(
@@ -467,7 +468,7 @@ fn derive_terminal(
                 }
 
                 #[inline]
-                fn try_parse_ast<'s>(parser: &mut Parser<'s, Self::T>, f_table: &SyntaxTreeTable<Self::T>) -> SyntaxResult<Self::T, Self::AST> {
+                fn try_parse_ast<'s>(parser: &mut Parser<'s, Self::T>, f_table: &SyntaxTreeTable<Self::T>, _should_recover: bool) -> SyntaxResult<Self::T, Self::AST> {
                     let t = ::core::any::TypeId::of::<Self>();
                     let f= f_table.get(t);
                     let follows = f.deref();
