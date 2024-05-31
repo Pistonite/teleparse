@@ -1,10 +1,11 @@
 //! optional syntax tree nodes ([`Option`], [`Exists`])
 use std::any::TypeId;
 use std::borrow::Cow;
+use std::collections::BTreeSet;
 use std::option::Option as StdOption;
 use std::marker::PhantomData;
 
-use crate::prelude::*;
+use crate::{prelude::*, TokenType};
 use crate::parser::ParserState;
 use crate::table::{LitTable, SyntaxTreeTable, TermSet};
 use crate::{Parser, SyntaxTree, SyntaxResult};
@@ -21,17 +22,47 @@ impl<ST: SyntaxTree + 'static> SyntaxTree for Option<ST> {
     type AST = Result<ST::AST, Span>;
 
     #[inline]
-    fn build_start_table( s_table: &mut SyntaxTreeTable<Self::T>, lits: &mut LitTable)-> bool {
-        build_start_table_impl::<ST>(TypeId::of::<Self>(), s_table, lits)
+    fn can_be_empty() -> bool {
+        true
     }
 
     #[inline]
-    fn build_follow_table<'s>(
-        s_table: &'s SyntaxTreeTable<Self::T>, 
-        f_table: &mut SyntaxTreeTable<Self::T>,
-        follows: &TermSet<Self::T>
-    ) -> (Cow<'s, TermSet<Self::T>>, bool) {
-        build_follow_table_impl::<ST>(TypeId::of::<Self>(), s_table, f_table, follows)
+    fn check_left_recursive(stack: &mut Vec<TypeId>, set: &mut BTreeSet<TypeId>) -> bool {
+        ST::check_left_recursive(stack, set)
+    }
+
+    fn build_first_table( s_table: &mut SyntaxTreeTable<Self::T>, lits: &mut LitTable)  {
+        s_table.init(Self::type_id(), |s_table| {
+            ST::build_first_table(s_table, lits);
+            let mut first = s_table.get(ST::type_id()).into_owned();
+            first.insert_empty();
+            first
+        })
+    }
+
+    #[inline]
+    fn has_first_collision(first: &SyntaxTreeTable<Self::T>) -> bool {
+        // Self -> Inner | e
+        // Collides if Inner contains e
+        first.get(ST::type_id()).contains_empty()
+    }
+
+    fn build_follow_table(
+        first: &SyntaxTreeTable<Self::T>, 
+        follow: &mut SyntaxTreeTable<Self::T>,
+    ) -> bool {
+        let t = Self::type_id();
+        let inner = ST::type_id();
+        // Self -> Inner | e
+        // Everything in FOLLOW(Self) is in FOLLOW(Inner), so:
+        // - FOLLOW(Inner) = FOLLOW(Inner) U FOLLOW(Self)
+        let changed = follow.union(inner, t);
+        // For the production Inner -> ...
+        // something would ever change if FOLLOW(Inner) changed
+        if changed {
+            ST::build_follow_table(first, follow);
+        }
+        changed
     }
 
     #[inline]
@@ -64,17 +95,32 @@ impl<ST: SyntaxTree + 'static> SyntaxTree for Exists<ST> {
     type AST = Result<ST::AST, Span>;
 
     #[inline]
-    fn build_start_table( s_table: &mut SyntaxTreeTable<Self::T>, lits: &mut LitTable)-> bool {
-        build_start_table_impl::<ST>(TypeId::of::<Self>(), s_table, lits)
+    fn can_be_empty() -> bool {
+        true
     }
 
     #[inline]
-    fn build_follow_table<'s>(
-        s_table: &'s SyntaxTreeTable<Self::T>, 
-        f_table: &mut SyntaxTreeTable<Self::T>,
-        follows: &TermSet<Self::T>
-    ) -> (Cow<'s, TermSet<Self::T>>, bool) {
-        build_follow_table_impl::<ST>(TypeId::of::<Self>(), s_table, f_table, follows)
+    fn check_left_recursive(stack: &mut Vec<TypeId>, set: &mut BTreeSet<TypeId>) -> bool {
+        ST::check_left_recursive(stack, set)
+    }
+
+    #[inline]
+    fn build_first_table( s_table: &mut SyntaxTreeTable<Self::T>, lits: &mut LitTable){
+        ST::build_first_table(s_table, lits);
+        build_first_table_impl::<ST::T>(Self::type_id(), ST::type_id(), s_table, lits)
+    }
+
+    #[inline]
+    fn has_first_collision(s_table: &SyntaxTreeTable<Self::T>) -> bool {
+        has_first_collision_impl::<ST::T>(s_table, ST::type_id())
+    }
+
+    #[inline]
+    fn build_follow_table(
+        first: &SyntaxTreeTable<Self::T>, 
+        follow: &mut SyntaxTreeTable<Self::T>,
+    ) -> bool {
+        build_follow_table_impl::<ST>(Self::type_id(), s_table, f_table, follows)
     }
 
     #[inline]
@@ -102,35 +148,31 @@ impl<ST: SyntaxTree + 'static> SyntaxTree for Exists<ST> {
     }
 }
 
-fn build_start_table_impl<ST: SyntaxTree + 'static>(t: TypeId, s_table: &mut SyntaxTreeTable<ST::T>, lits: &mut LitTable) -> bool {
+fn build_first_table_impl<T: TokenType>(t: TypeId, inner_t: TypeId, s_table: &mut SyntaxTreeTable<T>, lits: &mut LitTable) {
     s_table.init(t, |s_table| {
-        let mut set = TermSet::default();
-        // option => ST | e
-        ST::build_start_table(s_table, lits);
-        let start = s_table.get(TypeId::of::<ST>());
-        // because second variant is e, FIRST(ST) having e will have FIRST collision
-        let is_ll1 = !start.contains_eof();
-        set.insert_eof();
-        set.union(&start);
-        (set, is_ll1)
+        let mut first = s_table.get(inner_t).into_owned();
+        first.insert_empty();
+        first
     })
 }
 
-fn build_follow_table_impl<'s, ST: SyntaxTree + 'static>(
+#[inline]
+fn has_first_collision_impl<T: TokenType>(s_table: &SyntaxTreeTable<T>, inner_t: TypeId) -> bool {
+    // Self -> Inner | e
+    s_table.get(inner_t).contains_empty()
+}
+
+#[inline]
+fn build_follow_table_impl(
     t: TypeId,
-    s_table: &'s SyntaxTreeTable<ST::T>, 
-    f_table: &mut SyntaxTreeTable<ST::T>,
-    follows: &TermSet<ST::T>
-) -> (Cow<'s, TermSet<ST::T>>, bool) {
-    f_table.get_mut(t).union(follows);
-    // the follow set for something before this
-    // is (ST | e) <follow>
-    // however the final set only has e if follow has e
-    let mut prev_follow = s_table.get(t).into_owned();
-    prev_follow.remove_eof();
-    let is_ll1 = !prev_follow.intersects(follows);
-    prev_follow.union(follows);
-    (Cow::Owned(prev_follow), is_ll1)
+    inner: TypeId,
+    // first: &SyntaxTreeTable<ST::T>, 
+    follow: &mut SyntaxTreeTable<ST::T>,
+) -> bool {
+    // Self -> Inner | e
+    // Everything in FOLLOW(Self) is in FOLLOW(Inner)
+    // FOLLOW(Inner) = FOLLOW(Inner) U FOLLOW(Self)
+    follow.union(inner, t)
 }
     fn try_parse_ast_impl<'s, ST: SyntaxTree>(
         parser: &mut Parser<'s, ST::T>,

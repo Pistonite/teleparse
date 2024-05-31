@@ -16,7 +16,7 @@ pub struct Quote<S: From<StdString>, ST: SyntaxTree>(Node<S>, PhantomData<ST>);
 /// Alias for `Quote<String, ST>`
 pub type String<ST> = Quote<StdString, ST>;
 
-impl<S: From<StdString>, ST: SyntaxTree> SyntaxTree for Quote<S, ST> {
+impl<S: From<StdString> + 'static, ST: SyntaxTree+ 'static> SyntaxTree for Quote<S, ST> {
     ast_passthrough!();
 
     #[inline]
@@ -32,7 +32,7 @@ impl<S: From<StdString>, ST: SyntaxTree> SyntaxTree for Quote<S, ST> {
 #[teleparse_derive(Node)]
 pub struct Parse<S: FromStr, ST: SyntaxTree>(Node<Result<S, S::Err>>, PhantomData<ST>);
 
-impl<S: FromStr, ST: SyntaxTree> SyntaxTree for Parse<S, ST> {
+impl<S: FromStr + 'static, ST: SyntaxTree + 'static> SyntaxTree for Parse<S, ST> {
     ast_passthrough!();
 
     #[inline]
@@ -48,7 +48,7 @@ impl<S: FromStr, ST: SyntaxTree> SyntaxTree for Parse<S, ST> {
 #[teleparse_derive(Node)]
 pub struct ParseDefault<S: FromStr + Default, ST: SyntaxTree>(Node<S>, PhantomData<ST>);
 
-impl<S: FromStr + Default, ST: SyntaxTree> SyntaxTree for ParseDefault<S, ST> {
+impl<S: FromStr + Default + 'static, ST: SyntaxTree + 'static> SyntaxTree for ParseDefault<S, ST> {
     ast_passthrough!();
 
     #[inline]

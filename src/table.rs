@@ -59,27 +59,59 @@ impl<T: TokenType> SyntaxTreeTable<T> {
         }
     }
 
-    #[inline]
-    pub fn init<F: FnOnce(&mut Self) -> (TermSet<T>, bool)>(&mut self, st: TypeId, f: F) -> bool{
-        if self.map.contains_key(&st) {
-            return true;
+    /// Union B into A (A = A U B). Return if A is changed
+    pub fn union(&mut self, a: TypeId, b: TypeId) -> bool {
+        if a == b {
+            return false;
         }
-        let (set, is_ll1) = f(self);
-        self.map.insert(st, set);
-        is_ll1
+        let b_set = match self.map.remove(&b) {
+            Some(b) => b,
+            None => return false,
+        };
+        let changed = self.get_mut(a).union(&b_set);
+        self.map.insert(b, b_set);
+        changed
     }
+
+    /// Union (B - e) into A (A = A U (B - e)). Return if A is changed
+    pub fn union_skip_empty(&mut self, a: TypeId, b: TypeId) -> bool {
+        if a == b {
+            return false;
+        }
+        let b_set = match self.map.remove(&b) {
+            Some(b) => b,
+            None => return false,
+        };
+        let changed = self.get_mut(a).union_skip_empty(&b_set);
+        self.map.insert(b, b_set);
+        changed
+    }
+
+    // /// Initialize the table with a new AST type
+    // /// 
+    // #[inline]
+    // pub fn init<Pre: FnOnce(&mut Self) -> (), Post: FnOnce(&mut TermSet<T>) -> ()>(
+    //     &mut self, st: TypeId, pre: Pre, post: Post) {
+    //     // insert the key
+    //     match self.map.entry(st) {
+    //         Entry::Occupied(_) => return,
+    //         Entry::Vacant(e) => e.insert(TermSet::default())
+    //     };
+    //     pre(self);
+    //     post(self.get_mut(st));
+    // }
 }
 
 #[derive(Clone)]
 pub struct TermSet<T: TokenType> {
-    contains_eof: bool,
+    contains_empty: bool,
     array: T::Follow,
 }
 
 impl<T: TokenType> Debug for TermSet<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let mut s = f.debug_struct("TermSet");
-        s.field("eof", &self.contains_eof);
+        s.field("eof", &self.contains_empty);
         let slice: &[LitSet] = self.array.borrow();
         for (ty, set) in slice.iter().enumerate() {
             s.field(&ty.to_string(), set);
@@ -91,7 +123,7 @@ impl<T: TokenType> Debug for TermSet<T> {
 impl<T: TokenType> Default for TermSet<T> {
     fn default() -> Self {
         Self {
-            contains_eof: false,
+            contains_empty: false,
             array: T::Follow::default(),
         }
     }
@@ -100,7 +132,7 @@ impl<T: TokenType> Default for TermSet<T> {
 impl<T: TokenType> TermSet<T> {
     pub fn contains<'s>(&self, token: Option<TokenSrc<'s, T>>) -> bool {
         match token {
-            None => self.contains_eof,
+            None => self.contains_empty,
             Some(token) => {
                 self.get(token.ty).contains(&token.src)
             }
@@ -108,18 +140,18 @@ impl<T: TokenType> TermSet<T> {
     }
 
     #[inline]
-    pub fn insert_eof(&mut self) {
-        self.contains_eof = true;
+    pub fn insert_empty(&mut self) {
+        self.contains_empty = true;
     }
 
     #[inline]
-    pub fn contains_eof(&self) -> bool {
-        self.contains_eof
+    pub fn contains_empty(&self) -> bool {
+        self.contains_empty
     }
 
     #[inline]
-    pub fn remove_eof(&mut self) {
-        self.contains_eof = false;
+    pub fn remove_empty(&mut self) {
+        self.contains_empty = false;
     }
 
     #[inline]
@@ -132,15 +164,25 @@ impl<T: TokenType> TermSet<T> {
         self.get_mut(ty).insert(lit);
     }
 
-    pub fn union(&mut self, other: &Self) {
-        self.contains_eof |= other.contains_eof;
+    /// Union other into self (self = self U other). Return if self is changed
+    #[inline]
+    pub fn union(&mut self, other: &Self) -> bool {
+        self.contains_empty |= other.contains_empty;
+        self.union_skip_empty(other)
+    }
+
+    /// Union (other - e) into self (self = self U (other - e)). Return if self is changed
+    pub fn union_skip_empty(&mut self, other: &Self) -> bool {
+        let mut changed = false;
         for (set, other_set) in self.array.borrow_mut().iter_mut().zip(other.array.borrow().iter()) {
-            set.union(other_set);
+            let next_changed = set.union(other_set);
+            changed |= next_changed;
         }
+        changed
     }
 
     pub fn intersects(&self, other: &Self) -> bool {
-        if self.contains_eof && other.contains_eof {
+        if self.contains_empty && other.contains_empty {
             return true;
         }
         for (set, other_set) in self.array.borrow().iter().zip(other.array.borrow().iter()) {
@@ -162,9 +204,15 @@ impl<T: TokenType> TermSet<T> {
     }
 }
 
+/// Set of literals
+///
+/// Since the set of literals needed for a [`TokenType`]
+/// is finite, this uses `Arc<str>` internally to efficiently union with other sets.
 #[derive(Clone)]
 pub enum LitSet {
+    /// A finite set
     Match(BTreeSet<Arc<str>>),
+    /// Universal set
     Any,
 }
 
@@ -202,13 +250,18 @@ impl LitSet {
         }
     }
 
-    pub fn union(&mut self, other: &Self) {
+    /// Union other into self (self = self U other). Return if self is changed
+    pub fn union(&mut self, other: &Self) -> bool {
         match (self, other) {
             (Self::Match(set), Self::Match(other_set)) => {
+                let old_size = set.len();
                 set.extend(other_set.iter().cloned());
+                old_size != set.len()
             }
             (s, _) => {
+                let is_self_any = matches!(s, Self::Any);
                 *s= Self::Any;
+                !is_self_any
             }
         }
     }

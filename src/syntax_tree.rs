@@ -1,4 +1,6 @@
+use std::any::TypeId;
 use std::borrow::Cow;
+use std::collections::BTreeSet;
 
 use crate::table::{SyntaxTreeTable, LitTable, TermSet};
 use crate::{Parser, SyntaxResult, ToSpan, TokenType};
@@ -6,17 +8,31 @@ use crate::{Parser, SyntaxResult, ToSpan, TokenType};
 
 pub trait SyntaxTree: Sized + ToSpan {
     type T: TokenType;
-    type AST: ToSpan;
+    type AST: ToSpan + 'static;
 
-    fn build_start_table(
-        s_table: &mut SyntaxTreeTable<Self::T>, 
-        lits: &mut LitTable) -> bool; // is_ll1
+    /// Get the unique type id of the AST node
+    ///
+    /// Note that multiple Syntax tree implementation could have the same AST type,
+    /// and thus the same type id. For example, [`Quote`](crate::tp::Quote) and [`Parse`](crate::tp::Parse)
+    fn type_id() -> TypeId {
+        TypeId::of::<Self::AST>()
+    }
 
-    fn build_follow_table<'s>(
-        s_table: &'s SyntaxTreeTable<Self::T>, 
-        f_table: &mut SyntaxTreeTable<Self::T>,
-        follows: &TermSet<Self::T>
-        ) -> (Cow<'s, TermSet<Self::T>>, bool); // is_ll1
+    fn can_be_empty() -> bool;
+
+    fn check_left_recursive(stack: &mut Vec<TypeId>, set: &mut BTreeSet<TypeId>) -> bool;
+
+    fn build_first_table(
+        first: &mut SyntaxTreeTable<Self::T>, 
+        lits: &mut LitTable);
+
+    fn has_first_collision(first: &SyntaxTreeTable<Self::T>) -> bool;
+
+    fn build_follow_table(
+        first: &SyntaxTreeTable<Self::T>, 
+        follow: &mut SyntaxTreeTable<Self::T>,
+        // follows: &TermSet<Self::T>
+        ) -> bool;
 
     /// Attempt to parse one AST node
     ///

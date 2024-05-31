@@ -21,8 +21,9 @@ pub trait Root: SyntaxTree + 'static {
 }
 
 pub struct RootMetadata<ST: Root>{
+    pub is_left_recursive: bool,
     pub is_ll1: bool,
-    pub start_table: SyntaxTreeTable<ST::T>,
+    pub first_table: SyntaxTreeTable<ST::T>,
     pub follow_table: SyntaxTreeTable<ST::T>,
 }
 
@@ -69,18 +70,30 @@ macro_rules! derive_root_impl {
         fn root_metadata() -> &'static $crate::root::RootMetadata<Self> {
             static METADATA: std::sync::OnceLock<$crate::root::RootMetadata<$ident>> = std::sync::OnceLock::new();
             METADATA.get_or_init(|| {
-                let mut start_table = $crate::table::SyntaxTreeTable::default();
-                let mut lit_table = $crate::table::LitTable::default();
-                let mut no_first_first_collision = Self::build_start_table(&mut start_table, &mut lit_table);
-                let mut follow_table = $crate::table::SyntaxTreeTable::default();
-                // the root's follow table is EOF
-                let mut follows = $crate::table::TermSet::default();
-                follows.insert_eof();
+                let mut stack = std::vec::Vec::new();
+                let mut stack_set = std::collections::BTreeSet::new();
+                let is_left_recursive = Self::check_left_recursive(&mut stack, &mut stack_set);
 
-                let (_, no_first_follow_collsion) = Self::build_follow_table(&start_table, &mut follow_table, &follows);
+                let mut first_table = $crate::table::SyntaxTreeTable::default();
+                let mut lit_table = $crate::table::LitTable::default();
+                let mut follow_table = $crate::table::SyntaxTreeTable::default();
+
+                let mut is_ll1 = !is_left_recursive;
+                if is_ll1 {
+                    // can only check LL1 if not left-recursive
+                    Self::build_first_table(&mut first_table, &mut lit_table);
+                    let first_collision = Self::has_first_collision(&first_table);
+            
+                    // let mut follows = $crate::table::TermSet::default();
+                    // follows.insert_empty();
+                    // let (_, no_first_follow_collsion) = Self::build_follow_table(&first_table, &mut follow_table, &follows);
+                    // is_ll1 = no_first_first_collision && no_first_follow_collsion;
+                }
+
                 $crate::root::RootMetadata {
-                    is_ll1: no_first_first_collision && no_first_follow_collsion,
-                    start_table,
+                    is_left_recursive,
+                    is_ll1,
+                    first_table,
                     follow_table,
                 }
             })

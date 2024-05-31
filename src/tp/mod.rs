@@ -7,9 +7,11 @@ use crate::{Span, ToSpan};
 
 // pub mod blanket;
 pub mod iter;
-pub mod option;
-pub mod string;
+mod option;
+pub use option::*;
+mod string;
 pub use string::*;
+mod tuple;
 
 #[derive(Deref, DerefMut, ToSpan)]
 pub struct Node<T> {
@@ -43,20 +45,35 @@ macro_rules! ast_passthrough {
     () => {
     type T=ST::T;
     type AST=ST::AST;
-    #[inline]
-    fn build_start_table(
-        s_table: &mut crate::table::SyntaxTreeTable<Self::T>,
-        lits: &mut crate::table::LitTable) -> bool{
-        ST::build_start_table(s_table, lits)
+
+        #[inline]
+        fn can_be_empty() -> bool {
+        ST::can_be_empty()
+        }
+
+        #[inline]
+        fn check_left_recursive(stack: &mut std::vec::Vec<std::any::TypeId>, set: &mut std::collections::BTreeSet<std::any::TypeId>) -> bool {
+        ST::check_left_recursive(stack, set)
         }
 
     #[inline]
-    fn build_follow_table<'s>(
-        s_table: &'s crate::table::SyntaxTreeTable<Self::T>, 
-        f_table: &mut crate::table::SyntaxTreeTable<Self::T>,
-        follows: &crate::table::TermSet<Self::T>
-        ) -> (std::borrow::Cow<'s, crate::table::TermSet<Self::T>>, bool) {
-        ST::build_follow_table(s_table, f_table, follows)
+    fn build_first_table(
+        s_table: &mut crate::table::SyntaxTreeTable<Self::T>,
+        lits: &mut crate::table::LitTable) {
+        ST::build_first_table(s_table, lits)
+        }
+
+        #[inline]
+        fn has_first_collision(first: &crate::table::SyntaxTreeTable<Self::T>) -> bool {
+        ST::has_first_collision(first)
+        }
+
+    #[inline]
+    fn build_follow_table(
+        first: &crate::table::SyntaxTreeTable<Self::T>, 
+        follow: &mut crate::table::SyntaxTreeTable<Self::T>,
+        ) -> bool {
+        ST::build_follow_table(first, follow)
         }
     #[inline]
     fn try_parse_ast<'s>(parser: &mut crate::Parser<'s, Self::T>

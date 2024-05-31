@@ -180,30 +180,30 @@ pub trait ParserState<'s> {
 
     /// Parse a token of a specific type
     #[inline(never)]
-    fn parse_token( &mut self, ty: Self::T, follows: &TermSet<Self::T>) -> Result<Token<Self::T>, SyntaxError<Self::T>> {
+    fn parse_token( &mut self, ty: Self::T) -> Result<Token<Self::T>, SyntaxError<Self::T>> {
         let token = self.parse_token_type(ty)?;
-        let next = self.peek_token_src();
-        if follows.contains(next) {
-            Ok(token)
-        } else {
-            Err(self.expecting(follows.clone()))
-        }
+        // let next = self.peek_token_src();
+        Ok(token)
+        // if follows.contains(next) {
+        // } else {
+        //     Err(self.expecting(follows.clone()))
+        // }
     }
 
     #[inline(never)]
-    fn parse_token_match( &mut self, ty: Self::T, follows: &TermSet<Self::T>, match_lit: &'static str) -> Result<Token<Self::T>, SyntaxError<Self::T>> {
+    fn parse_token_match( &mut self, ty: Self::T, match_lit: &'static str) -> Result<Token<Self::T>, SyntaxError<Self::T>> {
         let token = self.parse_token_type(ty)?;
         if self.get_src(&token) != match_lit {
             let mut expected = TermSet::default();
             expected.insert_token_type_match(ty, match_lit.into());
             return Err(self.expecting(expected));
         }
-        let next = self.peek_token_src();
-        if follows.contains(next) {
+        // let next = self.peek_token_src();
+        // if follows.contains(next) {
             Ok(token)
-        } else {
-            Err(self.expecting(follows.clone()))
-        }
+        // } else {
+        //     Err(self.expecting(follows.clone()))
+        // }
     }
 
     #[inline]

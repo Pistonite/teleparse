@@ -115,18 +115,33 @@ const _: () = {
     impl SyntaxTree for Integer {
         type T = TokenType;
         type AST = Token<TokenType>;
-        fn build_start_table(
+        #[inline]
+        fn type_id() -> ::core::any::TypeId {
+            ::core::any::TypeId::of::<Self>()
+        }
+        #[inline]
+        fn can_be_empty() -> bool {
+            false
+        }
+        #[inline]
+        fn check_left_recursive(
+            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
+            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
+        ) -> bool {
+            false
+        }
+        fn build_first_table(
             s_table: &mut SyntaxTreeTable<Self::T>,
             lits: &mut LitTable,
-        ) {
-            let t = ::core::any::TypeId::of::<Self>();
+        ) -> bool {
+            let t = Self::type_id();
             s_table
                 .init(
                     t,
                     |_| {
                         let mut set = TermSet::default();
                         set.insert_token_type(TokenType::Integer);
-                        set
+                        (set, true)
                     },
                 )
         }
@@ -134,10 +149,10 @@ const _: () = {
             s_table: &'s SyntaxTreeTable<Self::T>,
             f_table: &mut SyntaxTreeTable<Self::T>,
             follows: &TermSet<Self::T>,
-        ) -> ::std::borrow::Cow<'s, TermSet<Self::T>> {
-            let t = ::core::any::TypeId::of::<Self>();
+        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
+            let t = Self::type_id();
             f_table.get_mut(t).union(follows);
-            s_table.get(t)
+            (s_table.get(t), true)
         }
         #[inline]
         fn try_parse_ast<'s>(
@@ -145,7 +160,7 @@ const _: () = {
             f_table: &SyntaxTreeTable<Self::T>,
             _should_recover: bool,
         ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = ::core::any::TypeId::of::<Self>();
+            let t = Self::type_id();
             let f = f_table.get(t);
             let follows = f.deref();
             let result = parser.parse_token(TokenType::Integer, follows);
@@ -224,11 +239,26 @@ const _: () = {
     impl SyntaxTree for OpAdd {
         type T = TokenType;
         type AST = Token<TokenType>;
-        fn build_start_table(
+        #[inline]
+        fn type_id() -> ::core::any::TypeId {
+            ::core::any::TypeId::of::<Self>()
+        }
+        #[inline]
+        fn can_be_empty() -> bool {
+            false
+        }
+        #[inline]
+        fn check_left_recursive(
+            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
+            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
+        ) -> bool {
+            false
+        }
+        fn build_first_table(
             s_table: &mut SyntaxTreeTable<Self::T>,
             lits: &mut LitTable,
-        ) {
-            let t = ::core::any::TypeId::of::<Self>();
+        ) -> bool {
+            let t = Self::type_id();
             s_table
                 .init(
                     t,
@@ -236,7 +266,7 @@ const _: () = {
                         let mut set = TermSet::default();
                         let lit = lits.get_or_add("+");
                         set.insert_token_type_match(TokenType::Operator, lit);
-                        set
+                        (set, true)
                     },
                 )
         }
@@ -244,10 +274,10 @@ const _: () = {
             s_table: &'s SyntaxTreeTable<Self::T>,
             f_table: &mut SyntaxTreeTable<Self::T>,
             follows: &TermSet<Self::T>,
-        ) -> ::std::borrow::Cow<'s, TermSet<Self::T>> {
-            let t = ::core::any::TypeId::of::<Self>();
+        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
+            let t = Self::type_id();
             f_table.get_mut(t).union(follows);
-            s_table.get(t)
+            (s_table.get(t), true)
         }
         #[inline]
         fn try_parse_ast<'s>(
@@ -255,7 +285,7 @@ const _: () = {
             f_table: &SyntaxTreeTable<Self::T>,
             _should_recover: bool,
         ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = ::core::any::TypeId::of::<Self>();
+            let t = Self::type_id();
             let f = f_table.get(t);
             let follows = f.deref();
             let result = parser.parse_token_match(TokenType::Operator, follows, "+");
@@ -334,11 +364,26 @@ const _: () = {
     impl SyntaxTree for OpSub {
         type T = TokenType;
         type AST = Token<TokenType>;
-        fn build_start_table(
+        #[inline]
+        fn type_id() -> ::core::any::TypeId {
+            ::core::any::TypeId::of::<Self>()
+        }
+        #[inline]
+        fn can_be_empty() -> bool {
+            false
+        }
+        #[inline]
+        fn check_left_recursive(
+            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
+            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
+        ) -> bool {
+            false
+        }
+        fn build_first_table(
             s_table: &mut SyntaxTreeTable<Self::T>,
             lits: &mut LitTable,
-        ) {
-            let t = ::core::any::TypeId::of::<Self>();
+        ) -> bool {
+            let t = Self::type_id();
             s_table
                 .init(
                     t,
@@ -346,7 +391,7 @@ const _: () = {
                         let mut set = TermSet::default();
                         let lit = lits.get_or_add("-");
                         set.insert_token_type_match(TokenType::Operator, lit);
-                        set
+                        (set, true)
                     },
                 )
         }
@@ -354,10 +399,10 @@ const _: () = {
             s_table: &'s SyntaxTreeTable<Self::T>,
             f_table: &mut SyntaxTreeTable<Self::T>,
             follows: &TermSet<Self::T>,
-        ) -> ::std::borrow::Cow<'s, TermSet<Self::T>> {
-            let t = ::core::any::TypeId::of::<Self>();
+        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
+            let t = Self::type_id();
             f_table.get_mut(t).union(follows);
-            s_table.get(t)
+            (s_table.get(t), true)
         }
         #[inline]
         fn try_parse_ast<'s>(
@@ -365,7 +410,7 @@ const _: () = {
             f_table: &SyntaxTreeTable<Self::T>,
             _should_recover: bool,
         ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = ::core::any::TypeId::of::<Self>();
+            let t = Self::type_id();
             let f = f_table.get(t);
             let follows = f.deref();
             let result = parser.parse_token_match(TokenType::Operator, follows, "-");
@@ -444,11 +489,26 @@ const _: () = {
     impl SyntaxTree for OpMul {
         type T = TokenType;
         type AST = Token<TokenType>;
-        fn build_start_table(
+        #[inline]
+        fn type_id() -> ::core::any::TypeId {
+            ::core::any::TypeId::of::<Self>()
+        }
+        #[inline]
+        fn can_be_empty() -> bool {
+            false
+        }
+        #[inline]
+        fn check_left_recursive(
+            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
+            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
+        ) -> bool {
+            false
+        }
+        fn build_first_table(
             s_table: &mut SyntaxTreeTable<Self::T>,
             lits: &mut LitTable,
-        ) {
-            let t = ::core::any::TypeId::of::<Self>();
+        ) -> bool {
+            let t = Self::type_id();
             s_table
                 .init(
                     t,
@@ -456,7 +516,7 @@ const _: () = {
                         let mut set = TermSet::default();
                         let lit = lits.get_or_add("*");
                         set.insert_token_type_match(TokenType::Operator, lit);
-                        set
+                        (set, true)
                     },
                 )
         }
@@ -464,10 +524,10 @@ const _: () = {
             s_table: &'s SyntaxTreeTable<Self::T>,
             f_table: &mut SyntaxTreeTable<Self::T>,
             follows: &TermSet<Self::T>,
-        ) -> ::std::borrow::Cow<'s, TermSet<Self::T>> {
-            let t = ::core::any::TypeId::of::<Self>();
+        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
+            let t = Self::type_id();
             f_table.get_mut(t).union(follows);
-            s_table.get(t)
+            (s_table.get(t), true)
         }
         #[inline]
         fn try_parse_ast<'s>(
@@ -475,7 +535,7 @@ const _: () = {
             f_table: &SyntaxTreeTable<Self::T>,
             _should_recover: bool,
         ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = ::core::any::TypeId::of::<Self>();
+            let t = Self::type_id();
             let f = f_table.get(t);
             let follows = f.deref();
             let result = parser.parse_token_match(TokenType::Operator, follows, "*");
@@ -554,11 +614,26 @@ const _: () = {
     impl SyntaxTree for OpDiv {
         type T = TokenType;
         type AST = Token<TokenType>;
-        fn build_start_table(
+        #[inline]
+        fn type_id() -> ::core::any::TypeId {
+            ::core::any::TypeId::of::<Self>()
+        }
+        #[inline]
+        fn can_be_empty() -> bool {
+            false
+        }
+        #[inline]
+        fn check_left_recursive(
+            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
+            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
+        ) -> bool {
+            false
+        }
+        fn build_first_table(
             s_table: &mut SyntaxTreeTable<Self::T>,
             lits: &mut LitTable,
-        ) {
-            let t = ::core::any::TypeId::of::<Self>();
+        ) -> bool {
+            let t = Self::type_id();
             s_table
                 .init(
                     t,
@@ -566,7 +641,7 @@ const _: () = {
                         let mut set = TermSet::default();
                         let lit = lits.get_or_add("/");
                         set.insert_token_type_match(TokenType::Operator, lit);
-                        set
+                        (set, true)
                     },
                 )
         }
@@ -574,10 +649,10 @@ const _: () = {
             s_table: &'s SyntaxTreeTable<Self::T>,
             f_table: &mut SyntaxTreeTable<Self::T>,
             follows: &TermSet<Self::T>,
-        ) -> ::std::borrow::Cow<'s, TermSet<Self::T>> {
-            let t = ::core::any::TypeId::of::<Self>();
+        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
+            let t = Self::type_id();
             f_table.get_mut(t).union(follows);
-            s_table.get(t)
+            (s_table.get(t), true)
         }
         #[inline]
         fn try_parse_ast<'s>(
@@ -585,7 +660,7 @@ const _: () = {
             f_table: &SyntaxTreeTable<Self::T>,
             _should_recover: bool,
         ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = ::core::any::TypeId::of::<Self>();
+            let t = Self::type_id();
             let f = f_table.get(t);
             let follows = f.deref();
             let result = parser.parse_token_match(TokenType::Operator, follows, "/");
@@ -664,11 +739,26 @@ const _: () = {
     impl SyntaxTree for ParamOpen {
         type T = TokenType;
         type AST = Token<TokenType>;
-        fn build_start_table(
+        #[inline]
+        fn type_id() -> ::core::any::TypeId {
+            ::core::any::TypeId::of::<Self>()
+        }
+        #[inline]
+        fn can_be_empty() -> bool {
+            false
+        }
+        #[inline]
+        fn check_left_recursive(
+            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
+            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
+        ) -> bool {
+            false
+        }
+        fn build_first_table(
             s_table: &mut SyntaxTreeTable<Self::T>,
             lits: &mut LitTable,
-        ) {
-            let t = ::core::any::TypeId::of::<Self>();
+        ) -> bool {
+            let t = Self::type_id();
             s_table
                 .init(
                     t,
@@ -676,7 +766,7 @@ const _: () = {
                         let mut set = TermSet::default();
                         let lit = lits.get_or_add("(");
                         set.insert_token_type_match(TokenType::Param, lit);
-                        set
+                        (set, true)
                     },
                 )
         }
@@ -684,10 +774,10 @@ const _: () = {
             s_table: &'s SyntaxTreeTable<Self::T>,
             f_table: &mut SyntaxTreeTable<Self::T>,
             follows: &TermSet<Self::T>,
-        ) -> ::std::borrow::Cow<'s, TermSet<Self::T>> {
-            let t = ::core::any::TypeId::of::<Self>();
+        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
+            let t = Self::type_id();
             f_table.get_mut(t).union(follows);
-            s_table.get(t)
+            (s_table.get(t), true)
         }
         #[inline]
         fn try_parse_ast<'s>(
@@ -695,7 +785,7 @@ const _: () = {
             f_table: &SyntaxTreeTable<Self::T>,
             _should_recover: bool,
         ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = ::core::any::TypeId::of::<Self>();
+            let t = Self::type_id();
             let f = f_table.get(t);
             let follows = f.deref();
             let result = parser.parse_token_match(TokenType::Param, follows, "(");
@@ -774,11 +864,26 @@ const _: () = {
     impl SyntaxTree for ParamClose {
         type T = TokenType;
         type AST = Token<TokenType>;
-        fn build_start_table(
+        #[inline]
+        fn type_id() -> ::core::any::TypeId {
+            ::core::any::TypeId::of::<Self>()
+        }
+        #[inline]
+        fn can_be_empty() -> bool {
+            false
+        }
+        #[inline]
+        fn check_left_recursive(
+            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
+            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
+        ) -> bool {
+            false
+        }
+        fn build_first_table(
             s_table: &mut SyntaxTreeTable<Self::T>,
             lits: &mut LitTable,
-        ) {
-            let t = ::core::any::TypeId::of::<Self>();
+        ) -> bool {
+            let t = Self::type_id();
             s_table
                 .init(
                     t,
@@ -786,7 +891,7 @@ const _: () = {
                         let mut set = TermSet::default();
                         let lit = lits.get_or_add(")");
                         set.insert_token_type_match(TokenType::Param, lit);
-                        set
+                        (set, true)
                     },
                 )
         }
@@ -794,10 +899,10 @@ const _: () = {
             s_table: &'s SyntaxTreeTable<Self::T>,
             f_table: &mut SyntaxTreeTable<Self::T>,
             follows: &TermSet<Self::T>,
-        ) -> ::std::borrow::Cow<'s, TermSet<Self::T>> {
-            let t = ::core::any::TypeId::of::<Self>();
+        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
+            let t = Self::type_id();
             f_table.get_mut(t).union(follows);
-            s_table.get(t)
+            (s_table.get(t), true)
         }
         #[inline]
         fn try_parse_ast<'s>(
@@ -805,7 +910,7 @@ const _: () = {
             f_table: &SyntaxTreeTable<Self::T>,
             _should_recover: bool,
         ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = ::core::any::TypeId::of::<Self>();
+            let t = Self::type_id();
             let f = f_table.get(t);
             let follows = f.deref();
             let result = parser.parse_token_match(TokenType::Param, follows, ")");

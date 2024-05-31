@@ -418,10 +418,10 @@ fn derive_terminal(
     let teleparse = crate_ident();
     let parse_impl = match match_lit {
         Some(match_lit) => quote! {
-            parser.parse_token_match(#enum_ident::#variant_ident, follows, #match_lit)
+            parser.parse_token_match(#enum_ident::#variant_ident, #match_lit)
         },
         None => quote! {
-            parser.parse_token(#enum_ident::#variant_ident, follows)
+            parser.parse_token(#enum_ident::#variant_ident)
         },
     };
     let s_table_insert_impl = match match_lit {
@@ -448,30 +448,50 @@ fn derive_terminal(
                 type T = #enum_ident;
                 type AST = Token<#enum_ident>;
 
-                fn build_start_table(s_table: &mut SyntaxTreeTable<Self::T>, lits: &mut LitTable) -> bool{
-                    let t = ::core::any::TypeId::of::<Self>();
+                #[inline]
+                fn type_id() -> ::core::any::TypeId {
+                    // need to override this because 2 terminals are different AST
+                    // but they both use Token<T> to represent their AST
+                    ::core::any::TypeId::of::<Self>()
+                }
+                #[inline]
+                fn can_be_empty() -> bool {
+                    false
+                }
+
+                #[inline]
+                fn check_left_recursive(_stack: &mut ::std::vec::Vec<::core::any::TypeId>, _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>) -> bool {
+                    false
+                }
+
+                fn build_first_table(s_table: &mut SyntaxTreeTable<Self::T>, lits: &mut LitTable) -> bool{
+                    let t = Self::type_id();
                     s_table.init(t, |_| {
                         let mut set = TermSet::default();
                         #s_table_insert_impl
-                        (set, true)
-                    })
+                        set
+                    });
                 }
 
+                #[inline]
+                fn has_first_collision(_s_table: &SyntaxTreeTable<Self::T>) -> bool {
+                    false
+                }
+
+                #[inline]
                 fn build_follow_table<'s>(
-                    s_table: &'s SyntaxTreeTable<Self::T>, 
-                    f_table: &mut SyntaxTreeTable<Self::T>,
-                    follows: &TermSet<Self::T>,
-                ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
-                    let t = ::core::any::TypeId::of::<Self>();
-                    f_table.get_mut(t).union(follows);
-                    (s_table.get(t), true)
+                    first: &'s SyntaxTreeTable<Self::T>, 
+                    follow: &mut SyntaxTreeTable<Self::T>,
+                ) -> bool {
+                    // no information to build follow table at terminal
+                    false
                 }
 
                 #[inline]
                 fn try_parse_ast<'s>(parser: &mut Parser<'s, Self::T>, f_table: &SyntaxTreeTable<Self::T>, _should_recover: bool) -> SyntaxResult<Self::T, Self::AST> {
-                    let t = ::core::any::TypeId::of::<Self>();
-                    let f= f_table.get(t);
-                    let follows = f.deref();
+                    // let t = Self::type_id();
+                    // let f= f_table.get(t);
+                    // let follows = f.deref();
                     let result = #parse_impl;
                     match result {
                         Ok(ast) => Ok(ast),
