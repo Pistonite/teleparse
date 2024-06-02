@@ -4,12 +4,14 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use derivative::Derivative;
 
-use crate::token::TokenSrc;
+use crate::token::{Map, TokenSrc};
 use crate::{SyntaxTree, TokenType};
 
+use super::parsing::ParsingEntry;
 use super::LitSet;
 
-
+#[derive(Derivative, Debug)]
+#[derivative(Default(new="true", bound=""))]
 pub struct FirstBuilder<T: TokenType> {
     seen: BTreeSet<TypeId>,
     exprs: Vec<FirstExpr<T>>,
@@ -114,12 +116,9 @@ pub struct First<T: TokenType> {
 }
 
 impl<T: TokenType> First<T> {
+    #[inline]
     pub fn get(&self, ty: &TypeId) -> &FirstSet<T> {
         self.map.get(ty).unwrap_or(&self.empty)
-    }
-    /// Check if FIRST(A) intersects with FIRST(B)
-    pub fn has_intersection(&self, a: &TypeId, b: &TypeId) -> bool {
-        self.get(a).intersects(self.get(b))
     }
 
     /// Check if FIRST(A) contains epsilon and FIRST(B) intersects with FIRST(A)
@@ -179,24 +178,12 @@ pub enum FirstInsert<T: TokenType> {
 }
 
 /// Implementation of the output of the FIRST function
-#[derive(Derivative, Clone)]
-#[derivative(Default(new="true"))]
+#[derive(Derivative, Debug, Clone)]
+#[derivative(Default(new="true", bound=""))]
 pub struct FirstSet<T: TokenType> {
     has_epsilon: bool,
     /// Maps token ordinal to a set of literals
-    array: T::Set,
-}
-
-impl<T: TokenType> std::fmt::Debug for FirstSet<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut s = f.debug_struct("Set");
-        s.field("e", &self.has_epsilon);
-        let slice: &[LitSet] = self.array.borrow();
-        for (ty, set) in slice.iter().enumerate() {
-            s.field(&ty.to_string(), set);
-        }
-        s.finish()
-    }
+    map: Map<T, LitSet>,
 }
 
 impl<TIter, T: TokenType> From<TIter> for FirstSet<T> 
@@ -212,6 +199,12 @@ impl<TIter, T: TokenType> From<TIter> for FirstSet<T>
 }
 
 impl<T: TokenType> FirstSet<T> {
+    pub fn clear(&mut self) {
+        self.has_epsilon = false;
+        for set in self.map.iter_mut() {
+            set.clear();
+        }
+    }
     /// Insert epsilon into the set. 
     ///
     /// Returns if the set is changed
@@ -233,10 +226,10 @@ impl<T: TokenType> FirstSet<T> {
     pub fn insert(&mut self, ty: T, lit: Option<&'static str>) -> bool {
         match lit {
             Some(lit) => {
-                self.get_mut(ty).insert(lit)
+                self.map.get_mut(ty).insert(lit)
             },
             None => {
-                self.get_mut(ty).union_universe()
+                self.map.get_mut(ty).union_universe()
             }
         }
     }
@@ -246,7 +239,7 @@ impl<T: TokenType> FirstSet<T> {
         match token {
             None => self.has_epsilon,
             Some(token) => {
-                self.get(token.ty).contains(&token.src)
+                self.map.get(token.ty).contains(&token.src)
             }
         }
     }
@@ -254,17 +247,27 @@ impl<T: TokenType> FirstSet<T> {
     /// Union with another FIRST set `Self = Self U (Other - { epsilon })`
     ///
     /// Returns if self is changed
-    #[inline]
     pub fn union_minus_epsilon(&mut self, other: &Self) -> bool {
-        union_impl::<T>(&mut self.array, &other.array)
+        let mut changed = false;
+        for (set, other_set) in self.map.iter_mut().zip(other.map.iter()) {
+            let next_changed = set.union(other_set);
+            changed |= next_changed;
+        }
+        changed
     }
 
     /// Returns if self intersects with another FIRST set
+    #[inline]
     pub fn intersects(&self, other: &Self) -> bool {
         if self.contains_epsilon() && other.contains_epsilon() {
             return true;
         }
-        for (set, other_set) in self.array.borrow().iter().zip(other.array.borrow().iter()) {
+        self.intersects_minus_epsilon(other)
+    }
+
+    /// Returns if self intersects (Other - { epsilon })
+    pub fn intersects_minus_epsilon(&self, other: &Self) -> bool {
+        for (set, other_set) in self.map.iter().zip(other.map.iter()) {
             if set.intersects(other_set) {
                 return true;
             }
@@ -272,24 +275,43 @@ impl<T: TokenType> FirstSet<T> {
         false
     }
 
-    #[inline]
-    fn get(&self, ty: T) -> &LitSet {
-        &self.array.borrow()[ty.id()]
+    pub fn intersection_terminal_minus_epsilon(&self, other: &Self) -> BTreeSet<String> {
+        let mut terminals = BTreeSet::new();
+        for ((ty, set), other_set) in self.map.iter_zip().zip(other.map.iter()) {
+            let intersection = set.intersection(other_set);
+            if intersection.is_empty() {
+                continue;
+            }
+            match intersection.iter() {
+                Some(lits) => {
+                    for lit in lits {
+                        terminals.insert(format!("\"{}\"", lit));
+                    }
+                }
+                None => {
+                    terminals.insert(format!("{:?}", ty));
+                }
+            };
+        }
+        terminals
     }
 
-    #[inline]
-    fn get_mut(&mut self, ty: T) -> &mut LitSet {
-        &mut self.array.borrow_mut()[ty.id()]
+    /// Register value for every token in the set into the entry
+    pub fn register_parsing(&self, entry: &mut ParsingEntry<T>, value: usize) {
+        if self.contains_epsilon() {
+            entry.register_epsilon(value);
+        }
+        for (ty, set) in self.map.iter_zip() {
+            match set.iter() {
+                None => entry.register(value, ty),
+                Some(lits) => {
+                    for lit in lits {
+                        entry.register_lit(value, ty, lit);
+                    }
+                }
+            }
+        }
     }
-}
-
-pub fn union_impl<T: TokenType>(s: &mut T::Set, o: &T::Set) -> bool {
-    let mut changed = false;
-    for (set, other_set) in s.borrow_mut().iter_mut().zip(o.borrow().iter()) {
-        let next_changed = set.union(other_set);
-        changed |= next_changed;
-    }
-    changed
 }
 
 #[cfg(test)]

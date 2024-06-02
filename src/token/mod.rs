@@ -9,13 +9,14 @@ use std::ops::{BitAnd, BitOr, Not, Range};
 
 use num::{Integer, Unsigned};
 
+mod map;
+pub use map::*;
 mod token_set;
 pub use token_set::*;
 mod token_storage;
 pub use token_storage::*;
 
-use crate::table::LitSet;
-use crate::{Lexer, SyntaxError, SyntaxErrorKind};
+use crate::{Lexer, Error, ErrorKind};
 
 /// Trait for token types, derivable with [`#[teleparse_derive(TokenType)]`](crate::teleparse_derive)
 ///
@@ -41,13 +42,14 @@ pub trait TokenType: Debug + Clone + Copy + PartialEq + Eq + Hash {
     /// Lexer associated with this TokenType
     type Lexer<'s>: Lexer<'s, T = Self>;
 
-    type Set: Default + Clone + Borrow<[LitSet]> + BorrowMut<[LitSet]>;
+    type Map<T: Default + Clone>: Default + Clone + Borrow<[T]> + BorrowMut<[T]>;
 
     /// Context type associated with parsing this TokenType and SyntaxTree
     type Ctx;
 
     /// Get the id of this token type (ordinal)
     fn id(&self) -> usize;
+    fn from_id(id: usize) -> Self;
 
     /// Convert to numeric representation for use in bit set
     fn to_bit(&self) -> Self::Bit;
@@ -209,9 +211,17 @@ impl<T: TokenType> Token<T> {
 }
 
 /// Holder of a token type + the source code spanning that token
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct TokenSrc<'s, T: TokenType> {
     pub ty: T,
     pub src: &'s str,
+}
+
+impl<'s, T: TokenType> TokenSrc<'s, T> {
+    #[inline]
+    pub fn new(ty: T, src: &'s str) -> Self {
+        Self { ty, src }
+    }
 }
 
 impl<'s, T: TokenType> From<(T, &'s str)> for TokenSrc<'s, T> {

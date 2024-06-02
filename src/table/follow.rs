@@ -12,12 +12,20 @@ use super::first::{First, FirstSet};
 use super::LitSet;
 
 pub struct FollowBuilder<T: TokenType> {
-    pub first: First<T>,
+    first: First<T>,
     seen: BTreeSet<TypeId>,
     exprs: Vec<FollowExpr>,
 }
 
+
 impl<T: TokenType> FollowBuilder<T> {
+    pub fn new(first: First<T>) -> Self {
+        Self {
+            first,
+            seen: BTreeSet::new(),
+            exprs: Vec::new(),
+        }
+    }
     #[inline(always)]
     pub fn build_recursive<ST: SyntaxTree<T=T>>(&mut self) {
         let t = ST::type_id();
@@ -145,6 +153,13 @@ pub struct Follow<T: TokenType> {
     empty: FollowSet<T>,
 }
 
+impl<T: TokenType> Follow<T> {
+    #[inline]
+    pub fn get(&self, t: &TypeId) -> &FollowSet<T> {
+        self.map.get(t).unwrap_or(&self.empty)
+    }
+}
+
 #[derive(Derivative)]
 #[derivative(Default(new = "true", bound = ""))]
 pub struct FollowSet<T: TokenType>(FirstSet<T>);
@@ -181,8 +196,19 @@ impl<T: TokenType> FollowSet<T> {
         }
         self.0.union_minus_epsilon(&other.0) || changed
     }
-    // #[inline]
-    // pub fn contains<'s>(&self, token: Option<TokenSrc<'s, T>>) -> bool {
-    //     self.0.contains(token)
-    // }
+
+    /// Check if the FOLLOW set intersects with a FIRST set
+    #[inline]
+    pub fn intersects_first(&self, other: &FirstSet<T>) -> bool {
+        self.0.intersects_minus_epsilon(other)
+    }
+
+    #[inline]
+    pub fn intersection_terminal_first(&self, other: &FirstSet<T>) -> BTreeSet<String> {
+        self.0.intersection_terminal_minus_epsilon(other)
+    }
+    #[inline]
+    pub fn contains<'s>(&self, token: Option<TokenSrc<'s, T>>) -> bool {
+        self.0.contains(token)
+    }
 }

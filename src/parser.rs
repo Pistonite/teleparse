@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use crate::{token::TokenSrc, Lexer, Root, Span, SyntaxError, SyntaxErrorKind, SyntaxResult, SyntaxResultExt, SyntaxTree, Token, TokenStorage, TokenType};
+use crate::{table::{first::FirstSet, follow::{Follow, FollowSet}}, token::TokenSrc, AstResult, Error, ErrorKind, Lexer, Root, Span, SyntaxTree, Token, TokenStorage, TokenType};
 // use crate::root::RootMetadata;
 
 pub struct Parser<'s, T: TokenType> {
@@ -15,7 +15,7 @@ pub struct Parser<'s, T: TokenType> {
     /// The encountered tokens that were marked with extract
     pub extracted_tokens: TokenStorage<T>,
     /// Errors encountered during parsing
-    pub errors: Vec<SyntaxError<T>>,
+    pub errors: Vec<Error<T>>,
     /// The lexer
     lexer: T::Lexer<'s>,
     /// The source code to parse
@@ -169,55 +169,74 @@ pub trait ParserState<'s> {
     /// Peek the token as TokenSrc
     fn peek_token_src(&mut self) -> Option<TokenSrc<'s, Self::T>>;
 
-    // /// Create a syntax error for an unexpected end of file
-    // fn unexpected_eof(&mut self) -> SyntaxError<Self::T>{
-    //     SyntaxError::new(self.current_span(), SyntaxErrorKind::UnexpectedEof)
-    // }
+    /// Create a syntax error for an unexpected end of file
+    fn unexpected_eof(&mut self) -> Error<Self::T>{
+        Error::new(self.current_span(), ErrorKind::UnexpectedEof)
+    }
 
-    // fn expecting(&mut self, expected: FirstSet<Self::T>) -> SyntaxError<Self::T> {
-    //     SyntaxError::new(self.current_span(), SyntaxErrorKind::Expecting(expected))
-    // }
+    fn expecting(&mut self, expected: FirstSet<Self::T>) -> Error<Self::T> {
+        Error::new(self.current_span(), ErrorKind::Expecting(expected))
+    }
 
-    // /// Parse a token of a specific type
-    // #[inline(never)]
-    // fn parse_token( &mut self, ty: Self::T) -> Result<Token<Self::T>, SyntaxError<Self::T>> {
-    //     let token = self.parse_token_type(ty)?;
-    //     // let next = self.peek_token_src();
-    //     Ok(token)
-    //     // if follows.contains(next) {
-    //     // } else {
-    //     //     Err(self.expecting(follows.clone()))
-    //     // }
-    // }
+    /// Parse a token of a specific type
+    ///
+    /// ## Recovery
+    /// None. If the token is not of the expected type, the token is consumed and the parser panics
+    #[inline(never)]
+    fn parse_token( &mut self, ty: Self::T) -> AstResult<Self::T, Token<Self::T>> {
+        let token = match self.consume_token() {
+            Some(token) => token,
+            None => return AstResult::Panic(vec![self.unexpected_eof()]),
+        };
+        if token.ty != ty {
+            let expected = [(ty, None)].into();
+            return AstResult::Panic(vec![self.expecting(expected)]);
+        }
+        AstResult::Success(token)
+    }
 
-    // #[inline(never)]
-    // fn parse_token_match( &mut self, ty: Self::T, match_lit: &'static str) -> Result<Token<Self::T>, SyntaxError<Self::T>> {
-    //     let token = self.parse_token_type(ty)?;
-    //     if self.get_src(&token) != match_lit {
-    //         let mut expected = FirstSet::default();
-    //         expected.insert_token_type_match(ty, match_lit.into());
-    //         return Err(self.expecting(expected));
-    //     }
-    //     // let next = self.peek_token_src();
-    //     // if follows.contains(next) {
-    //         Ok(token)
-    //     // } else {
-    //     //     Err(self.expecting(follows.clone()))
-    //     // }
-    // }
+    /// Parse a token of a specific type, matching a specific literal
+    ///
+    /// ## Recovery
+    /// The parser peeks the next token. If it matches, the token is then consumed and returned.
+    /// Otherwise:
+    /// - If the next token is EOF and EOF is in FOLLOW, the missing token will be inserted.
+    /// - If the next token is in FOLLOW, the missing token will be inserted
+    /// - Otherwise, the parser panics without consuming the token
+    /// 
+    #[inline(never)]
+    fn parse_token_lit( &mut self, ty: Self::T, match_lit: &'static str
+        , follow: &FollowSet<Self::T>
+    ) -> AstResult<Self::T, Token<Self::T>> {
+        let token = match self.peek_token() {
+            Some(token) => token,
+            None =>  {
+                if follow.contains_eof() {
+                    let expecting = [(ty, Some(match_lit))].into();
+                    let token = Token::new(self.current_span(), ty);
+                    return AstResult::Recovered(token, vec![self.expecting(expecting)]);
+                }
+                return AstResult::Panic(vec![self.unexpected_eof()]);
+            }
+        };
 
-    // #[inline]
-    // fn parse_token_type( &mut self, ty: Self::T) -> Result<Token<Self::T>, SyntaxError<Self::T>> {
-    //     let token = match self.consume_token() {
-    //         Some(token) => token,
-    //         None => Err(self.unexpected_eof())?,
-    //     };
-    //     if token.ty != ty {
-    //         Err(token.unexpected())
-    //     } else {
-    //         Ok(token)
-    //     }
-    // }
+        let src = self.get_src(&token);
+
+        if token.ty == ty && src == match_lit {
+            self.consume_token();
+            return AstResult::Success(token);
+        }
+
+        let expecting = [(ty, Some(match_lit))].into();
+        let token_src = TokenSrc::new(token.ty, src);
+        if follow.contains(Some(token_src)) {
+            // do not consume the next token
+            let token = Token::new(self.current_span(), ty);
+            return AstResult::Recovered(token, vec![self.expecting(expecting)]);
+        }
+
+        AstResult::Panic(vec![self.expecting(expecting)])
+    }
 }
 
 impl<'s, T: TokenType> ParserState<'s> for Parser<'s, T> {
@@ -278,7 +297,7 @@ impl<'s, T: TokenType> ParserState<'s> for Parser<'s, T> {
             let (invalid, token) = self.lexer.next();
             if let Some(span) = invalid {
                 self.invalid_source.push(span);
-                self.errors.push(SyntaxError::new(span, SyntaxErrorKind::UnexpectedCharacters));
+                self.errors.push(Error::new(span, ErrorKind::UnexpectedCharacters));
             }
             if let Some(token) = token {
                 if !token.ty.should_extract() {

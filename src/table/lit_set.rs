@@ -39,6 +39,27 @@ impl LitSet {
         Self::Any
     }
 
+    #[inline]
+    pub fn is_universe(&self) -> bool {
+        matches!(self, Self::Any)
+    }
+
+    #[inline]
+    pub fn clear(&mut self) {
+        match self {
+            Self::Match(set) => set.clear(),
+            Self::Any => {},
+        }
+    }
+
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        match self {
+            Self::Match(set) => set.is_empty(),
+            Self::Any => false,
+        }
+    }
+
     /// Insert a literal constants into the set
     #[inline]
     pub fn insert(&mut self, lit: &'static str) -> bool {
@@ -91,14 +112,55 @@ impl LitSet {
     pub fn intersects(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::Match(set), Self::Match(other_set)) => {
-                set.iter().any(|lit| {
-                    other_set.contains(lit)
-                })
+                set.intersection(other_set).next().is_some()
             }
-            (Self::Any, _) | (_, Self::Any) => true,
+            (Self::Any, s) | (s, Self::Any) => !s.is_empty(),
         }
     }
 
+    pub fn intersection(&self, other: &Self) -> Self {
+        match (self, other) {
+            (Self::Match(set), Self::Match(other_set)) => {
+                Self::Match(set.intersection(other_set).copied().collect())
+            }
+            (Self::Any, Self::Any)  => Self::Any,
+            (Self::Any, s) | (s, Self::Any) => {
+                s.clone()
+            }
+        }
+    }
+
+    pub fn iter(&self) -> Option<impl Iterator<Item = &&'static str>> {
+        match self {
+            Self::Match(set) => Some(set.iter()),
+            Self::Any => None,
+        }
+    }
+
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum Intersects {
+    None,
+    First(&'static str),
+    Universe
+}
+
+pub enum Intersection<'a> {
+    Single(std::collections::btree_set::Iter<'a, &'static str>),
+    Both(std::collections::btree_set::Intersection<'a, &'static str>),
+}
+
+impl<'a> Iterator for Intersection<'a> {
+    type Item = &'static str;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let next = match self {
+            Self::Single(iter) => iter.next(),
+            Self::Both(iter) => iter.next(),
+        };
+        next.map(|x|*x)
+    }
 }
 
 #[cfg(test)]
@@ -201,10 +263,10 @@ mod tests {
     fn intersect_empty_universe() {
         let set1 = LitSet::new();
         let set2 = LitSet::universe();
-        assert!(!set1.intersects(&set1));
-        assert!(set1.intersects(&set2));
-        assert!(set2.intersects(&set1));
-        assert!(set2.intersects(&set2));
+        assert_eq!(set1.intersects(&set1), false);
+        assert_eq!(set1.intersects(&set2), false);
+        assert_eq!(set2.intersects(&set1), false);
+        assert_eq!(set2.intersects(&set2), true);
     }
 
     #[test]
@@ -212,31 +274,48 @@ mod tests {
         let u = LitSet::universe();
         let set = LitSet::from(["a", "b"]);
 
-        assert!(u.intersects(&set));
-        assert!(set.intersects(&u));
+        assert_eq!(u.intersects(&set), true);
+        assert_eq!(set.intersects(&u), true);
+        assert_eq!(u.intersection(&set), set);
+        assert_eq!(set.intersection(&u), set);
     }
 
     #[test]
     fn intersect_disjoint() {
         let set1 = LitSet::from(["a", "b"]);
         let set2 = LitSet::from(["c", "d"]);
-        assert!(!set1.intersects(&set2));
-        assert!(!set2.intersects(&set1));
+        assert_eq!(set1.intersects(&set2), false);
+        assert_eq!(set2.intersects(&set1), false);
+        assert_eq!(set2.intersection(&set1), LitSet::new());
+        assert_eq!(set1.intersection(&set2), LitSet::new());
     }
 
     #[test]
     fn intersect_subset() {
         let set1 = LitSet::from(["a", "b"]);
         let set2 = LitSet::from(["a"]);
-        assert!(set1.intersects(&set2));
-        assert!(set2.intersects(&set1));
+        assert_eq!(set1.intersects(&set2), true);
+        assert_eq!(set2.intersects(&set1), true);
+        assert_eq!(set2.intersection(&set1), set2);
+        assert_eq!(set1.intersection(&set2), set2);
     }
 
     #[test]
     fn intersect_empty() {
         let set1 = LitSet::from(["a", "b"]);
         let set2 = LitSet::new();
-        assert!(!set1.intersects(&set2));
-        assert!(!set2.intersects(&set1));
+        assert_eq!(set1.intersects(&set2), false);
+        assert_eq!(set2.intersects(&set1), false);
+        assert_eq!(set2.intersection(&set1), set2);
+        assert_eq!(set1.intersection(&set2), set2);
+    }
+
+    #[test]
+    fn intersection() {
+        let set1 = LitSet::from(["a", "b", "c"]);
+        let set2 = LitSet::from(["a", "c", "d"]);
+        let expected = LitSet::from(["a", "c"]);
+        assert_eq!(set1.intersection(&set2), expected);
+        assert_eq!(set2.intersection(&set1), expected);
     }
 }

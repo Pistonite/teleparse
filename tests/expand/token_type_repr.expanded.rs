@@ -166,74 +166,72 @@ impl teleparse::ToSpan for X00000 {
 }
 #[automatically_derived]
 const _: () = {
-    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{LL1Error, AstResult, ToSpan, Span, Token, Parser, SyntaxTree};
     use teleparse::parser::ParserState;
-    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
-    use core::ops::Deref;
+    use teleparse::root::RootMetadata;
+    use teleparse::table::first::{FirstBuilder, FirstExpr, First};
+    use teleparse::table::follow::{FollowBuilder, Follow};
+    use teleparse::table::parsing::Parsing;
+    use ::core::any::TypeId;
+    use ::std::vec::Vec;
+    use ::std::collections::BTreeSet;
+    use ::std::option::Option;
+    use ::std::borrow::Cow;
     impl SyntaxTree for X00000 {
         type T = TokenU32;
         type AST = Token<TokenU32>;
         #[inline]
-        fn type_id() -> ::core::any::TypeId {
-            ::core::any::TypeId::of::<Self>()
+        fn type_id() -> TypeId {
+            TypeId::of::<Self>()
         }
         #[inline]
-        fn can_be_empty() -> bool {
+        fn debug() -> Cow<'static, str> {
+            Cow::Borrowed("X00000")
+        }
+        #[inline]
+        fn produces_epsilon() -> bool {
             false
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-        ) -> bool {
-            false
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
         }
-        fn build_first_table(
-            s_table: &mut SyntaxTreeTable<Self::T>,
-            lits: &mut LitTable,
-        ) -> bool {
+        fn build_first(builder: &mut FirstBuilder<Self::T>) {
             let t = Self::type_id();
-            s_table
-                .init(
-                    t,
-                    |_| {
-                        let mut set = TermSet::default();
-                        let lit = lits.get_or_add("0000");
-                        set.insert_token_type_match(TokenU32::X00000, lit);
-                        (set, true)
-                    },
-                )
+            let expr = FirstExpr::insert_token(t, TokenU32::X00000, Some("0000"));
+            builder.add(expr);
         }
-        fn build_follow_table<'s>(
-            s_table: &'s SyntaxTreeTable<Self::T>,
-            f_table: &mut SyntaxTreeTable<Self::T>,
-            follows: &TermSet<Self::T>,
-        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
-            let t = Self::type_id();
-            f_table.get_mut(t).union(follows);
-            (s_table.get(t), true)
+        #[inline]
+        fn check_first_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_follow(builder: &mut FollowBuilder<Self::T>) {}
+        #[inline]
+        fn check_first_follow_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+            follow: &Follow<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_parsing(seen: &mut BTreeSet<TypeId>, parsing: &mut Parsing<Self::T>) {
+            seen.insert(Self::type_id());
         }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-            f_table: &SyntaxTreeTable<Self::T>,
-            _should_recover: bool,
-        ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = Self::type_id();
-            let f = f_table.get(t);
-            let follows = f.deref();
-            let result = parser.parse_token_match(TokenU32::X00000, follows, "0000");
-            match result {
-                Ok(ast) => Ok(ast),
-                Err(e) => e.into(),
-            }
-        }
-        #[inline]
-        fn into_parse_tree<'s>(
-            ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T>,
-        ) -> Self {
-            Self(ast)
+            meta: &RootMetadata<Self::T>,
+        ) -> AstResult<Self::T, Self::AST> {
+            let follow = meta.follow.get(&Self::type_id());
+            parser.parse_token_lit(TokenU32::X00000, "0000", follow)
         }
     }
 };
@@ -291,74 +289,72 @@ impl teleparse::ToSpan for X00001 {
 }
 #[automatically_derived]
 const _: () = {
-    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{LL1Error, AstResult, ToSpan, Span, Token, Parser, SyntaxTree};
     use teleparse::parser::ParserState;
-    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
-    use core::ops::Deref;
+    use teleparse::root::RootMetadata;
+    use teleparse::table::first::{FirstBuilder, FirstExpr, First};
+    use teleparse::table::follow::{FollowBuilder, Follow};
+    use teleparse::table::parsing::Parsing;
+    use ::core::any::TypeId;
+    use ::std::vec::Vec;
+    use ::std::collections::BTreeSet;
+    use ::std::option::Option;
+    use ::std::borrow::Cow;
     impl SyntaxTree for X00001 {
         type T = TokenU32;
         type AST = Token<TokenU32>;
         #[inline]
-        fn type_id() -> ::core::any::TypeId {
-            ::core::any::TypeId::of::<Self>()
+        fn type_id() -> TypeId {
+            TypeId::of::<Self>()
         }
         #[inline]
-        fn can_be_empty() -> bool {
+        fn debug() -> Cow<'static, str> {
+            Cow::Borrowed("X00001")
+        }
+        #[inline]
+        fn produces_epsilon() -> bool {
             false
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-        ) -> bool {
-            false
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
         }
-        fn build_first_table(
-            s_table: &mut SyntaxTreeTable<Self::T>,
-            lits: &mut LitTable,
-        ) -> bool {
+        fn build_first(builder: &mut FirstBuilder<Self::T>) {
             let t = Self::type_id();
-            s_table
-                .init(
-                    t,
-                    |_| {
-                        let mut set = TermSet::default();
-                        let lit = lits.get_or_add("0000");
-                        set.insert_token_type_match(TokenU32::X00001, lit);
-                        (set, true)
-                    },
-                )
+            let expr = FirstExpr::insert_token(t, TokenU32::X00001, Some("0000"));
+            builder.add(expr);
         }
-        fn build_follow_table<'s>(
-            s_table: &'s SyntaxTreeTable<Self::T>,
-            f_table: &mut SyntaxTreeTable<Self::T>,
-            follows: &TermSet<Self::T>,
-        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
-            let t = Self::type_id();
-            f_table.get_mut(t).union(follows);
-            (s_table.get(t), true)
+        #[inline]
+        fn check_first_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_follow(builder: &mut FollowBuilder<Self::T>) {}
+        #[inline]
+        fn check_first_follow_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+            follow: &Follow<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_parsing(seen: &mut BTreeSet<TypeId>, parsing: &mut Parsing<Self::T>) {
+            seen.insert(Self::type_id());
         }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-            f_table: &SyntaxTreeTable<Self::T>,
-            _should_recover: bool,
-        ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = Self::type_id();
-            let f = f_table.get(t);
-            let follows = f.deref();
-            let result = parser.parse_token_match(TokenU32::X00001, follows, "0000");
-            match result {
-                Ok(ast) => Ok(ast),
-                Err(e) => e.into(),
-            }
-        }
-        #[inline]
-        fn into_parse_tree<'s>(
-            ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T>,
-        ) -> Self {
-            Self(ast)
+            meta: &RootMetadata<Self::T>,
+        ) -> AstResult<Self::T, Self::AST> {
+            let follow = meta.follow.get(&Self::type_id());
+            parser.parse_token_lit(TokenU32::X00001, "0000", follow)
         }
     }
 };
@@ -416,74 +412,72 @@ impl teleparse::ToSpan for X00010 {
 }
 #[automatically_derived]
 const _: () = {
-    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{LL1Error, AstResult, ToSpan, Span, Token, Parser, SyntaxTree};
     use teleparse::parser::ParserState;
-    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
-    use core::ops::Deref;
+    use teleparse::root::RootMetadata;
+    use teleparse::table::first::{FirstBuilder, FirstExpr, First};
+    use teleparse::table::follow::{FollowBuilder, Follow};
+    use teleparse::table::parsing::Parsing;
+    use ::core::any::TypeId;
+    use ::std::vec::Vec;
+    use ::std::collections::BTreeSet;
+    use ::std::option::Option;
+    use ::std::borrow::Cow;
     impl SyntaxTree for X00010 {
         type T = TokenU32;
         type AST = Token<TokenU32>;
         #[inline]
-        fn type_id() -> ::core::any::TypeId {
-            ::core::any::TypeId::of::<Self>()
+        fn type_id() -> TypeId {
+            TypeId::of::<Self>()
         }
         #[inline]
-        fn can_be_empty() -> bool {
+        fn debug() -> Cow<'static, str> {
+            Cow::Borrowed("X00010")
+        }
+        #[inline]
+        fn produces_epsilon() -> bool {
             false
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-        ) -> bool {
-            false
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
         }
-        fn build_first_table(
-            s_table: &mut SyntaxTreeTable<Self::T>,
-            lits: &mut LitTable,
-        ) -> bool {
+        fn build_first(builder: &mut FirstBuilder<Self::T>) {
             let t = Self::type_id();
-            s_table
-                .init(
-                    t,
-                    |_| {
-                        let mut set = TermSet::default();
-                        let lit = lits.get_or_add("0000");
-                        set.insert_token_type_match(TokenU32::X00010, lit);
-                        (set, true)
-                    },
-                )
+            let expr = FirstExpr::insert_token(t, TokenU32::X00010, Some("0000"));
+            builder.add(expr);
         }
-        fn build_follow_table<'s>(
-            s_table: &'s SyntaxTreeTable<Self::T>,
-            f_table: &mut SyntaxTreeTable<Self::T>,
-            follows: &TermSet<Self::T>,
-        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
-            let t = Self::type_id();
-            f_table.get_mut(t).union(follows);
-            (s_table.get(t), true)
+        #[inline]
+        fn check_first_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_follow(builder: &mut FollowBuilder<Self::T>) {}
+        #[inline]
+        fn check_first_follow_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+            follow: &Follow<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_parsing(seen: &mut BTreeSet<TypeId>, parsing: &mut Parsing<Self::T>) {
+            seen.insert(Self::type_id());
         }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-            f_table: &SyntaxTreeTable<Self::T>,
-            _should_recover: bool,
-        ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = Self::type_id();
-            let f = f_table.get(t);
-            let follows = f.deref();
-            let result = parser.parse_token_match(TokenU32::X00010, follows, "0000");
-            match result {
-                Ok(ast) => Ok(ast),
-                Err(e) => e.into(),
-            }
-        }
-        #[inline]
-        fn into_parse_tree<'s>(
-            ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T>,
-        ) -> Self {
-            Self(ast)
+            meta: &RootMetadata<Self::T>,
+        ) -> AstResult<Self::T, Self::AST> {
+            let follow = meta.follow.get(&Self::type_id());
+            parser.parse_token_lit(TokenU32::X00010, "0000", follow)
         }
     }
 };
@@ -541,74 +535,72 @@ impl teleparse::ToSpan for X00011 {
 }
 #[automatically_derived]
 const _: () = {
-    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{LL1Error, AstResult, ToSpan, Span, Token, Parser, SyntaxTree};
     use teleparse::parser::ParserState;
-    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
-    use core::ops::Deref;
+    use teleparse::root::RootMetadata;
+    use teleparse::table::first::{FirstBuilder, FirstExpr, First};
+    use teleparse::table::follow::{FollowBuilder, Follow};
+    use teleparse::table::parsing::Parsing;
+    use ::core::any::TypeId;
+    use ::std::vec::Vec;
+    use ::std::collections::BTreeSet;
+    use ::std::option::Option;
+    use ::std::borrow::Cow;
     impl SyntaxTree for X00011 {
         type T = TokenU32;
         type AST = Token<TokenU32>;
         #[inline]
-        fn type_id() -> ::core::any::TypeId {
-            ::core::any::TypeId::of::<Self>()
+        fn type_id() -> TypeId {
+            TypeId::of::<Self>()
         }
         #[inline]
-        fn can_be_empty() -> bool {
+        fn debug() -> Cow<'static, str> {
+            Cow::Borrowed("X00011")
+        }
+        #[inline]
+        fn produces_epsilon() -> bool {
             false
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-        ) -> bool {
-            false
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
         }
-        fn build_first_table(
-            s_table: &mut SyntaxTreeTable<Self::T>,
-            lits: &mut LitTable,
-        ) -> bool {
+        fn build_first(builder: &mut FirstBuilder<Self::T>) {
             let t = Self::type_id();
-            s_table
-                .init(
-                    t,
-                    |_| {
-                        let mut set = TermSet::default();
-                        let lit = lits.get_or_add("0000");
-                        set.insert_token_type_match(TokenU32::X00011, lit);
-                        (set, true)
-                    },
-                )
+            let expr = FirstExpr::insert_token(t, TokenU32::X00011, Some("0000"));
+            builder.add(expr);
         }
-        fn build_follow_table<'s>(
-            s_table: &'s SyntaxTreeTable<Self::T>,
-            f_table: &mut SyntaxTreeTable<Self::T>,
-            follows: &TermSet<Self::T>,
-        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
-            let t = Self::type_id();
-            f_table.get_mut(t).union(follows);
-            (s_table.get(t), true)
+        #[inline]
+        fn check_first_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_follow(builder: &mut FollowBuilder<Self::T>) {}
+        #[inline]
+        fn check_first_follow_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+            follow: &Follow<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_parsing(seen: &mut BTreeSet<TypeId>, parsing: &mut Parsing<Self::T>) {
+            seen.insert(Self::type_id());
         }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-            f_table: &SyntaxTreeTable<Self::T>,
-            _should_recover: bool,
-        ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = Self::type_id();
-            let f = f_table.get(t);
-            let follows = f.deref();
-            let result = parser.parse_token_match(TokenU32::X00011, follows, "0000");
-            match result {
-                Ok(ast) => Ok(ast),
-                Err(e) => e.into(),
-            }
-        }
-        #[inline]
-        fn into_parse_tree<'s>(
-            ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T>,
-        ) -> Self {
-            Self(ast)
+            meta: &RootMetadata<Self::T>,
+        ) -> AstResult<Self::T, Self::AST> {
+            let follow = meta.follow.get(&Self::type_id());
+            parser.parse_token_lit(TokenU32::X00011, "0000", follow)
         }
     }
 };
@@ -666,74 +658,72 @@ impl teleparse::ToSpan for X00100 {
 }
 #[automatically_derived]
 const _: () = {
-    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{LL1Error, AstResult, ToSpan, Span, Token, Parser, SyntaxTree};
     use teleparse::parser::ParserState;
-    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
-    use core::ops::Deref;
+    use teleparse::root::RootMetadata;
+    use teleparse::table::first::{FirstBuilder, FirstExpr, First};
+    use teleparse::table::follow::{FollowBuilder, Follow};
+    use teleparse::table::parsing::Parsing;
+    use ::core::any::TypeId;
+    use ::std::vec::Vec;
+    use ::std::collections::BTreeSet;
+    use ::std::option::Option;
+    use ::std::borrow::Cow;
     impl SyntaxTree for X00100 {
         type T = TokenU32;
         type AST = Token<TokenU32>;
         #[inline]
-        fn type_id() -> ::core::any::TypeId {
-            ::core::any::TypeId::of::<Self>()
+        fn type_id() -> TypeId {
+            TypeId::of::<Self>()
         }
         #[inline]
-        fn can_be_empty() -> bool {
+        fn debug() -> Cow<'static, str> {
+            Cow::Borrowed("X00100")
+        }
+        #[inline]
+        fn produces_epsilon() -> bool {
             false
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-        ) -> bool {
-            false
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
         }
-        fn build_first_table(
-            s_table: &mut SyntaxTreeTable<Self::T>,
-            lits: &mut LitTable,
-        ) -> bool {
+        fn build_first(builder: &mut FirstBuilder<Self::T>) {
             let t = Self::type_id();
-            s_table
-                .init(
-                    t,
-                    |_| {
-                        let mut set = TermSet::default();
-                        let lit = lits.get_or_add("0000");
-                        set.insert_token_type_match(TokenU32::X00100, lit);
-                        (set, true)
-                    },
-                )
+            let expr = FirstExpr::insert_token(t, TokenU32::X00100, Some("0000"));
+            builder.add(expr);
         }
-        fn build_follow_table<'s>(
-            s_table: &'s SyntaxTreeTable<Self::T>,
-            f_table: &mut SyntaxTreeTable<Self::T>,
-            follows: &TermSet<Self::T>,
-        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
-            let t = Self::type_id();
-            f_table.get_mut(t).union(follows);
-            (s_table.get(t), true)
+        #[inline]
+        fn check_first_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_follow(builder: &mut FollowBuilder<Self::T>) {}
+        #[inline]
+        fn check_first_follow_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+            follow: &Follow<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_parsing(seen: &mut BTreeSet<TypeId>, parsing: &mut Parsing<Self::T>) {
+            seen.insert(Self::type_id());
         }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-            f_table: &SyntaxTreeTable<Self::T>,
-            _should_recover: bool,
-        ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = Self::type_id();
-            let f = f_table.get(t);
-            let follows = f.deref();
-            let result = parser.parse_token_match(TokenU32::X00100, follows, "0000");
-            match result {
-                Ok(ast) => Ok(ast),
-                Err(e) => e.into(),
-            }
-        }
-        #[inline]
-        fn into_parse_tree<'s>(
-            ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T>,
-        ) -> Self {
-            Self(ast)
+            meta: &RootMetadata<Self::T>,
+        ) -> AstResult<Self::T, Self::AST> {
+            let follow = meta.follow.get(&Self::type_id());
+            parser.parse_token_lit(TokenU32::X00100, "0000", follow)
         }
     }
 };
@@ -791,74 +781,72 @@ impl teleparse::ToSpan for X00101 {
 }
 #[automatically_derived]
 const _: () = {
-    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{LL1Error, AstResult, ToSpan, Span, Token, Parser, SyntaxTree};
     use teleparse::parser::ParserState;
-    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
-    use core::ops::Deref;
+    use teleparse::root::RootMetadata;
+    use teleparse::table::first::{FirstBuilder, FirstExpr, First};
+    use teleparse::table::follow::{FollowBuilder, Follow};
+    use teleparse::table::parsing::Parsing;
+    use ::core::any::TypeId;
+    use ::std::vec::Vec;
+    use ::std::collections::BTreeSet;
+    use ::std::option::Option;
+    use ::std::borrow::Cow;
     impl SyntaxTree for X00101 {
         type T = TokenU32;
         type AST = Token<TokenU32>;
         #[inline]
-        fn type_id() -> ::core::any::TypeId {
-            ::core::any::TypeId::of::<Self>()
+        fn type_id() -> TypeId {
+            TypeId::of::<Self>()
         }
         #[inline]
-        fn can_be_empty() -> bool {
+        fn debug() -> Cow<'static, str> {
+            Cow::Borrowed("X00101")
+        }
+        #[inline]
+        fn produces_epsilon() -> bool {
             false
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-        ) -> bool {
-            false
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
         }
-        fn build_first_table(
-            s_table: &mut SyntaxTreeTable<Self::T>,
-            lits: &mut LitTable,
-        ) -> bool {
+        fn build_first(builder: &mut FirstBuilder<Self::T>) {
             let t = Self::type_id();
-            s_table
-                .init(
-                    t,
-                    |_| {
-                        let mut set = TermSet::default();
-                        let lit = lits.get_or_add("0000");
-                        set.insert_token_type_match(TokenU32::X00101, lit);
-                        (set, true)
-                    },
-                )
+            let expr = FirstExpr::insert_token(t, TokenU32::X00101, Some("0000"));
+            builder.add(expr);
         }
-        fn build_follow_table<'s>(
-            s_table: &'s SyntaxTreeTable<Self::T>,
-            f_table: &mut SyntaxTreeTable<Self::T>,
-            follows: &TermSet<Self::T>,
-        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
-            let t = Self::type_id();
-            f_table.get_mut(t).union(follows);
-            (s_table.get(t), true)
+        #[inline]
+        fn check_first_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_follow(builder: &mut FollowBuilder<Self::T>) {}
+        #[inline]
+        fn check_first_follow_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+            follow: &Follow<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_parsing(seen: &mut BTreeSet<TypeId>, parsing: &mut Parsing<Self::T>) {
+            seen.insert(Self::type_id());
         }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-            f_table: &SyntaxTreeTable<Self::T>,
-            _should_recover: bool,
-        ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = Self::type_id();
-            let f = f_table.get(t);
-            let follows = f.deref();
-            let result = parser.parse_token_match(TokenU32::X00101, follows, "0000");
-            match result {
-                Ok(ast) => Ok(ast),
-                Err(e) => e.into(),
-            }
-        }
-        #[inline]
-        fn into_parse_tree<'s>(
-            ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T>,
-        ) -> Self {
-            Self(ast)
+            meta: &RootMetadata<Self::T>,
+        ) -> AstResult<Self::T, Self::AST> {
+            let follow = meta.follow.get(&Self::type_id());
+            parser.parse_token_lit(TokenU32::X00101, "0000", follow)
         }
     }
 };
@@ -916,74 +904,72 @@ impl teleparse::ToSpan for X00110 {
 }
 #[automatically_derived]
 const _: () = {
-    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{LL1Error, AstResult, ToSpan, Span, Token, Parser, SyntaxTree};
     use teleparse::parser::ParserState;
-    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
-    use core::ops::Deref;
+    use teleparse::root::RootMetadata;
+    use teleparse::table::first::{FirstBuilder, FirstExpr, First};
+    use teleparse::table::follow::{FollowBuilder, Follow};
+    use teleparse::table::parsing::Parsing;
+    use ::core::any::TypeId;
+    use ::std::vec::Vec;
+    use ::std::collections::BTreeSet;
+    use ::std::option::Option;
+    use ::std::borrow::Cow;
     impl SyntaxTree for X00110 {
         type T = TokenU32;
         type AST = Token<TokenU32>;
         #[inline]
-        fn type_id() -> ::core::any::TypeId {
-            ::core::any::TypeId::of::<Self>()
+        fn type_id() -> TypeId {
+            TypeId::of::<Self>()
         }
         #[inline]
-        fn can_be_empty() -> bool {
+        fn debug() -> Cow<'static, str> {
+            Cow::Borrowed("X00110")
+        }
+        #[inline]
+        fn produces_epsilon() -> bool {
             false
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-        ) -> bool {
-            false
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
         }
-        fn build_first_table(
-            s_table: &mut SyntaxTreeTable<Self::T>,
-            lits: &mut LitTable,
-        ) -> bool {
+        fn build_first(builder: &mut FirstBuilder<Self::T>) {
             let t = Self::type_id();
-            s_table
-                .init(
-                    t,
-                    |_| {
-                        let mut set = TermSet::default();
-                        let lit = lits.get_or_add("0000");
-                        set.insert_token_type_match(TokenU32::X00110, lit);
-                        (set, true)
-                    },
-                )
+            let expr = FirstExpr::insert_token(t, TokenU32::X00110, Some("0000"));
+            builder.add(expr);
         }
-        fn build_follow_table<'s>(
-            s_table: &'s SyntaxTreeTable<Self::T>,
-            f_table: &mut SyntaxTreeTable<Self::T>,
-            follows: &TermSet<Self::T>,
-        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
-            let t = Self::type_id();
-            f_table.get_mut(t).union(follows);
-            (s_table.get(t), true)
+        #[inline]
+        fn check_first_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_follow(builder: &mut FollowBuilder<Self::T>) {}
+        #[inline]
+        fn check_first_follow_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+            follow: &Follow<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_parsing(seen: &mut BTreeSet<TypeId>, parsing: &mut Parsing<Self::T>) {
+            seen.insert(Self::type_id());
         }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-            f_table: &SyntaxTreeTable<Self::T>,
-            _should_recover: bool,
-        ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = Self::type_id();
-            let f = f_table.get(t);
-            let follows = f.deref();
-            let result = parser.parse_token_match(TokenU32::X00110, follows, "0000");
-            match result {
-                Ok(ast) => Ok(ast),
-                Err(e) => e.into(),
-            }
-        }
-        #[inline]
-        fn into_parse_tree<'s>(
-            ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T>,
-        ) -> Self {
-            Self(ast)
+            meta: &RootMetadata<Self::T>,
+        ) -> AstResult<Self::T, Self::AST> {
+            let follow = meta.follow.get(&Self::type_id());
+            parser.parse_token_lit(TokenU32::X00110, "0000", follow)
         }
     }
 };
@@ -1041,74 +1027,72 @@ impl teleparse::ToSpan for X00111 {
 }
 #[automatically_derived]
 const _: () = {
-    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{LL1Error, AstResult, ToSpan, Span, Token, Parser, SyntaxTree};
     use teleparse::parser::ParserState;
-    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
-    use core::ops::Deref;
+    use teleparse::root::RootMetadata;
+    use teleparse::table::first::{FirstBuilder, FirstExpr, First};
+    use teleparse::table::follow::{FollowBuilder, Follow};
+    use teleparse::table::parsing::Parsing;
+    use ::core::any::TypeId;
+    use ::std::vec::Vec;
+    use ::std::collections::BTreeSet;
+    use ::std::option::Option;
+    use ::std::borrow::Cow;
     impl SyntaxTree for X00111 {
         type T = TokenU32;
         type AST = Token<TokenU32>;
         #[inline]
-        fn type_id() -> ::core::any::TypeId {
-            ::core::any::TypeId::of::<Self>()
+        fn type_id() -> TypeId {
+            TypeId::of::<Self>()
         }
         #[inline]
-        fn can_be_empty() -> bool {
+        fn debug() -> Cow<'static, str> {
+            Cow::Borrowed("X00111")
+        }
+        #[inline]
+        fn produces_epsilon() -> bool {
             false
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-        ) -> bool {
-            false
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
         }
-        fn build_first_table(
-            s_table: &mut SyntaxTreeTable<Self::T>,
-            lits: &mut LitTable,
-        ) -> bool {
+        fn build_first(builder: &mut FirstBuilder<Self::T>) {
             let t = Self::type_id();
-            s_table
-                .init(
-                    t,
-                    |_| {
-                        let mut set = TermSet::default();
-                        let lit = lits.get_or_add("0000");
-                        set.insert_token_type_match(TokenU32::X00111, lit);
-                        (set, true)
-                    },
-                )
+            let expr = FirstExpr::insert_token(t, TokenU32::X00111, Some("0000"));
+            builder.add(expr);
         }
-        fn build_follow_table<'s>(
-            s_table: &'s SyntaxTreeTable<Self::T>,
-            f_table: &mut SyntaxTreeTable<Self::T>,
-            follows: &TermSet<Self::T>,
-        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
-            let t = Self::type_id();
-            f_table.get_mut(t).union(follows);
-            (s_table.get(t), true)
+        #[inline]
+        fn check_first_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_follow(builder: &mut FollowBuilder<Self::T>) {}
+        #[inline]
+        fn check_first_follow_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+            follow: &Follow<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_parsing(seen: &mut BTreeSet<TypeId>, parsing: &mut Parsing<Self::T>) {
+            seen.insert(Self::type_id());
         }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-            f_table: &SyntaxTreeTable<Self::T>,
-            _should_recover: bool,
-        ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = Self::type_id();
-            let f = f_table.get(t);
-            let follows = f.deref();
-            let result = parser.parse_token_match(TokenU32::X00111, follows, "0000");
-            match result {
-                Ok(ast) => Ok(ast),
-                Err(e) => e.into(),
-            }
-        }
-        #[inline]
-        fn into_parse_tree<'s>(
-            ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T>,
-        ) -> Self {
-            Self(ast)
+            meta: &RootMetadata<Self::T>,
+        ) -> AstResult<Self::T, Self::AST> {
+            let follow = meta.follow.get(&Self::type_id());
+            parser.parse_token_lit(TokenU32::X00111, "0000", follow)
         }
     }
 };
@@ -1166,74 +1150,72 @@ impl teleparse::ToSpan for X01000 {
 }
 #[automatically_derived]
 const _: () = {
-    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{LL1Error, AstResult, ToSpan, Span, Token, Parser, SyntaxTree};
     use teleparse::parser::ParserState;
-    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
-    use core::ops::Deref;
+    use teleparse::root::RootMetadata;
+    use teleparse::table::first::{FirstBuilder, FirstExpr, First};
+    use teleparse::table::follow::{FollowBuilder, Follow};
+    use teleparse::table::parsing::Parsing;
+    use ::core::any::TypeId;
+    use ::std::vec::Vec;
+    use ::std::collections::BTreeSet;
+    use ::std::option::Option;
+    use ::std::borrow::Cow;
     impl SyntaxTree for X01000 {
         type T = TokenU32;
         type AST = Token<TokenU32>;
         #[inline]
-        fn type_id() -> ::core::any::TypeId {
-            ::core::any::TypeId::of::<Self>()
+        fn type_id() -> TypeId {
+            TypeId::of::<Self>()
         }
         #[inline]
-        fn can_be_empty() -> bool {
+        fn debug() -> Cow<'static, str> {
+            Cow::Borrowed("X01000")
+        }
+        #[inline]
+        fn produces_epsilon() -> bool {
             false
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-        ) -> bool {
-            false
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
         }
-        fn build_first_table(
-            s_table: &mut SyntaxTreeTable<Self::T>,
-            lits: &mut LitTable,
-        ) -> bool {
+        fn build_first(builder: &mut FirstBuilder<Self::T>) {
             let t = Self::type_id();
-            s_table
-                .init(
-                    t,
-                    |_| {
-                        let mut set = TermSet::default();
-                        let lit = lits.get_or_add("0000");
-                        set.insert_token_type_match(TokenU32::X01000, lit);
-                        (set, true)
-                    },
-                )
+            let expr = FirstExpr::insert_token(t, TokenU32::X01000, Some("0000"));
+            builder.add(expr);
         }
-        fn build_follow_table<'s>(
-            s_table: &'s SyntaxTreeTable<Self::T>,
-            f_table: &mut SyntaxTreeTable<Self::T>,
-            follows: &TermSet<Self::T>,
-        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
-            let t = Self::type_id();
-            f_table.get_mut(t).union(follows);
-            (s_table.get(t), true)
+        #[inline]
+        fn check_first_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_follow(builder: &mut FollowBuilder<Self::T>) {}
+        #[inline]
+        fn check_first_follow_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+            follow: &Follow<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_parsing(seen: &mut BTreeSet<TypeId>, parsing: &mut Parsing<Self::T>) {
+            seen.insert(Self::type_id());
         }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-            f_table: &SyntaxTreeTable<Self::T>,
-            _should_recover: bool,
-        ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = Self::type_id();
-            let f = f_table.get(t);
-            let follows = f.deref();
-            let result = parser.parse_token_match(TokenU32::X01000, follows, "0000");
-            match result {
-                Ok(ast) => Ok(ast),
-                Err(e) => e.into(),
-            }
-        }
-        #[inline]
-        fn into_parse_tree<'s>(
-            ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T>,
-        ) -> Self {
-            Self(ast)
+            meta: &RootMetadata<Self::T>,
+        ) -> AstResult<Self::T, Self::AST> {
+            let follow = meta.follow.get(&Self::type_id());
+            parser.parse_token_lit(TokenU32::X01000, "0000", follow)
         }
     }
 };
@@ -1291,74 +1273,72 @@ impl teleparse::ToSpan for X01001 {
 }
 #[automatically_derived]
 const _: () = {
-    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{LL1Error, AstResult, ToSpan, Span, Token, Parser, SyntaxTree};
     use teleparse::parser::ParserState;
-    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
-    use core::ops::Deref;
+    use teleparse::root::RootMetadata;
+    use teleparse::table::first::{FirstBuilder, FirstExpr, First};
+    use teleparse::table::follow::{FollowBuilder, Follow};
+    use teleparse::table::parsing::Parsing;
+    use ::core::any::TypeId;
+    use ::std::vec::Vec;
+    use ::std::collections::BTreeSet;
+    use ::std::option::Option;
+    use ::std::borrow::Cow;
     impl SyntaxTree for X01001 {
         type T = TokenU32;
         type AST = Token<TokenU32>;
         #[inline]
-        fn type_id() -> ::core::any::TypeId {
-            ::core::any::TypeId::of::<Self>()
+        fn type_id() -> TypeId {
+            TypeId::of::<Self>()
         }
         #[inline]
-        fn can_be_empty() -> bool {
+        fn debug() -> Cow<'static, str> {
+            Cow::Borrowed("X01001")
+        }
+        #[inline]
+        fn produces_epsilon() -> bool {
             false
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-        ) -> bool {
-            false
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
         }
-        fn build_first_table(
-            s_table: &mut SyntaxTreeTable<Self::T>,
-            lits: &mut LitTable,
-        ) -> bool {
+        fn build_first(builder: &mut FirstBuilder<Self::T>) {
             let t = Self::type_id();
-            s_table
-                .init(
-                    t,
-                    |_| {
-                        let mut set = TermSet::default();
-                        let lit = lits.get_or_add("0000");
-                        set.insert_token_type_match(TokenU32::X01001, lit);
-                        (set, true)
-                    },
-                )
+            let expr = FirstExpr::insert_token(t, TokenU32::X01001, Some("0000"));
+            builder.add(expr);
         }
-        fn build_follow_table<'s>(
-            s_table: &'s SyntaxTreeTable<Self::T>,
-            f_table: &mut SyntaxTreeTable<Self::T>,
-            follows: &TermSet<Self::T>,
-        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
-            let t = Self::type_id();
-            f_table.get_mut(t).union(follows);
-            (s_table.get(t), true)
+        #[inline]
+        fn check_first_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_follow(builder: &mut FollowBuilder<Self::T>) {}
+        #[inline]
+        fn check_first_follow_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+            follow: &Follow<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_parsing(seen: &mut BTreeSet<TypeId>, parsing: &mut Parsing<Self::T>) {
+            seen.insert(Self::type_id());
         }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-            f_table: &SyntaxTreeTable<Self::T>,
-            _should_recover: bool,
-        ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = Self::type_id();
-            let f = f_table.get(t);
-            let follows = f.deref();
-            let result = parser.parse_token_match(TokenU32::X01001, follows, "0000");
-            match result {
-                Ok(ast) => Ok(ast),
-                Err(e) => e.into(),
-            }
-        }
-        #[inline]
-        fn into_parse_tree<'s>(
-            ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T>,
-        ) -> Self {
-            Self(ast)
+            meta: &RootMetadata<Self::T>,
+        ) -> AstResult<Self::T, Self::AST> {
+            let follow = meta.follow.get(&Self::type_id());
+            parser.parse_token_lit(TokenU32::X01001, "0000", follow)
         }
     }
 };
@@ -1416,74 +1396,72 @@ impl teleparse::ToSpan for X01010 {
 }
 #[automatically_derived]
 const _: () = {
-    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{LL1Error, AstResult, ToSpan, Span, Token, Parser, SyntaxTree};
     use teleparse::parser::ParserState;
-    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
-    use core::ops::Deref;
+    use teleparse::root::RootMetadata;
+    use teleparse::table::first::{FirstBuilder, FirstExpr, First};
+    use teleparse::table::follow::{FollowBuilder, Follow};
+    use teleparse::table::parsing::Parsing;
+    use ::core::any::TypeId;
+    use ::std::vec::Vec;
+    use ::std::collections::BTreeSet;
+    use ::std::option::Option;
+    use ::std::borrow::Cow;
     impl SyntaxTree for X01010 {
         type T = TokenU32;
         type AST = Token<TokenU32>;
         #[inline]
-        fn type_id() -> ::core::any::TypeId {
-            ::core::any::TypeId::of::<Self>()
+        fn type_id() -> TypeId {
+            TypeId::of::<Self>()
         }
         #[inline]
-        fn can_be_empty() -> bool {
+        fn debug() -> Cow<'static, str> {
+            Cow::Borrowed("X01010")
+        }
+        #[inline]
+        fn produces_epsilon() -> bool {
             false
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-        ) -> bool {
-            false
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
         }
-        fn build_first_table(
-            s_table: &mut SyntaxTreeTable<Self::T>,
-            lits: &mut LitTable,
-        ) -> bool {
+        fn build_first(builder: &mut FirstBuilder<Self::T>) {
             let t = Self::type_id();
-            s_table
-                .init(
-                    t,
-                    |_| {
-                        let mut set = TermSet::default();
-                        let lit = lits.get_or_add("0000");
-                        set.insert_token_type_match(TokenU32::X01010, lit);
-                        (set, true)
-                    },
-                )
+            let expr = FirstExpr::insert_token(t, TokenU32::X01010, Some("0000"));
+            builder.add(expr);
         }
-        fn build_follow_table<'s>(
-            s_table: &'s SyntaxTreeTable<Self::T>,
-            f_table: &mut SyntaxTreeTable<Self::T>,
-            follows: &TermSet<Self::T>,
-        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
-            let t = Self::type_id();
-            f_table.get_mut(t).union(follows);
-            (s_table.get(t), true)
+        #[inline]
+        fn check_first_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_follow(builder: &mut FollowBuilder<Self::T>) {}
+        #[inline]
+        fn check_first_follow_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+            follow: &Follow<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_parsing(seen: &mut BTreeSet<TypeId>, parsing: &mut Parsing<Self::T>) {
+            seen.insert(Self::type_id());
         }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-            f_table: &SyntaxTreeTable<Self::T>,
-            _should_recover: bool,
-        ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = Self::type_id();
-            let f = f_table.get(t);
-            let follows = f.deref();
-            let result = parser.parse_token_match(TokenU32::X01010, follows, "0000");
-            match result {
-                Ok(ast) => Ok(ast),
-                Err(e) => e.into(),
-            }
-        }
-        #[inline]
-        fn into_parse_tree<'s>(
-            ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T>,
-        ) -> Self {
-            Self(ast)
+            meta: &RootMetadata<Self::T>,
+        ) -> AstResult<Self::T, Self::AST> {
+            let follow = meta.follow.get(&Self::type_id());
+            parser.parse_token_lit(TokenU32::X01010, "0000", follow)
         }
     }
 };
@@ -1541,74 +1519,72 @@ impl teleparse::ToSpan for X01011 {
 }
 #[automatically_derived]
 const _: () = {
-    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{LL1Error, AstResult, ToSpan, Span, Token, Parser, SyntaxTree};
     use teleparse::parser::ParserState;
-    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
-    use core::ops::Deref;
+    use teleparse::root::RootMetadata;
+    use teleparse::table::first::{FirstBuilder, FirstExpr, First};
+    use teleparse::table::follow::{FollowBuilder, Follow};
+    use teleparse::table::parsing::Parsing;
+    use ::core::any::TypeId;
+    use ::std::vec::Vec;
+    use ::std::collections::BTreeSet;
+    use ::std::option::Option;
+    use ::std::borrow::Cow;
     impl SyntaxTree for X01011 {
         type T = TokenU32;
         type AST = Token<TokenU32>;
         #[inline]
-        fn type_id() -> ::core::any::TypeId {
-            ::core::any::TypeId::of::<Self>()
+        fn type_id() -> TypeId {
+            TypeId::of::<Self>()
         }
         #[inline]
-        fn can_be_empty() -> bool {
+        fn debug() -> Cow<'static, str> {
+            Cow::Borrowed("X01011")
+        }
+        #[inline]
+        fn produces_epsilon() -> bool {
             false
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-        ) -> bool {
-            false
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
         }
-        fn build_first_table(
-            s_table: &mut SyntaxTreeTable<Self::T>,
-            lits: &mut LitTable,
-        ) -> bool {
+        fn build_first(builder: &mut FirstBuilder<Self::T>) {
             let t = Self::type_id();
-            s_table
-                .init(
-                    t,
-                    |_| {
-                        let mut set = TermSet::default();
-                        let lit = lits.get_or_add("0000");
-                        set.insert_token_type_match(TokenU32::X01011, lit);
-                        (set, true)
-                    },
-                )
+            let expr = FirstExpr::insert_token(t, TokenU32::X01011, Some("0000"));
+            builder.add(expr);
         }
-        fn build_follow_table<'s>(
-            s_table: &'s SyntaxTreeTable<Self::T>,
-            f_table: &mut SyntaxTreeTable<Self::T>,
-            follows: &TermSet<Self::T>,
-        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
-            let t = Self::type_id();
-            f_table.get_mut(t).union(follows);
-            (s_table.get(t), true)
+        #[inline]
+        fn check_first_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_follow(builder: &mut FollowBuilder<Self::T>) {}
+        #[inline]
+        fn check_first_follow_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+            follow: &Follow<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_parsing(seen: &mut BTreeSet<TypeId>, parsing: &mut Parsing<Self::T>) {
+            seen.insert(Self::type_id());
         }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-            f_table: &SyntaxTreeTable<Self::T>,
-            _should_recover: bool,
-        ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = Self::type_id();
-            let f = f_table.get(t);
-            let follows = f.deref();
-            let result = parser.parse_token_match(TokenU32::X01011, follows, "0000");
-            match result {
-                Ok(ast) => Ok(ast),
-                Err(e) => e.into(),
-            }
-        }
-        #[inline]
-        fn into_parse_tree<'s>(
-            ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T>,
-        ) -> Self {
-            Self(ast)
+            meta: &RootMetadata<Self::T>,
+        ) -> AstResult<Self::T, Self::AST> {
+            let follow = meta.follow.get(&Self::type_id());
+            parser.parse_token_lit(TokenU32::X01011, "0000", follow)
         }
     }
 };
@@ -1666,74 +1642,72 @@ impl teleparse::ToSpan for X01100 {
 }
 #[automatically_derived]
 const _: () = {
-    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{LL1Error, AstResult, ToSpan, Span, Token, Parser, SyntaxTree};
     use teleparse::parser::ParserState;
-    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
-    use core::ops::Deref;
+    use teleparse::root::RootMetadata;
+    use teleparse::table::first::{FirstBuilder, FirstExpr, First};
+    use teleparse::table::follow::{FollowBuilder, Follow};
+    use teleparse::table::parsing::Parsing;
+    use ::core::any::TypeId;
+    use ::std::vec::Vec;
+    use ::std::collections::BTreeSet;
+    use ::std::option::Option;
+    use ::std::borrow::Cow;
     impl SyntaxTree for X01100 {
         type T = TokenU32;
         type AST = Token<TokenU32>;
         #[inline]
-        fn type_id() -> ::core::any::TypeId {
-            ::core::any::TypeId::of::<Self>()
+        fn type_id() -> TypeId {
+            TypeId::of::<Self>()
         }
         #[inline]
-        fn can_be_empty() -> bool {
+        fn debug() -> Cow<'static, str> {
+            Cow::Borrowed("X01100")
+        }
+        #[inline]
+        fn produces_epsilon() -> bool {
             false
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-        ) -> bool {
-            false
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
         }
-        fn build_first_table(
-            s_table: &mut SyntaxTreeTable<Self::T>,
-            lits: &mut LitTable,
-        ) -> bool {
+        fn build_first(builder: &mut FirstBuilder<Self::T>) {
             let t = Self::type_id();
-            s_table
-                .init(
-                    t,
-                    |_| {
-                        let mut set = TermSet::default();
-                        let lit = lits.get_or_add("0000");
-                        set.insert_token_type_match(TokenU32::X01100, lit);
-                        (set, true)
-                    },
-                )
+            let expr = FirstExpr::insert_token(t, TokenU32::X01100, Some("0000"));
+            builder.add(expr);
         }
-        fn build_follow_table<'s>(
-            s_table: &'s SyntaxTreeTable<Self::T>,
-            f_table: &mut SyntaxTreeTable<Self::T>,
-            follows: &TermSet<Self::T>,
-        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
-            let t = Self::type_id();
-            f_table.get_mut(t).union(follows);
-            (s_table.get(t), true)
+        #[inline]
+        fn check_first_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_follow(builder: &mut FollowBuilder<Self::T>) {}
+        #[inline]
+        fn check_first_follow_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+            follow: &Follow<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_parsing(seen: &mut BTreeSet<TypeId>, parsing: &mut Parsing<Self::T>) {
+            seen.insert(Self::type_id());
         }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-            f_table: &SyntaxTreeTable<Self::T>,
-            _should_recover: bool,
-        ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = Self::type_id();
-            let f = f_table.get(t);
-            let follows = f.deref();
-            let result = parser.parse_token_match(TokenU32::X01100, follows, "0000");
-            match result {
-                Ok(ast) => Ok(ast),
-                Err(e) => e.into(),
-            }
-        }
-        #[inline]
-        fn into_parse_tree<'s>(
-            ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T>,
-        ) -> Self {
-            Self(ast)
+            meta: &RootMetadata<Self::T>,
+        ) -> AstResult<Self::T, Self::AST> {
+            let follow = meta.follow.get(&Self::type_id());
+            parser.parse_token_lit(TokenU32::X01100, "0000", follow)
         }
     }
 };
@@ -1791,74 +1765,72 @@ impl teleparse::ToSpan for X01101 {
 }
 #[automatically_derived]
 const _: () = {
-    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{LL1Error, AstResult, ToSpan, Span, Token, Parser, SyntaxTree};
     use teleparse::parser::ParserState;
-    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
-    use core::ops::Deref;
+    use teleparse::root::RootMetadata;
+    use teleparse::table::first::{FirstBuilder, FirstExpr, First};
+    use teleparse::table::follow::{FollowBuilder, Follow};
+    use teleparse::table::parsing::Parsing;
+    use ::core::any::TypeId;
+    use ::std::vec::Vec;
+    use ::std::collections::BTreeSet;
+    use ::std::option::Option;
+    use ::std::borrow::Cow;
     impl SyntaxTree for X01101 {
         type T = TokenU32;
         type AST = Token<TokenU32>;
         #[inline]
-        fn type_id() -> ::core::any::TypeId {
-            ::core::any::TypeId::of::<Self>()
+        fn type_id() -> TypeId {
+            TypeId::of::<Self>()
         }
         #[inline]
-        fn can_be_empty() -> bool {
+        fn debug() -> Cow<'static, str> {
+            Cow::Borrowed("X01101")
+        }
+        #[inline]
+        fn produces_epsilon() -> bool {
             false
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-        ) -> bool {
-            false
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
         }
-        fn build_first_table(
-            s_table: &mut SyntaxTreeTable<Self::T>,
-            lits: &mut LitTable,
-        ) -> bool {
+        fn build_first(builder: &mut FirstBuilder<Self::T>) {
             let t = Self::type_id();
-            s_table
-                .init(
-                    t,
-                    |_| {
-                        let mut set = TermSet::default();
-                        let lit = lits.get_or_add("0000");
-                        set.insert_token_type_match(TokenU32::X01101, lit);
-                        (set, true)
-                    },
-                )
+            let expr = FirstExpr::insert_token(t, TokenU32::X01101, Some("0000"));
+            builder.add(expr);
         }
-        fn build_follow_table<'s>(
-            s_table: &'s SyntaxTreeTable<Self::T>,
-            f_table: &mut SyntaxTreeTable<Self::T>,
-            follows: &TermSet<Self::T>,
-        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
-            let t = Self::type_id();
-            f_table.get_mut(t).union(follows);
-            (s_table.get(t), true)
+        #[inline]
+        fn check_first_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_follow(builder: &mut FollowBuilder<Self::T>) {}
+        #[inline]
+        fn check_first_follow_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+            follow: &Follow<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_parsing(seen: &mut BTreeSet<TypeId>, parsing: &mut Parsing<Self::T>) {
+            seen.insert(Self::type_id());
         }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-            f_table: &SyntaxTreeTable<Self::T>,
-            _should_recover: bool,
-        ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = Self::type_id();
-            let f = f_table.get(t);
-            let follows = f.deref();
-            let result = parser.parse_token_match(TokenU32::X01101, follows, "0000");
-            match result {
-                Ok(ast) => Ok(ast),
-                Err(e) => e.into(),
-            }
-        }
-        #[inline]
-        fn into_parse_tree<'s>(
-            ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T>,
-        ) -> Self {
-            Self(ast)
+            meta: &RootMetadata<Self::T>,
+        ) -> AstResult<Self::T, Self::AST> {
+            let follow = meta.follow.get(&Self::type_id());
+            parser.parse_token_lit(TokenU32::X01101, "0000", follow)
         }
     }
 };
@@ -1916,74 +1888,72 @@ impl teleparse::ToSpan for X01110 {
 }
 #[automatically_derived]
 const _: () = {
-    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{LL1Error, AstResult, ToSpan, Span, Token, Parser, SyntaxTree};
     use teleparse::parser::ParserState;
-    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
-    use core::ops::Deref;
+    use teleparse::root::RootMetadata;
+    use teleparse::table::first::{FirstBuilder, FirstExpr, First};
+    use teleparse::table::follow::{FollowBuilder, Follow};
+    use teleparse::table::parsing::Parsing;
+    use ::core::any::TypeId;
+    use ::std::vec::Vec;
+    use ::std::collections::BTreeSet;
+    use ::std::option::Option;
+    use ::std::borrow::Cow;
     impl SyntaxTree for X01110 {
         type T = TokenU32;
         type AST = Token<TokenU32>;
         #[inline]
-        fn type_id() -> ::core::any::TypeId {
-            ::core::any::TypeId::of::<Self>()
+        fn type_id() -> TypeId {
+            TypeId::of::<Self>()
         }
         #[inline]
-        fn can_be_empty() -> bool {
+        fn debug() -> Cow<'static, str> {
+            Cow::Borrowed("X01110")
+        }
+        #[inline]
+        fn produces_epsilon() -> bool {
             false
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-        ) -> bool {
-            false
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
         }
-        fn build_first_table(
-            s_table: &mut SyntaxTreeTable<Self::T>,
-            lits: &mut LitTable,
-        ) -> bool {
+        fn build_first(builder: &mut FirstBuilder<Self::T>) {
             let t = Self::type_id();
-            s_table
-                .init(
-                    t,
-                    |_| {
-                        let mut set = TermSet::default();
-                        let lit = lits.get_or_add("0000");
-                        set.insert_token_type_match(TokenU32::X01110, lit);
-                        (set, true)
-                    },
-                )
+            let expr = FirstExpr::insert_token(t, TokenU32::X01110, Some("0000"));
+            builder.add(expr);
         }
-        fn build_follow_table<'s>(
-            s_table: &'s SyntaxTreeTable<Self::T>,
-            f_table: &mut SyntaxTreeTable<Self::T>,
-            follows: &TermSet<Self::T>,
-        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
-            let t = Self::type_id();
-            f_table.get_mut(t).union(follows);
-            (s_table.get(t), true)
+        #[inline]
+        fn check_first_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_follow(builder: &mut FollowBuilder<Self::T>) {}
+        #[inline]
+        fn check_first_follow_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+            follow: &Follow<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_parsing(seen: &mut BTreeSet<TypeId>, parsing: &mut Parsing<Self::T>) {
+            seen.insert(Self::type_id());
         }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-            f_table: &SyntaxTreeTable<Self::T>,
-            _should_recover: bool,
-        ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = Self::type_id();
-            let f = f_table.get(t);
-            let follows = f.deref();
-            let result = parser.parse_token_match(TokenU32::X01110, follows, "0000");
-            match result {
-                Ok(ast) => Ok(ast),
-                Err(e) => e.into(),
-            }
-        }
-        #[inline]
-        fn into_parse_tree<'s>(
-            ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T>,
-        ) -> Self {
-            Self(ast)
+            meta: &RootMetadata<Self::T>,
+        ) -> AstResult<Self::T, Self::AST> {
+            let follow = meta.follow.get(&Self::type_id());
+            parser.parse_token_lit(TokenU32::X01110, "0000", follow)
         }
     }
 };
@@ -2041,74 +2011,72 @@ impl teleparse::ToSpan for X01111 {
 }
 #[automatically_derived]
 const _: () = {
-    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{LL1Error, AstResult, ToSpan, Span, Token, Parser, SyntaxTree};
     use teleparse::parser::ParserState;
-    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
-    use core::ops::Deref;
+    use teleparse::root::RootMetadata;
+    use teleparse::table::first::{FirstBuilder, FirstExpr, First};
+    use teleparse::table::follow::{FollowBuilder, Follow};
+    use teleparse::table::parsing::Parsing;
+    use ::core::any::TypeId;
+    use ::std::vec::Vec;
+    use ::std::collections::BTreeSet;
+    use ::std::option::Option;
+    use ::std::borrow::Cow;
     impl SyntaxTree for X01111 {
         type T = TokenU32;
         type AST = Token<TokenU32>;
         #[inline]
-        fn type_id() -> ::core::any::TypeId {
-            ::core::any::TypeId::of::<Self>()
+        fn type_id() -> TypeId {
+            TypeId::of::<Self>()
         }
         #[inline]
-        fn can_be_empty() -> bool {
+        fn debug() -> Cow<'static, str> {
+            Cow::Borrowed("X01111")
+        }
+        #[inline]
+        fn produces_epsilon() -> bool {
             false
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-        ) -> bool {
-            false
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
         }
-        fn build_first_table(
-            s_table: &mut SyntaxTreeTable<Self::T>,
-            lits: &mut LitTable,
-        ) -> bool {
+        fn build_first(builder: &mut FirstBuilder<Self::T>) {
             let t = Self::type_id();
-            s_table
-                .init(
-                    t,
-                    |_| {
-                        let mut set = TermSet::default();
-                        let lit = lits.get_or_add("0000");
-                        set.insert_token_type_match(TokenU32::X01111, lit);
-                        (set, true)
-                    },
-                )
+            let expr = FirstExpr::insert_token(t, TokenU32::X01111, Some("0000"));
+            builder.add(expr);
         }
-        fn build_follow_table<'s>(
-            s_table: &'s SyntaxTreeTable<Self::T>,
-            f_table: &mut SyntaxTreeTable<Self::T>,
-            follows: &TermSet<Self::T>,
-        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
-            let t = Self::type_id();
-            f_table.get_mut(t).union(follows);
-            (s_table.get(t), true)
+        #[inline]
+        fn check_first_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_follow(builder: &mut FollowBuilder<Self::T>) {}
+        #[inline]
+        fn check_first_follow_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+            follow: &Follow<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_parsing(seen: &mut BTreeSet<TypeId>, parsing: &mut Parsing<Self::T>) {
+            seen.insert(Self::type_id());
         }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-            f_table: &SyntaxTreeTable<Self::T>,
-            _should_recover: bool,
-        ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = Self::type_id();
-            let f = f_table.get(t);
-            let follows = f.deref();
-            let result = parser.parse_token_match(TokenU32::X01111, follows, "0000");
-            match result {
-                Ok(ast) => Ok(ast),
-                Err(e) => e.into(),
-            }
-        }
-        #[inline]
-        fn into_parse_tree<'s>(
-            ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T>,
-        ) -> Self {
-            Self(ast)
+            meta: &RootMetadata<Self::T>,
+        ) -> AstResult<Self::T, Self::AST> {
+            let follow = meta.follow.get(&Self::type_id());
+            parser.parse_token_lit(TokenU32::X01111, "0000", follow)
         }
     }
 };
@@ -2166,74 +2134,72 @@ impl teleparse::ToSpan for X10000 {
 }
 #[automatically_derived]
 const _: () = {
-    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{LL1Error, AstResult, ToSpan, Span, Token, Parser, SyntaxTree};
     use teleparse::parser::ParserState;
-    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
-    use core::ops::Deref;
+    use teleparse::root::RootMetadata;
+    use teleparse::table::first::{FirstBuilder, FirstExpr, First};
+    use teleparse::table::follow::{FollowBuilder, Follow};
+    use teleparse::table::parsing::Parsing;
+    use ::core::any::TypeId;
+    use ::std::vec::Vec;
+    use ::std::collections::BTreeSet;
+    use ::std::option::Option;
+    use ::std::borrow::Cow;
     impl SyntaxTree for X10000 {
         type T = TokenU32;
         type AST = Token<TokenU32>;
         #[inline]
-        fn type_id() -> ::core::any::TypeId {
-            ::core::any::TypeId::of::<Self>()
+        fn type_id() -> TypeId {
+            TypeId::of::<Self>()
         }
         #[inline]
-        fn can_be_empty() -> bool {
+        fn debug() -> Cow<'static, str> {
+            Cow::Borrowed("X10000")
+        }
+        #[inline]
+        fn produces_epsilon() -> bool {
             false
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-        ) -> bool {
-            false
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
         }
-        fn build_first_table(
-            s_table: &mut SyntaxTreeTable<Self::T>,
-            lits: &mut LitTable,
-        ) -> bool {
+        fn build_first(builder: &mut FirstBuilder<Self::T>) {
             let t = Self::type_id();
-            s_table
-                .init(
-                    t,
-                    |_| {
-                        let mut set = TermSet::default();
-                        let lit = lits.get_or_add("0000");
-                        set.insert_token_type_match(TokenU32::X10000, lit);
-                        (set, true)
-                    },
-                )
+            let expr = FirstExpr::insert_token(t, TokenU32::X10000, Some("0000"));
+            builder.add(expr);
         }
-        fn build_follow_table<'s>(
-            s_table: &'s SyntaxTreeTable<Self::T>,
-            f_table: &mut SyntaxTreeTable<Self::T>,
-            follows: &TermSet<Self::T>,
-        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
-            let t = Self::type_id();
-            f_table.get_mut(t).union(follows);
-            (s_table.get(t), true)
+        #[inline]
+        fn check_first_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_follow(builder: &mut FollowBuilder<Self::T>) {}
+        #[inline]
+        fn check_first_follow_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+            follow: &Follow<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_parsing(seen: &mut BTreeSet<TypeId>, parsing: &mut Parsing<Self::T>) {
+            seen.insert(Self::type_id());
         }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-            f_table: &SyntaxTreeTable<Self::T>,
-            _should_recover: bool,
-        ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = Self::type_id();
-            let f = f_table.get(t);
-            let follows = f.deref();
-            let result = parser.parse_token_match(TokenU32::X10000, follows, "0000");
-            match result {
-                Ok(ast) => Ok(ast),
-                Err(e) => e.into(),
-            }
-        }
-        #[inline]
-        fn into_parse_tree<'s>(
-            ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T>,
-        ) -> Self {
-            Self(ast)
+            meta: &RootMetadata<Self::T>,
+        ) -> AstResult<Self::T, Self::AST> {
+            let follow = meta.follow.get(&Self::type_id());
+            parser.parse_token_lit(TokenU32::X10000, "0000", follow)
         }
     }
 };
@@ -2291,74 +2257,72 @@ impl teleparse::ToSpan for X10001 {
 }
 #[automatically_derived]
 const _: () = {
-    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{LL1Error, AstResult, ToSpan, Span, Token, Parser, SyntaxTree};
     use teleparse::parser::ParserState;
-    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
-    use core::ops::Deref;
+    use teleparse::root::RootMetadata;
+    use teleparse::table::first::{FirstBuilder, FirstExpr, First};
+    use teleparse::table::follow::{FollowBuilder, Follow};
+    use teleparse::table::parsing::Parsing;
+    use ::core::any::TypeId;
+    use ::std::vec::Vec;
+    use ::std::collections::BTreeSet;
+    use ::std::option::Option;
+    use ::std::borrow::Cow;
     impl SyntaxTree for X10001 {
         type T = TokenU32;
         type AST = Token<TokenU32>;
         #[inline]
-        fn type_id() -> ::core::any::TypeId {
-            ::core::any::TypeId::of::<Self>()
+        fn type_id() -> TypeId {
+            TypeId::of::<Self>()
         }
         #[inline]
-        fn can_be_empty() -> bool {
+        fn debug() -> Cow<'static, str> {
+            Cow::Borrowed("X10001")
+        }
+        #[inline]
+        fn produces_epsilon() -> bool {
             false
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-        ) -> bool {
-            false
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
         }
-        fn build_first_table(
-            s_table: &mut SyntaxTreeTable<Self::T>,
-            lits: &mut LitTable,
-        ) -> bool {
+        fn build_first(builder: &mut FirstBuilder<Self::T>) {
             let t = Self::type_id();
-            s_table
-                .init(
-                    t,
-                    |_| {
-                        let mut set = TermSet::default();
-                        let lit = lits.get_or_add("0000");
-                        set.insert_token_type_match(TokenU32::X10001, lit);
-                        (set, true)
-                    },
-                )
+            let expr = FirstExpr::insert_token(t, TokenU32::X10001, Some("0000"));
+            builder.add(expr);
         }
-        fn build_follow_table<'s>(
-            s_table: &'s SyntaxTreeTable<Self::T>,
-            f_table: &mut SyntaxTreeTable<Self::T>,
-            follows: &TermSet<Self::T>,
-        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
-            let t = Self::type_id();
-            f_table.get_mut(t).union(follows);
-            (s_table.get(t), true)
+        #[inline]
+        fn check_first_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_follow(builder: &mut FollowBuilder<Self::T>) {}
+        #[inline]
+        fn check_first_follow_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+            follow: &Follow<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_parsing(seen: &mut BTreeSet<TypeId>, parsing: &mut Parsing<Self::T>) {
+            seen.insert(Self::type_id());
         }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-            f_table: &SyntaxTreeTable<Self::T>,
-            _should_recover: bool,
-        ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = Self::type_id();
-            let f = f_table.get(t);
-            let follows = f.deref();
-            let result = parser.parse_token_match(TokenU32::X10001, follows, "0000");
-            match result {
-                Ok(ast) => Ok(ast),
-                Err(e) => e.into(),
-            }
-        }
-        #[inline]
-        fn into_parse_tree<'s>(
-            ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T>,
-        ) -> Self {
-            Self(ast)
+            meta: &RootMetadata<Self::T>,
+        ) -> AstResult<Self::T, Self::AST> {
+            let follow = meta.follow.get(&Self::type_id());
+            parser.parse_token_lit(TokenU32::X10001, "0000", follow)
         }
     }
 };
@@ -2416,74 +2380,72 @@ impl teleparse::ToSpan for X10010 {
 }
 #[automatically_derived]
 const _: () = {
-    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{LL1Error, AstResult, ToSpan, Span, Token, Parser, SyntaxTree};
     use teleparse::parser::ParserState;
-    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
-    use core::ops::Deref;
+    use teleparse::root::RootMetadata;
+    use teleparse::table::first::{FirstBuilder, FirstExpr, First};
+    use teleparse::table::follow::{FollowBuilder, Follow};
+    use teleparse::table::parsing::Parsing;
+    use ::core::any::TypeId;
+    use ::std::vec::Vec;
+    use ::std::collections::BTreeSet;
+    use ::std::option::Option;
+    use ::std::borrow::Cow;
     impl SyntaxTree for X10010 {
         type T = TokenU32;
         type AST = Token<TokenU32>;
         #[inline]
-        fn type_id() -> ::core::any::TypeId {
-            ::core::any::TypeId::of::<Self>()
+        fn type_id() -> TypeId {
+            TypeId::of::<Self>()
         }
         #[inline]
-        fn can_be_empty() -> bool {
+        fn debug() -> Cow<'static, str> {
+            Cow::Borrowed("X10010")
+        }
+        #[inline]
+        fn produces_epsilon() -> bool {
             false
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-        ) -> bool {
-            false
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
         }
-        fn build_first_table(
-            s_table: &mut SyntaxTreeTable<Self::T>,
-            lits: &mut LitTable,
-        ) -> bool {
+        fn build_first(builder: &mut FirstBuilder<Self::T>) {
             let t = Self::type_id();
-            s_table
-                .init(
-                    t,
-                    |_| {
-                        let mut set = TermSet::default();
-                        let lit = lits.get_or_add("0000");
-                        set.insert_token_type_match(TokenU32::X10010, lit);
-                        (set, true)
-                    },
-                )
+            let expr = FirstExpr::insert_token(t, TokenU32::X10010, Some("0000"));
+            builder.add(expr);
         }
-        fn build_follow_table<'s>(
-            s_table: &'s SyntaxTreeTable<Self::T>,
-            f_table: &mut SyntaxTreeTable<Self::T>,
-            follows: &TermSet<Self::T>,
-        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
-            let t = Self::type_id();
-            f_table.get_mut(t).union(follows);
-            (s_table.get(t), true)
+        #[inline]
+        fn check_first_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_follow(builder: &mut FollowBuilder<Self::T>) {}
+        #[inline]
+        fn check_first_follow_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+            follow: &Follow<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_parsing(seen: &mut BTreeSet<TypeId>, parsing: &mut Parsing<Self::T>) {
+            seen.insert(Self::type_id());
         }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-            f_table: &SyntaxTreeTable<Self::T>,
-            _should_recover: bool,
-        ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = Self::type_id();
-            let f = f_table.get(t);
-            let follows = f.deref();
-            let result = parser.parse_token_match(TokenU32::X10010, follows, "0000");
-            match result {
-                Ok(ast) => Ok(ast),
-                Err(e) => e.into(),
-            }
-        }
-        #[inline]
-        fn into_parse_tree<'s>(
-            ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T>,
-        ) -> Self {
-            Self(ast)
+            meta: &RootMetadata<Self::T>,
+        ) -> AstResult<Self::T, Self::AST> {
+            let follow = meta.follow.get(&Self::type_id());
+            parser.parse_token_lit(TokenU32::X10010, "0000", follow)
         }
     }
 };
@@ -2541,74 +2503,72 @@ impl teleparse::ToSpan for X10011 {
 }
 #[automatically_derived]
 const _: () = {
-    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{LL1Error, AstResult, ToSpan, Span, Token, Parser, SyntaxTree};
     use teleparse::parser::ParserState;
-    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
-    use core::ops::Deref;
+    use teleparse::root::RootMetadata;
+    use teleparse::table::first::{FirstBuilder, FirstExpr, First};
+    use teleparse::table::follow::{FollowBuilder, Follow};
+    use teleparse::table::parsing::Parsing;
+    use ::core::any::TypeId;
+    use ::std::vec::Vec;
+    use ::std::collections::BTreeSet;
+    use ::std::option::Option;
+    use ::std::borrow::Cow;
     impl SyntaxTree for X10011 {
         type T = TokenU32;
         type AST = Token<TokenU32>;
         #[inline]
-        fn type_id() -> ::core::any::TypeId {
-            ::core::any::TypeId::of::<Self>()
+        fn type_id() -> TypeId {
+            TypeId::of::<Self>()
         }
         #[inline]
-        fn can_be_empty() -> bool {
+        fn debug() -> Cow<'static, str> {
+            Cow::Borrowed("X10011")
+        }
+        #[inline]
+        fn produces_epsilon() -> bool {
             false
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-        ) -> bool {
-            false
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
         }
-        fn build_first_table(
-            s_table: &mut SyntaxTreeTable<Self::T>,
-            lits: &mut LitTable,
-        ) -> bool {
+        fn build_first(builder: &mut FirstBuilder<Self::T>) {
             let t = Self::type_id();
-            s_table
-                .init(
-                    t,
-                    |_| {
-                        let mut set = TermSet::default();
-                        let lit = lits.get_or_add("0000");
-                        set.insert_token_type_match(TokenU32::X10011, lit);
-                        (set, true)
-                    },
-                )
+            let expr = FirstExpr::insert_token(t, TokenU32::X10011, Some("0000"));
+            builder.add(expr);
         }
-        fn build_follow_table<'s>(
-            s_table: &'s SyntaxTreeTable<Self::T>,
-            f_table: &mut SyntaxTreeTable<Self::T>,
-            follows: &TermSet<Self::T>,
-        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
-            let t = Self::type_id();
-            f_table.get_mut(t).union(follows);
-            (s_table.get(t), true)
+        #[inline]
+        fn check_first_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_follow(builder: &mut FollowBuilder<Self::T>) {}
+        #[inline]
+        fn check_first_follow_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+            follow: &Follow<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_parsing(seen: &mut BTreeSet<TypeId>, parsing: &mut Parsing<Self::T>) {
+            seen.insert(Self::type_id());
         }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-            f_table: &SyntaxTreeTable<Self::T>,
-            _should_recover: bool,
-        ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = Self::type_id();
-            let f = f_table.get(t);
-            let follows = f.deref();
-            let result = parser.parse_token_match(TokenU32::X10011, follows, "0000");
-            match result {
-                Ok(ast) => Ok(ast),
-                Err(e) => e.into(),
-            }
-        }
-        #[inline]
-        fn into_parse_tree<'s>(
-            ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T>,
-        ) -> Self {
-            Self(ast)
+            meta: &RootMetadata<Self::T>,
+        ) -> AstResult<Self::T, Self::AST> {
+            let follow = meta.follow.get(&Self::type_id());
+            parser.parse_token_lit(TokenU32::X10011, "0000", follow)
         }
     }
 };
@@ -2666,74 +2626,72 @@ impl teleparse::ToSpan for X10100 {
 }
 #[automatically_derived]
 const _: () = {
-    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{LL1Error, AstResult, ToSpan, Span, Token, Parser, SyntaxTree};
     use teleparse::parser::ParserState;
-    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
-    use core::ops::Deref;
+    use teleparse::root::RootMetadata;
+    use teleparse::table::first::{FirstBuilder, FirstExpr, First};
+    use teleparse::table::follow::{FollowBuilder, Follow};
+    use teleparse::table::parsing::Parsing;
+    use ::core::any::TypeId;
+    use ::std::vec::Vec;
+    use ::std::collections::BTreeSet;
+    use ::std::option::Option;
+    use ::std::borrow::Cow;
     impl SyntaxTree for X10100 {
         type T = TokenU32;
         type AST = Token<TokenU32>;
         #[inline]
-        fn type_id() -> ::core::any::TypeId {
-            ::core::any::TypeId::of::<Self>()
+        fn type_id() -> TypeId {
+            TypeId::of::<Self>()
         }
         #[inline]
-        fn can_be_empty() -> bool {
+        fn debug() -> Cow<'static, str> {
+            Cow::Borrowed("X10100")
+        }
+        #[inline]
+        fn produces_epsilon() -> bool {
             false
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-        ) -> bool {
-            false
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
         }
-        fn build_first_table(
-            s_table: &mut SyntaxTreeTable<Self::T>,
-            lits: &mut LitTable,
-        ) -> bool {
+        fn build_first(builder: &mut FirstBuilder<Self::T>) {
             let t = Self::type_id();
-            s_table
-                .init(
-                    t,
-                    |_| {
-                        let mut set = TermSet::default();
-                        let lit = lits.get_or_add("0000");
-                        set.insert_token_type_match(TokenU32::X10100, lit);
-                        (set, true)
-                    },
-                )
+            let expr = FirstExpr::insert_token(t, TokenU32::X10100, Some("0000"));
+            builder.add(expr);
         }
-        fn build_follow_table<'s>(
-            s_table: &'s SyntaxTreeTable<Self::T>,
-            f_table: &mut SyntaxTreeTable<Self::T>,
-            follows: &TermSet<Self::T>,
-        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
-            let t = Self::type_id();
-            f_table.get_mut(t).union(follows);
-            (s_table.get(t), true)
+        #[inline]
+        fn check_first_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_follow(builder: &mut FollowBuilder<Self::T>) {}
+        #[inline]
+        fn check_first_follow_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+            follow: &Follow<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_parsing(seen: &mut BTreeSet<TypeId>, parsing: &mut Parsing<Self::T>) {
+            seen.insert(Self::type_id());
         }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-            f_table: &SyntaxTreeTable<Self::T>,
-            _should_recover: bool,
-        ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = Self::type_id();
-            let f = f_table.get(t);
-            let follows = f.deref();
-            let result = parser.parse_token_match(TokenU32::X10100, follows, "0000");
-            match result {
-                Ok(ast) => Ok(ast),
-                Err(e) => e.into(),
-            }
-        }
-        #[inline]
-        fn into_parse_tree<'s>(
-            ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T>,
-        ) -> Self {
-            Self(ast)
+            meta: &RootMetadata<Self::T>,
+        ) -> AstResult<Self::T, Self::AST> {
+            let follow = meta.follow.get(&Self::type_id());
+            parser.parse_token_lit(TokenU32::X10100, "0000", follow)
         }
     }
 };
@@ -2791,74 +2749,72 @@ impl teleparse::ToSpan for X10101 {
 }
 #[automatically_derived]
 const _: () = {
-    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{LL1Error, AstResult, ToSpan, Span, Token, Parser, SyntaxTree};
     use teleparse::parser::ParserState;
-    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
-    use core::ops::Deref;
+    use teleparse::root::RootMetadata;
+    use teleparse::table::first::{FirstBuilder, FirstExpr, First};
+    use teleparse::table::follow::{FollowBuilder, Follow};
+    use teleparse::table::parsing::Parsing;
+    use ::core::any::TypeId;
+    use ::std::vec::Vec;
+    use ::std::collections::BTreeSet;
+    use ::std::option::Option;
+    use ::std::borrow::Cow;
     impl SyntaxTree for X10101 {
         type T = TokenU32;
         type AST = Token<TokenU32>;
         #[inline]
-        fn type_id() -> ::core::any::TypeId {
-            ::core::any::TypeId::of::<Self>()
+        fn type_id() -> TypeId {
+            TypeId::of::<Self>()
         }
         #[inline]
-        fn can_be_empty() -> bool {
+        fn debug() -> Cow<'static, str> {
+            Cow::Borrowed("X10101")
+        }
+        #[inline]
+        fn produces_epsilon() -> bool {
             false
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-        ) -> bool {
-            false
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
         }
-        fn build_first_table(
-            s_table: &mut SyntaxTreeTable<Self::T>,
-            lits: &mut LitTable,
-        ) -> bool {
+        fn build_first(builder: &mut FirstBuilder<Self::T>) {
             let t = Self::type_id();
-            s_table
-                .init(
-                    t,
-                    |_| {
-                        let mut set = TermSet::default();
-                        let lit = lits.get_or_add("0000");
-                        set.insert_token_type_match(TokenU32::X10101, lit);
-                        (set, true)
-                    },
-                )
+            let expr = FirstExpr::insert_token(t, TokenU32::X10101, Some("0000"));
+            builder.add(expr);
         }
-        fn build_follow_table<'s>(
-            s_table: &'s SyntaxTreeTable<Self::T>,
-            f_table: &mut SyntaxTreeTable<Self::T>,
-            follows: &TermSet<Self::T>,
-        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
-            let t = Self::type_id();
-            f_table.get_mut(t).union(follows);
-            (s_table.get(t), true)
+        #[inline]
+        fn check_first_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_follow(builder: &mut FollowBuilder<Self::T>) {}
+        #[inline]
+        fn check_first_follow_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+            follow: &Follow<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_parsing(seen: &mut BTreeSet<TypeId>, parsing: &mut Parsing<Self::T>) {
+            seen.insert(Self::type_id());
         }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-            f_table: &SyntaxTreeTable<Self::T>,
-            _should_recover: bool,
-        ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = Self::type_id();
-            let f = f_table.get(t);
-            let follows = f.deref();
-            let result = parser.parse_token_match(TokenU32::X10101, follows, "0000");
-            match result {
-                Ok(ast) => Ok(ast),
-                Err(e) => e.into(),
-            }
-        }
-        #[inline]
-        fn into_parse_tree<'s>(
-            ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T>,
-        ) -> Self {
-            Self(ast)
+            meta: &RootMetadata<Self::T>,
+        ) -> AstResult<Self::T, Self::AST> {
+            let follow = meta.follow.get(&Self::type_id());
+            parser.parse_token_lit(TokenU32::X10101, "0000", follow)
         }
     }
 };
@@ -2916,74 +2872,72 @@ impl teleparse::ToSpan for X10110 {
 }
 #[automatically_derived]
 const _: () = {
-    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{LL1Error, AstResult, ToSpan, Span, Token, Parser, SyntaxTree};
     use teleparse::parser::ParserState;
-    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
-    use core::ops::Deref;
+    use teleparse::root::RootMetadata;
+    use teleparse::table::first::{FirstBuilder, FirstExpr, First};
+    use teleparse::table::follow::{FollowBuilder, Follow};
+    use teleparse::table::parsing::Parsing;
+    use ::core::any::TypeId;
+    use ::std::vec::Vec;
+    use ::std::collections::BTreeSet;
+    use ::std::option::Option;
+    use ::std::borrow::Cow;
     impl SyntaxTree for X10110 {
         type T = TokenU32;
         type AST = Token<TokenU32>;
         #[inline]
-        fn type_id() -> ::core::any::TypeId {
-            ::core::any::TypeId::of::<Self>()
+        fn type_id() -> TypeId {
+            TypeId::of::<Self>()
         }
         #[inline]
-        fn can_be_empty() -> bool {
+        fn debug() -> Cow<'static, str> {
+            Cow::Borrowed("X10110")
+        }
+        #[inline]
+        fn produces_epsilon() -> bool {
             false
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-        ) -> bool {
-            false
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
         }
-        fn build_first_table(
-            s_table: &mut SyntaxTreeTable<Self::T>,
-            lits: &mut LitTable,
-        ) -> bool {
+        fn build_first(builder: &mut FirstBuilder<Self::T>) {
             let t = Self::type_id();
-            s_table
-                .init(
-                    t,
-                    |_| {
-                        let mut set = TermSet::default();
-                        let lit = lits.get_or_add("0000");
-                        set.insert_token_type_match(TokenU32::X10110, lit);
-                        (set, true)
-                    },
-                )
+            let expr = FirstExpr::insert_token(t, TokenU32::X10110, Some("0000"));
+            builder.add(expr);
         }
-        fn build_follow_table<'s>(
-            s_table: &'s SyntaxTreeTable<Self::T>,
-            f_table: &mut SyntaxTreeTable<Self::T>,
-            follows: &TermSet<Self::T>,
-        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
-            let t = Self::type_id();
-            f_table.get_mut(t).union(follows);
-            (s_table.get(t), true)
+        #[inline]
+        fn check_first_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_follow(builder: &mut FollowBuilder<Self::T>) {}
+        #[inline]
+        fn check_first_follow_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+            follow: &Follow<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_parsing(seen: &mut BTreeSet<TypeId>, parsing: &mut Parsing<Self::T>) {
+            seen.insert(Self::type_id());
         }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-            f_table: &SyntaxTreeTable<Self::T>,
-            _should_recover: bool,
-        ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = Self::type_id();
-            let f = f_table.get(t);
-            let follows = f.deref();
-            let result = parser.parse_token_match(TokenU32::X10110, follows, "0000");
-            match result {
-                Ok(ast) => Ok(ast),
-                Err(e) => e.into(),
-            }
-        }
-        #[inline]
-        fn into_parse_tree<'s>(
-            ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T>,
-        ) -> Self {
-            Self(ast)
+            meta: &RootMetadata<Self::T>,
+        ) -> AstResult<Self::T, Self::AST> {
+            let follow = meta.follow.get(&Self::type_id());
+            parser.parse_token_lit(TokenU32::X10110, "0000", follow)
         }
     }
 };
@@ -3041,74 +2995,72 @@ impl teleparse::ToSpan for X10111 {
 }
 #[automatically_derived]
 const _: () = {
-    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{LL1Error, AstResult, ToSpan, Span, Token, Parser, SyntaxTree};
     use teleparse::parser::ParserState;
-    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
-    use core::ops::Deref;
+    use teleparse::root::RootMetadata;
+    use teleparse::table::first::{FirstBuilder, FirstExpr, First};
+    use teleparse::table::follow::{FollowBuilder, Follow};
+    use teleparse::table::parsing::Parsing;
+    use ::core::any::TypeId;
+    use ::std::vec::Vec;
+    use ::std::collections::BTreeSet;
+    use ::std::option::Option;
+    use ::std::borrow::Cow;
     impl SyntaxTree for X10111 {
         type T = TokenU32;
         type AST = Token<TokenU32>;
         #[inline]
-        fn type_id() -> ::core::any::TypeId {
-            ::core::any::TypeId::of::<Self>()
+        fn type_id() -> TypeId {
+            TypeId::of::<Self>()
         }
         #[inline]
-        fn can_be_empty() -> bool {
+        fn debug() -> Cow<'static, str> {
+            Cow::Borrowed("X10111")
+        }
+        #[inline]
+        fn produces_epsilon() -> bool {
             false
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-        ) -> bool {
-            false
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
         }
-        fn build_first_table(
-            s_table: &mut SyntaxTreeTable<Self::T>,
-            lits: &mut LitTable,
-        ) -> bool {
+        fn build_first(builder: &mut FirstBuilder<Self::T>) {
             let t = Self::type_id();
-            s_table
-                .init(
-                    t,
-                    |_| {
-                        let mut set = TermSet::default();
-                        let lit = lits.get_or_add("0000");
-                        set.insert_token_type_match(TokenU32::X10111, lit);
-                        (set, true)
-                    },
-                )
+            let expr = FirstExpr::insert_token(t, TokenU32::X10111, Some("0000"));
+            builder.add(expr);
         }
-        fn build_follow_table<'s>(
-            s_table: &'s SyntaxTreeTable<Self::T>,
-            f_table: &mut SyntaxTreeTable<Self::T>,
-            follows: &TermSet<Self::T>,
-        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
-            let t = Self::type_id();
-            f_table.get_mut(t).union(follows);
-            (s_table.get(t), true)
+        #[inline]
+        fn check_first_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_follow(builder: &mut FollowBuilder<Self::T>) {}
+        #[inline]
+        fn check_first_follow_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+            follow: &Follow<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_parsing(seen: &mut BTreeSet<TypeId>, parsing: &mut Parsing<Self::T>) {
+            seen.insert(Self::type_id());
         }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-            f_table: &SyntaxTreeTable<Self::T>,
-            _should_recover: bool,
-        ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = Self::type_id();
-            let f = f_table.get(t);
-            let follows = f.deref();
-            let result = parser.parse_token_match(TokenU32::X10111, follows, "0000");
-            match result {
-                Ok(ast) => Ok(ast),
-                Err(e) => e.into(),
-            }
-        }
-        #[inline]
-        fn into_parse_tree<'s>(
-            ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T>,
-        ) -> Self {
-            Self(ast)
+            meta: &RootMetadata<Self::T>,
+        ) -> AstResult<Self::T, Self::AST> {
+            let follow = meta.follow.get(&Self::type_id());
+            parser.parse_token_lit(TokenU32::X10111, "0000", follow)
         }
     }
 };
@@ -3166,74 +3118,72 @@ impl teleparse::ToSpan for X11000 {
 }
 #[automatically_derived]
 const _: () = {
-    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{LL1Error, AstResult, ToSpan, Span, Token, Parser, SyntaxTree};
     use teleparse::parser::ParserState;
-    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
-    use core::ops::Deref;
+    use teleparse::root::RootMetadata;
+    use teleparse::table::first::{FirstBuilder, FirstExpr, First};
+    use teleparse::table::follow::{FollowBuilder, Follow};
+    use teleparse::table::parsing::Parsing;
+    use ::core::any::TypeId;
+    use ::std::vec::Vec;
+    use ::std::collections::BTreeSet;
+    use ::std::option::Option;
+    use ::std::borrow::Cow;
     impl SyntaxTree for X11000 {
         type T = TokenU32;
         type AST = Token<TokenU32>;
         #[inline]
-        fn type_id() -> ::core::any::TypeId {
-            ::core::any::TypeId::of::<Self>()
+        fn type_id() -> TypeId {
+            TypeId::of::<Self>()
         }
         #[inline]
-        fn can_be_empty() -> bool {
+        fn debug() -> Cow<'static, str> {
+            Cow::Borrowed("X11000")
+        }
+        #[inline]
+        fn produces_epsilon() -> bool {
             false
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-        ) -> bool {
-            false
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
         }
-        fn build_first_table(
-            s_table: &mut SyntaxTreeTable<Self::T>,
-            lits: &mut LitTable,
-        ) -> bool {
+        fn build_first(builder: &mut FirstBuilder<Self::T>) {
             let t = Self::type_id();
-            s_table
-                .init(
-                    t,
-                    |_| {
-                        let mut set = TermSet::default();
-                        let lit = lits.get_or_add("0000");
-                        set.insert_token_type_match(TokenU32::X11000, lit);
-                        (set, true)
-                    },
-                )
+            let expr = FirstExpr::insert_token(t, TokenU32::X11000, Some("0000"));
+            builder.add(expr);
         }
-        fn build_follow_table<'s>(
-            s_table: &'s SyntaxTreeTable<Self::T>,
-            f_table: &mut SyntaxTreeTable<Self::T>,
-            follows: &TermSet<Self::T>,
-        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
-            let t = Self::type_id();
-            f_table.get_mut(t).union(follows);
-            (s_table.get(t), true)
+        #[inline]
+        fn check_first_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_follow(builder: &mut FollowBuilder<Self::T>) {}
+        #[inline]
+        fn check_first_follow_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+            follow: &Follow<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_parsing(seen: &mut BTreeSet<TypeId>, parsing: &mut Parsing<Self::T>) {
+            seen.insert(Self::type_id());
         }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-            f_table: &SyntaxTreeTable<Self::T>,
-            _should_recover: bool,
-        ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = Self::type_id();
-            let f = f_table.get(t);
-            let follows = f.deref();
-            let result = parser.parse_token_match(TokenU32::X11000, follows, "0000");
-            match result {
-                Ok(ast) => Ok(ast),
-                Err(e) => e.into(),
-            }
-        }
-        #[inline]
-        fn into_parse_tree<'s>(
-            ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T>,
-        ) -> Self {
-            Self(ast)
+            meta: &RootMetadata<Self::T>,
+        ) -> AstResult<Self::T, Self::AST> {
+            let follow = meta.follow.get(&Self::type_id());
+            parser.parse_token_lit(TokenU32::X11000, "0000", follow)
         }
     }
 };
@@ -3291,74 +3241,72 @@ impl teleparse::ToSpan for X11001 {
 }
 #[automatically_derived]
 const _: () = {
-    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{LL1Error, AstResult, ToSpan, Span, Token, Parser, SyntaxTree};
     use teleparse::parser::ParserState;
-    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
-    use core::ops::Deref;
+    use teleparse::root::RootMetadata;
+    use teleparse::table::first::{FirstBuilder, FirstExpr, First};
+    use teleparse::table::follow::{FollowBuilder, Follow};
+    use teleparse::table::parsing::Parsing;
+    use ::core::any::TypeId;
+    use ::std::vec::Vec;
+    use ::std::collections::BTreeSet;
+    use ::std::option::Option;
+    use ::std::borrow::Cow;
     impl SyntaxTree for X11001 {
         type T = TokenU32;
         type AST = Token<TokenU32>;
         #[inline]
-        fn type_id() -> ::core::any::TypeId {
-            ::core::any::TypeId::of::<Self>()
+        fn type_id() -> TypeId {
+            TypeId::of::<Self>()
         }
         #[inline]
-        fn can_be_empty() -> bool {
+        fn debug() -> Cow<'static, str> {
+            Cow::Borrowed("X11001")
+        }
+        #[inline]
+        fn produces_epsilon() -> bool {
             false
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-        ) -> bool {
-            false
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
         }
-        fn build_first_table(
-            s_table: &mut SyntaxTreeTable<Self::T>,
-            lits: &mut LitTable,
-        ) -> bool {
+        fn build_first(builder: &mut FirstBuilder<Self::T>) {
             let t = Self::type_id();
-            s_table
-                .init(
-                    t,
-                    |_| {
-                        let mut set = TermSet::default();
-                        let lit = lits.get_or_add("0000");
-                        set.insert_token_type_match(TokenU32::X11001, lit);
-                        (set, true)
-                    },
-                )
+            let expr = FirstExpr::insert_token(t, TokenU32::X11001, Some("0000"));
+            builder.add(expr);
         }
-        fn build_follow_table<'s>(
-            s_table: &'s SyntaxTreeTable<Self::T>,
-            f_table: &mut SyntaxTreeTable<Self::T>,
-            follows: &TermSet<Self::T>,
-        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
-            let t = Self::type_id();
-            f_table.get_mut(t).union(follows);
-            (s_table.get(t), true)
+        #[inline]
+        fn check_first_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_follow(builder: &mut FollowBuilder<Self::T>) {}
+        #[inline]
+        fn check_first_follow_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+            follow: &Follow<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_parsing(seen: &mut BTreeSet<TypeId>, parsing: &mut Parsing<Self::T>) {
+            seen.insert(Self::type_id());
         }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-            f_table: &SyntaxTreeTable<Self::T>,
-            _should_recover: bool,
-        ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = Self::type_id();
-            let f = f_table.get(t);
-            let follows = f.deref();
-            let result = parser.parse_token_match(TokenU32::X11001, follows, "0000");
-            match result {
-                Ok(ast) => Ok(ast),
-                Err(e) => e.into(),
-            }
-        }
-        #[inline]
-        fn into_parse_tree<'s>(
-            ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T>,
-        ) -> Self {
-            Self(ast)
+            meta: &RootMetadata<Self::T>,
+        ) -> AstResult<Self::T, Self::AST> {
+            let follow = meta.follow.get(&Self::type_id());
+            parser.parse_token_lit(TokenU32::X11001, "0000", follow)
         }
     }
 };
@@ -3416,74 +3364,72 @@ impl teleparse::ToSpan for X11010 {
 }
 #[automatically_derived]
 const _: () = {
-    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{LL1Error, AstResult, ToSpan, Span, Token, Parser, SyntaxTree};
     use teleparse::parser::ParserState;
-    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
-    use core::ops::Deref;
+    use teleparse::root::RootMetadata;
+    use teleparse::table::first::{FirstBuilder, FirstExpr, First};
+    use teleparse::table::follow::{FollowBuilder, Follow};
+    use teleparse::table::parsing::Parsing;
+    use ::core::any::TypeId;
+    use ::std::vec::Vec;
+    use ::std::collections::BTreeSet;
+    use ::std::option::Option;
+    use ::std::borrow::Cow;
     impl SyntaxTree for X11010 {
         type T = TokenU32;
         type AST = Token<TokenU32>;
         #[inline]
-        fn type_id() -> ::core::any::TypeId {
-            ::core::any::TypeId::of::<Self>()
+        fn type_id() -> TypeId {
+            TypeId::of::<Self>()
         }
         #[inline]
-        fn can_be_empty() -> bool {
+        fn debug() -> Cow<'static, str> {
+            Cow::Borrowed("X11010")
+        }
+        #[inline]
+        fn produces_epsilon() -> bool {
             false
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-        ) -> bool {
-            false
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
         }
-        fn build_first_table(
-            s_table: &mut SyntaxTreeTable<Self::T>,
-            lits: &mut LitTable,
-        ) -> bool {
+        fn build_first(builder: &mut FirstBuilder<Self::T>) {
             let t = Self::type_id();
-            s_table
-                .init(
-                    t,
-                    |_| {
-                        let mut set = TermSet::default();
-                        let lit = lits.get_or_add("0000");
-                        set.insert_token_type_match(TokenU32::X11010, lit);
-                        (set, true)
-                    },
-                )
+            let expr = FirstExpr::insert_token(t, TokenU32::X11010, Some("0000"));
+            builder.add(expr);
         }
-        fn build_follow_table<'s>(
-            s_table: &'s SyntaxTreeTable<Self::T>,
-            f_table: &mut SyntaxTreeTable<Self::T>,
-            follows: &TermSet<Self::T>,
-        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
-            let t = Self::type_id();
-            f_table.get_mut(t).union(follows);
-            (s_table.get(t), true)
+        #[inline]
+        fn check_first_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_follow(builder: &mut FollowBuilder<Self::T>) {}
+        #[inline]
+        fn check_first_follow_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+            follow: &Follow<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_parsing(seen: &mut BTreeSet<TypeId>, parsing: &mut Parsing<Self::T>) {
+            seen.insert(Self::type_id());
         }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-            f_table: &SyntaxTreeTable<Self::T>,
-            _should_recover: bool,
-        ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = Self::type_id();
-            let f = f_table.get(t);
-            let follows = f.deref();
-            let result = parser.parse_token_match(TokenU32::X11010, follows, "0000");
-            match result {
-                Ok(ast) => Ok(ast),
-                Err(e) => e.into(),
-            }
-        }
-        #[inline]
-        fn into_parse_tree<'s>(
-            ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T>,
-        ) -> Self {
-            Self(ast)
+            meta: &RootMetadata<Self::T>,
+        ) -> AstResult<Self::T, Self::AST> {
+            let follow = meta.follow.get(&Self::type_id());
+            parser.parse_token_lit(TokenU32::X11010, "0000", follow)
         }
     }
 };
@@ -3541,74 +3487,72 @@ impl teleparse::ToSpan for X11011 {
 }
 #[automatically_derived]
 const _: () = {
-    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{LL1Error, AstResult, ToSpan, Span, Token, Parser, SyntaxTree};
     use teleparse::parser::ParserState;
-    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
-    use core::ops::Deref;
+    use teleparse::root::RootMetadata;
+    use teleparse::table::first::{FirstBuilder, FirstExpr, First};
+    use teleparse::table::follow::{FollowBuilder, Follow};
+    use teleparse::table::parsing::Parsing;
+    use ::core::any::TypeId;
+    use ::std::vec::Vec;
+    use ::std::collections::BTreeSet;
+    use ::std::option::Option;
+    use ::std::borrow::Cow;
     impl SyntaxTree for X11011 {
         type T = TokenU32;
         type AST = Token<TokenU32>;
         #[inline]
-        fn type_id() -> ::core::any::TypeId {
-            ::core::any::TypeId::of::<Self>()
+        fn type_id() -> TypeId {
+            TypeId::of::<Self>()
         }
         #[inline]
-        fn can_be_empty() -> bool {
+        fn debug() -> Cow<'static, str> {
+            Cow::Borrowed("X11011")
+        }
+        #[inline]
+        fn produces_epsilon() -> bool {
             false
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-        ) -> bool {
-            false
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
         }
-        fn build_first_table(
-            s_table: &mut SyntaxTreeTable<Self::T>,
-            lits: &mut LitTable,
-        ) -> bool {
+        fn build_first(builder: &mut FirstBuilder<Self::T>) {
             let t = Self::type_id();
-            s_table
-                .init(
-                    t,
-                    |_| {
-                        let mut set = TermSet::default();
-                        let lit = lits.get_or_add("0000");
-                        set.insert_token_type_match(TokenU32::X11011, lit);
-                        (set, true)
-                    },
-                )
+            let expr = FirstExpr::insert_token(t, TokenU32::X11011, Some("0000"));
+            builder.add(expr);
         }
-        fn build_follow_table<'s>(
-            s_table: &'s SyntaxTreeTable<Self::T>,
-            f_table: &mut SyntaxTreeTable<Self::T>,
-            follows: &TermSet<Self::T>,
-        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
-            let t = Self::type_id();
-            f_table.get_mut(t).union(follows);
-            (s_table.get(t), true)
+        #[inline]
+        fn check_first_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_follow(builder: &mut FollowBuilder<Self::T>) {}
+        #[inline]
+        fn check_first_follow_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+            follow: &Follow<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_parsing(seen: &mut BTreeSet<TypeId>, parsing: &mut Parsing<Self::T>) {
+            seen.insert(Self::type_id());
         }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-            f_table: &SyntaxTreeTable<Self::T>,
-            _should_recover: bool,
-        ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = Self::type_id();
-            let f = f_table.get(t);
-            let follows = f.deref();
-            let result = parser.parse_token_match(TokenU32::X11011, follows, "0000");
-            match result {
-                Ok(ast) => Ok(ast),
-                Err(e) => e.into(),
-            }
-        }
-        #[inline]
-        fn into_parse_tree<'s>(
-            ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T>,
-        ) -> Self {
-            Self(ast)
+            meta: &RootMetadata<Self::T>,
+        ) -> AstResult<Self::T, Self::AST> {
+            let follow = meta.follow.get(&Self::type_id());
+            parser.parse_token_lit(TokenU32::X11011, "0000", follow)
         }
     }
 };
@@ -3666,74 +3610,72 @@ impl teleparse::ToSpan for X11100 {
 }
 #[automatically_derived]
 const _: () = {
-    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{LL1Error, AstResult, ToSpan, Span, Token, Parser, SyntaxTree};
     use teleparse::parser::ParserState;
-    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
-    use core::ops::Deref;
+    use teleparse::root::RootMetadata;
+    use teleparse::table::first::{FirstBuilder, FirstExpr, First};
+    use teleparse::table::follow::{FollowBuilder, Follow};
+    use teleparse::table::parsing::Parsing;
+    use ::core::any::TypeId;
+    use ::std::vec::Vec;
+    use ::std::collections::BTreeSet;
+    use ::std::option::Option;
+    use ::std::borrow::Cow;
     impl SyntaxTree for X11100 {
         type T = TokenU32;
         type AST = Token<TokenU32>;
         #[inline]
-        fn type_id() -> ::core::any::TypeId {
-            ::core::any::TypeId::of::<Self>()
+        fn type_id() -> TypeId {
+            TypeId::of::<Self>()
         }
         #[inline]
-        fn can_be_empty() -> bool {
+        fn debug() -> Cow<'static, str> {
+            Cow::Borrowed("X11100")
+        }
+        #[inline]
+        fn produces_epsilon() -> bool {
             false
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-        ) -> bool {
-            false
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
         }
-        fn build_first_table(
-            s_table: &mut SyntaxTreeTable<Self::T>,
-            lits: &mut LitTable,
-        ) -> bool {
+        fn build_first(builder: &mut FirstBuilder<Self::T>) {
             let t = Self::type_id();
-            s_table
-                .init(
-                    t,
-                    |_| {
-                        let mut set = TermSet::default();
-                        let lit = lits.get_or_add("0000");
-                        set.insert_token_type_match(TokenU32::X11100, lit);
-                        (set, true)
-                    },
-                )
+            let expr = FirstExpr::insert_token(t, TokenU32::X11100, Some("0000"));
+            builder.add(expr);
         }
-        fn build_follow_table<'s>(
-            s_table: &'s SyntaxTreeTable<Self::T>,
-            f_table: &mut SyntaxTreeTable<Self::T>,
-            follows: &TermSet<Self::T>,
-        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
-            let t = Self::type_id();
-            f_table.get_mut(t).union(follows);
-            (s_table.get(t), true)
+        #[inline]
+        fn check_first_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_follow(builder: &mut FollowBuilder<Self::T>) {}
+        #[inline]
+        fn check_first_follow_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+            follow: &Follow<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_parsing(seen: &mut BTreeSet<TypeId>, parsing: &mut Parsing<Self::T>) {
+            seen.insert(Self::type_id());
         }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-            f_table: &SyntaxTreeTable<Self::T>,
-            _should_recover: bool,
-        ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = Self::type_id();
-            let f = f_table.get(t);
-            let follows = f.deref();
-            let result = parser.parse_token_match(TokenU32::X11100, follows, "0000");
-            match result {
-                Ok(ast) => Ok(ast),
-                Err(e) => e.into(),
-            }
-        }
-        #[inline]
-        fn into_parse_tree<'s>(
-            ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T>,
-        ) -> Self {
-            Self(ast)
+            meta: &RootMetadata<Self::T>,
+        ) -> AstResult<Self::T, Self::AST> {
+            let follow = meta.follow.get(&Self::type_id());
+            parser.parse_token_lit(TokenU32::X11100, "0000", follow)
         }
     }
 };
@@ -3791,74 +3733,72 @@ impl teleparse::ToSpan for X11101 {
 }
 #[automatically_derived]
 const _: () = {
-    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{LL1Error, AstResult, ToSpan, Span, Token, Parser, SyntaxTree};
     use teleparse::parser::ParserState;
-    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
-    use core::ops::Deref;
+    use teleparse::root::RootMetadata;
+    use teleparse::table::first::{FirstBuilder, FirstExpr, First};
+    use teleparse::table::follow::{FollowBuilder, Follow};
+    use teleparse::table::parsing::Parsing;
+    use ::core::any::TypeId;
+    use ::std::vec::Vec;
+    use ::std::collections::BTreeSet;
+    use ::std::option::Option;
+    use ::std::borrow::Cow;
     impl SyntaxTree for X11101 {
         type T = TokenU32;
         type AST = Token<TokenU32>;
         #[inline]
-        fn type_id() -> ::core::any::TypeId {
-            ::core::any::TypeId::of::<Self>()
+        fn type_id() -> TypeId {
+            TypeId::of::<Self>()
         }
         #[inline]
-        fn can_be_empty() -> bool {
+        fn debug() -> Cow<'static, str> {
+            Cow::Borrowed("X11101")
+        }
+        #[inline]
+        fn produces_epsilon() -> bool {
             false
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-        ) -> bool {
-            false
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
         }
-        fn build_first_table(
-            s_table: &mut SyntaxTreeTable<Self::T>,
-            lits: &mut LitTable,
-        ) -> bool {
+        fn build_first(builder: &mut FirstBuilder<Self::T>) {
             let t = Self::type_id();
-            s_table
-                .init(
-                    t,
-                    |_| {
-                        let mut set = TermSet::default();
-                        let lit = lits.get_or_add("0000");
-                        set.insert_token_type_match(TokenU32::X11101, lit);
-                        (set, true)
-                    },
-                )
+            let expr = FirstExpr::insert_token(t, TokenU32::X11101, Some("0000"));
+            builder.add(expr);
         }
-        fn build_follow_table<'s>(
-            s_table: &'s SyntaxTreeTable<Self::T>,
-            f_table: &mut SyntaxTreeTable<Self::T>,
-            follows: &TermSet<Self::T>,
-        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
-            let t = Self::type_id();
-            f_table.get_mut(t).union(follows);
-            (s_table.get(t), true)
+        #[inline]
+        fn check_first_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_follow(builder: &mut FollowBuilder<Self::T>) {}
+        #[inline]
+        fn check_first_follow_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+            follow: &Follow<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_parsing(seen: &mut BTreeSet<TypeId>, parsing: &mut Parsing<Self::T>) {
+            seen.insert(Self::type_id());
         }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-            f_table: &SyntaxTreeTable<Self::T>,
-            _should_recover: bool,
-        ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = Self::type_id();
-            let f = f_table.get(t);
-            let follows = f.deref();
-            let result = parser.parse_token_match(TokenU32::X11101, follows, "0000");
-            match result {
-                Ok(ast) => Ok(ast),
-                Err(e) => e.into(),
-            }
-        }
-        #[inline]
-        fn into_parse_tree<'s>(
-            ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T>,
-        ) -> Self {
-            Self(ast)
+            meta: &RootMetadata<Self::T>,
+        ) -> AstResult<Self::T, Self::AST> {
+            let follow = meta.follow.get(&Self::type_id());
+            parser.parse_token_lit(TokenU32::X11101, "0000", follow)
         }
     }
 };
@@ -3916,74 +3856,72 @@ impl teleparse::ToSpan for X11110 {
 }
 #[automatically_derived]
 const _: () = {
-    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{LL1Error, AstResult, ToSpan, Span, Token, Parser, SyntaxTree};
     use teleparse::parser::ParserState;
-    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
-    use core::ops::Deref;
+    use teleparse::root::RootMetadata;
+    use teleparse::table::first::{FirstBuilder, FirstExpr, First};
+    use teleparse::table::follow::{FollowBuilder, Follow};
+    use teleparse::table::parsing::Parsing;
+    use ::core::any::TypeId;
+    use ::std::vec::Vec;
+    use ::std::collections::BTreeSet;
+    use ::std::option::Option;
+    use ::std::borrow::Cow;
     impl SyntaxTree for X11110 {
         type T = TokenU32;
         type AST = Token<TokenU32>;
         #[inline]
-        fn type_id() -> ::core::any::TypeId {
-            ::core::any::TypeId::of::<Self>()
+        fn type_id() -> TypeId {
+            TypeId::of::<Self>()
         }
         #[inline]
-        fn can_be_empty() -> bool {
+        fn debug() -> Cow<'static, str> {
+            Cow::Borrowed("X11110")
+        }
+        #[inline]
+        fn produces_epsilon() -> bool {
             false
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-        ) -> bool {
-            false
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
         }
-        fn build_first_table(
-            s_table: &mut SyntaxTreeTable<Self::T>,
-            lits: &mut LitTable,
-        ) -> bool {
+        fn build_first(builder: &mut FirstBuilder<Self::T>) {
             let t = Self::type_id();
-            s_table
-                .init(
-                    t,
-                    |_| {
-                        let mut set = TermSet::default();
-                        let lit = lits.get_or_add("0000");
-                        set.insert_token_type_match(TokenU32::X11110, lit);
-                        (set, true)
-                    },
-                )
+            let expr = FirstExpr::insert_token(t, TokenU32::X11110, Some("0000"));
+            builder.add(expr);
         }
-        fn build_follow_table<'s>(
-            s_table: &'s SyntaxTreeTable<Self::T>,
-            f_table: &mut SyntaxTreeTable<Self::T>,
-            follows: &TermSet<Self::T>,
-        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
-            let t = Self::type_id();
-            f_table.get_mut(t).union(follows);
-            (s_table.get(t), true)
+        #[inline]
+        fn check_first_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_follow(builder: &mut FollowBuilder<Self::T>) {}
+        #[inline]
+        fn check_first_follow_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+            follow: &Follow<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_parsing(seen: &mut BTreeSet<TypeId>, parsing: &mut Parsing<Self::T>) {
+            seen.insert(Self::type_id());
         }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-            f_table: &SyntaxTreeTable<Self::T>,
-            _should_recover: bool,
-        ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = Self::type_id();
-            let f = f_table.get(t);
-            let follows = f.deref();
-            let result = parser.parse_token_match(TokenU32::X11110, follows, "0000");
-            match result {
-                Ok(ast) => Ok(ast),
-                Err(e) => e.into(),
-            }
-        }
-        #[inline]
-        fn into_parse_tree<'s>(
-            ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T>,
-        ) -> Self {
-            Self(ast)
+            meta: &RootMetadata<Self::T>,
+        ) -> AstResult<Self::T, Self::AST> {
+            let follow = meta.follow.get(&Self::type_id());
+            parser.parse_token_lit(TokenU32::X11110, "0000", follow)
         }
     }
 };
@@ -4041,74 +3979,72 @@ impl teleparse::ToSpan for X11111 {
 }
 #[automatically_derived]
 const _: () = {
-    use teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+    use teleparse::{LL1Error, AstResult, ToSpan, Span, Token, Parser, SyntaxTree};
     use teleparse::parser::ParserState;
-    use teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
-    use core::ops::Deref;
+    use teleparse::root::RootMetadata;
+    use teleparse::table::first::{FirstBuilder, FirstExpr, First};
+    use teleparse::table::follow::{FollowBuilder, Follow};
+    use teleparse::table::parsing::Parsing;
+    use ::core::any::TypeId;
+    use ::std::vec::Vec;
+    use ::std::collections::BTreeSet;
+    use ::std::option::Option;
+    use ::std::borrow::Cow;
     impl SyntaxTree for X11111 {
         type T = TokenU32;
         type AST = Token<TokenU32>;
         #[inline]
-        fn type_id() -> ::core::any::TypeId {
-            ::core::any::TypeId::of::<Self>()
+        fn type_id() -> TypeId {
+            TypeId::of::<Self>()
         }
         #[inline]
-        fn can_be_empty() -> bool {
+        fn debug() -> Cow<'static, str> {
+            Cow::Borrowed("X11111")
+        }
+        #[inline]
+        fn produces_epsilon() -> bool {
             false
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut ::std::vec::Vec<::core::any::TypeId>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-        ) -> bool {
-            false
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
         }
-        fn build_first_table(
-            s_table: &mut SyntaxTreeTable<Self::T>,
-            lits: &mut LitTable,
-        ) -> bool {
+        fn build_first(builder: &mut FirstBuilder<Self::T>) {
             let t = Self::type_id();
-            s_table
-                .init(
-                    t,
-                    |_| {
-                        let mut set = TermSet::default();
-                        let lit = lits.get_or_add("0000");
-                        set.insert_token_type_match(TokenU32::X11111, lit);
-                        (set, true)
-                    },
-                )
+            let expr = FirstExpr::insert_token(t, TokenU32::X11111, Some("0000"));
+            builder.add(expr);
         }
-        fn build_follow_table<'s>(
-            s_table: &'s SyntaxTreeTable<Self::T>,
-            f_table: &mut SyntaxTreeTable<Self::T>,
-            follows: &TermSet<Self::T>,
-        ) -> (::std::borrow::Cow<'s, TermSet<Self::T>>, bool) {
-            let t = Self::type_id();
-            f_table.get_mut(t).union(follows);
-            (s_table.get(t), true)
+        #[inline]
+        fn check_first_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_follow(builder: &mut FollowBuilder<Self::T>) {}
+        #[inline]
+        fn check_first_follow_conflict_recursive(
+            seen: &mut BTreeSet<TypeId>,
+            first: &First<Self::T>,
+            follow: &Follow<Self::T>,
+        ) -> Result<(), LL1Error> {
+            Ok(())
+        }
+        #[inline]
+        fn build_parsing(seen: &mut BTreeSet<TypeId>, parsing: &mut Parsing<Self::T>) {
+            seen.insert(Self::type_id());
         }
         #[inline]
         fn try_parse_ast<'s>(
             parser: &mut Parser<'s, Self::T>,
-            f_table: &SyntaxTreeTable<Self::T>,
-            _should_recover: bool,
-        ) -> SyntaxResult<Self::T, Self::AST> {
-            let t = Self::type_id();
-            let f = f_table.get(t);
-            let follows = f.deref();
-            let result = parser.parse_token_match(TokenU32::X11111, follows, "0000");
-            match result {
-                Ok(ast) => Ok(ast),
-                Err(e) => e.into(),
-            }
-        }
-        #[inline]
-        fn into_parse_tree<'s>(
-            ast: Self::AST,
-            _parser: &mut Parser<'s, Self::T>,
-        ) -> Self {
-            Self(ast)
+            meta: &RootMetadata<Self::T>,
+        ) -> AstResult<Self::T, Self::AST> {
+            let follow = meta.follow.get(&Self::type_id());
+            parser.parse_token_lit(TokenU32::X11111, "0000", follow)
         }
     }
 };
@@ -4118,11 +4054,15 @@ const _: () = {
     impl teleparse::TokenType for TokenU32 {
         type Bit = u32;
         type Lexer<'s> = DerivedLexer<'s>;
-        type Follow = [teleparse::table::LitSet; 32usize];
+        type Map<T: Default + Clone> = [T; 32usize];
         type Ctx = ();
         #[inline]
         fn id(&self) -> usize {
             *self as usize
+        }
+        #[inline]
+        fn from_id(id: usize) -> Self {
+            unsafe { std::mem::transmute(id) }
         }
         #[inline]
         fn to_bit(&self) -> Self::Bit {

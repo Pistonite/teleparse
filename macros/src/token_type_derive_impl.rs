@@ -285,12 +285,17 @@ fn expand_internal(
             impl #teleparse::TokenType for #enum_ident {
                 type Bit = #repr_ty;
                 type Lexer<'s> = DerivedLexer<'s>;
-                type Follow = [ #teleparse::table::LitSet; #enum_len];
+                type Map<T: Default + Clone> = [T; #enum_len];
                 type Ctx = #context_ty;
 
                 #[inline]
                 fn id(&self) -> usize {
                     *self as usize
+                }
+
+                #[inline]
+                fn from_id(id: usize) -> Self {
+                    unsafe { std::mem::transmute(id) }
                 }
 
                 #[inline]
@@ -416,14 +421,15 @@ fn derive_terminal(
     match_lit: Option<&syn::LitStr>,
 ) -> TokenStream2 {
     let teleparse = crate_ident();
-    // let parse_impl = match match_lit {
-    //     Some(match_lit) => quote! {
-    //         parser.parse_token_match(#enum_ident::#variant_ident, #match_lit)
-    //     },
-    //     None => quote! {
-    //         parser.parse_token(#enum_ident::#variant_ident)
-    //     },
-    // };
+    let terminal_ident_str = terminal_ident.to_string();
+    let parse_impl = match match_lit {
+        Some(match_lit) => quote! {
+            parser.parse_token_lit(#enum_ident::#variant_ident, #match_lit, follow)
+        },
+        None => quote! {
+            parser.parse_token(#enum_ident::#variant_ident)
+        },
+    };
     let first_impl = match match_lit {
         Some(match_lit) => quote! {Some(#match_lit) },
         None => quote! {None },
@@ -435,25 +441,40 @@ fn derive_terminal(
         #vis struct #terminal_ident(pub #teleparse::Token<#enum_ident>);
         #[automatically_derived]
         const _: () = {
-            use #teleparse::{ToSpan, Span, Token, Parser, SyntaxResult, SyntaxTree};
+            use #teleparse::{LL1Error, AstResult, ToSpan, Span, Token, Parser, SyntaxTree};
             use #teleparse::parser::ParserState;
-            use #teleparse::table::{SyntaxTreeTable, LitTable, TermSet};
+            use #teleparse::root::RootMetadata;
             use #teleparse::table::first::{FirstBuilder, FirstExpr, First};
-            use core::ops::Deref;
+            use #teleparse::table::follow::{FollowBuilder, Follow};
+            use #teleparse::table::parsing::Parsing;
+            use ::core::any::TypeId;
+            use ::std::vec::Vec;
+            use ::std::collections::BTreeSet;
+            use ::std::option::Option;
+            use ::std::borrow::Cow;
             impl SyntaxTree for #terminal_ident {
                 type T = #enum_ident;
                 type AST = Token<#enum_ident>;
 
                 #[inline]
-                fn type_id() -> ::core::any::TypeId {
+                fn type_id() -> TypeId {
                     // need to override this because 2 terminals are different AST
                     // but they both use Token<T> to represent their AST
-                    ::core::any::TypeId::of::<Self>()
+                    TypeId::of::<Self>()
+                }
+                #[inline]
+                fn debug() -> Cow<'static, str> {
+                    Cow::Borrowed(#terminal_ident_str)
                 }
 
                 #[inline]
-                fn check_left_recursive(_stack: &mut ::std::vec::Vec<::core::any::TypeId>, _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>) -> bool {
+                fn produces_epsilon() -> bool {
                     false
+                }
+
+                #[inline]
+                fn check_left_recursive(_stack: &mut Vec<String>, _set: &mut BTreeSet<TypeId>) -> Result<(), LL1Error> {
+                    Ok(())
                 }
 
                 fn build_first(builder: &mut FirstBuilder<Self::T>) {
@@ -463,30 +484,28 @@ fn derive_terminal(
                 }
 
                 #[inline]
-                fn has_first_collision(_first: &First<Self::T>) -> bool {
-                    false
+                fn check_first_conflict_recursive(seen: &mut BTreeSet<TypeId>, first: &First<Self::T>) -> Result<(), LL1Error> {
+                    Ok(())
                 }
 
-                // #[inline]
-                // fn build_follow_table<'s>(
-                //     first: &'s SyntaxTreeTable<Self::T>, 
-                //     follow: &mut SyntaxTreeTable<Self::T>,
-                // ) -> bool {
-                //     // no information to build follow table at terminal
-                //     false
-                // }
-                //
-                // #[inline]
-                // fn try_parse_ast<'s>(parser: &mut Parser<'s, Self::T>, f_table: &SyntaxTreeTable<Self::T>, _should_recover: bool) -> SyntaxResult<Self::T, Self::AST> {
-                //     // let t = Self::type_id();
-                //     // let f= f_table.get(t);
-                //     // let follows = f.deref();
-                //     let result = #parse_impl;
-                //     match result {
-                //         Ok(ast) => Ok(ast),
-                //         Err(e) => e.into(),
-                //     }
-                // }
+                #[inline]
+                fn build_follow(builder: &mut FollowBuilder<Self::T>) { }
+
+                #[inline]
+                fn check_first_follow_conflict_recursive(seen: &mut BTreeSet<TypeId>, first: &First<Self::T>, follow: &Follow<Self::T>) -> Result<(), LL1Error> {
+                    Ok(())
+                }
+
+                #[inline]
+                fn build_parsing(seen: &mut BTreeSet<TypeId>, parsing: &mut Parsing<Self::T>) { 
+                    seen.insert(Self::type_id());
+                }
+
+                #[inline]
+                fn try_parse_ast<'s>(parser: &mut Parser<'s, Self::T>, meta: &RootMetadata<Self::T>) -> AstResult<Self::T, Self::AST> {
+                    let follow = meta.follow.get(&Self::type_id());
+                    #parse_impl
+                }
                 //
                 // #[inline]
                 // fn into_parse_tree<'s>(ast: Self::AST, _parser: &mut Parser<'s, Self::T>) -> Self {

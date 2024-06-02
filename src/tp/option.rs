@@ -5,11 +5,13 @@ use std::collections::BTreeSet;
 use std::option::Option as StdOption;
 use std::marker::PhantomData;
 
+use crate::root::RootMetadata;
 use crate::table::first::{First, FirstBuilder, FirstExpr};
-use crate::table::follow::{FollowBuilder, FollowExpr};
-use crate::{prelude::*, TokenType};
-use crate::parser::ParserState;
-use crate::{SyntaxTree, SyntaxResult};
+use crate::table::follow::{Follow, FollowBuilder, FollowExpr};
+use crate::table::parsing::Parsing;
+use crate::{prelude::*, LL1Error, TokenType};
+use crate::parser::{Parser, ParserState};
+use crate::{SyntaxTree, AstResult};
 
 use super::Node;
 
@@ -22,10 +24,8 @@ impl<ST: SyntaxTree> SyntaxTree for Option<ST> {
     type AST = Result<ST::AST, Span>;
 
     #[inline]
-    fn debug_type(f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Option<");
-        ST::debug_type(f)?;
-        write!(f, ">")
+    fn debug() -> Cow<'static, str> {
+        Cow::Owned(format!("Option<{}>", ST::debug()))
     }
 
     #[inline]
@@ -34,7 +34,7 @@ impl<ST: SyntaxTree> SyntaxTree for Option<ST> {
     }
 
     #[inline]
-    fn check_left_recursive(stack: &mut Vec<TypeId>, set: &mut BTreeSet<TypeId>) -> StdOption<Vec<TypeId>> {
+    fn check_left_recursive(stack: &mut Vec<String>, set: &mut BTreeSet<TypeId>) -> Result<(), LL1Error> {
         ST::check_left_recursive(stack ,set)
     }
 
@@ -54,10 +54,16 @@ impl<ST: SyntaxTree> SyntaxTree for Option<ST> {
     }
 
     #[inline]
-    fn check_conflict(first: &First<Self::T>) -> bool {
+    fn check_first_conflict_recursive(seen: &mut BTreeSet<TypeId>, first: &First<Self::T>) -> Result<(), LL1Error> {
         // Self -> Inner | e
         // Collides if Inner contains e
-        first.get(&ST::type_id()).contains_epsilon()
+        if first.get(&ST::type_id()).contains_epsilon() {
+            let type_name = Self::debug();
+            let inner_name = ST::debug();
+            let inner_name_2 = "<epsilon>".to_string();
+            return Err(LL1Error::FirstFirstConflict(type_name.into_owned(), inner_name.into_owned(), inner_name_2, "<epsilon>".to_string()));
+        }
+        ST::check_first_conflict(seen, first)
     }
 
     #[inline]
@@ -71,14 +77,36 @@ impl<ST: SyntaxTree> SyntaxTree for Option<ST> {
         builder.add(FollowExpr::union_follow(inner, t));
     }
 
-    // #[inline]
-    // fn try_parse_ast<'s>(
-    //     parser: &mut Parser<'s, Self::T>,
-    //     f_table: &SyntaxTreeTable<Self::T>,
-    //     _should_recover: bool,
-    // ) -> SyntaxResult<Self::T, Self::AST> {
-    //     try_parse_ast_impl::<ST>(parser, f_table)
-    // }
+    #[inline]
+    fn check_first_follow_conflict_recursive(seen: &mut BTreeSet<TypeId>, first: &First<Self::T>, follow: &Follow<Self::T>) -> Result<(), LL1Error> {
+        ST::check_first_follow_conflict(seen, first, follow)
+    }
+
+    #[inline]
+    fn build_parsing(seen: &mut BTreeSet<TypeId>, parsing: &mut Parsing<Self::T>) {
+        if seen.insert(Self::type_id()) {
+            ST::build_parsing(seen, parsing);
+        }
+    }
+
+    #[inline]
+    fn try_parse_ast<'s>(
+        parser: &mut Parser<'s, Self::T>,
+        meta: &RootMetadata<Self::T>,
+    ) -> AstResult<Self::T, Self::AST> {
+        let token = parser.peek_token_src();
+        if token.is_none() {
+            // produces epsilon
+            return AstResult::Success(Err(parser.current_span()));
+        }
+        let first = meta.first.get(&ST::type_id());
+        if !first.contains(token) {
+            // produces epsilon
+            return AstResult::Success(Err(parser.current_span()));
+        }
+
+        ST::try_parse_ast(parser, meta).map(|ast| Ok(ast))
+    }
 
     // #[inline]
     // fn into_parse_tree<'s>(

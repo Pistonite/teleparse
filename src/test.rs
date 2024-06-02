@@ -13,7 +13,7 @@ pub enum TestTokenType {
 impl TokenType for TestTokenType {
     type Bit = u8;
     type Lexer<'s> = LexerStub;
-    type Set = [LitSet; 3];
+    type Map<T: Default+Clone> = [T; 3];
     type Ctx = ();
 
     fn id(&self) -> usize {
@@ -21,6 +21,14 @@ impl TokenType for TestTokenType {
             TestTokenType::A => 0,
             TestTokenType::B => 1,
             TestTokenType::C => 2,
+        }
+    }
+
+    fn from_id(id: usize) -> Self {
+        match id {
+            0 => TestTokenType::A,
+            1 => TestTokenType::B,
+            _ => TestTokenType::C,
         }
     }
 

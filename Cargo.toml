@@ -18,6 +18,7 @@ num = "0.4.3"
 regex = "1.10.4"
 thiserror = "1.0.61"
 derivative = "2.2.0"
+itertools = "0.13.0"
 
 [dev-dependencies]
 macrotest = "1.0.12"
