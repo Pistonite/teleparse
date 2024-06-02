@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
-use crate::{table::{SyntaxTreeTable, TermSet}, token::TokenSrc, Lexer, Root, Span, SyntaxError, SyntaxErrorKind, SyntaxResult, SyntaxResultExt, SyntaxTree, Token, TokenStorage, TokenType};
-use crate::root::RootMetadata;
+use crate::{token::TokenSrc, Lexer, Root, Span, SyntaxError, SyntaxErrorKind, SyntaxResult, SyntaxResultExt, SyntaxTree, Token, TokenStorage, TokenType};
+// use crate::root::RootMetadata;
 
 pub struct Parser<'s, T: TokenType> {
     /// The context
@@ -54,83 +54,83 @@ impl<'s, T: TokenType> Parser<'s, T> {
         self.max_stack_size = size;
     }
 
-    /// Attempt to parse the syntax tree root once.
-    ///
-    /// Note that if you are parsing multiple roots, it's more efficient to use [`Parser::iter`]
-    pub fn once<ST: Root<T=T>>(&mut self) -> Option<ST> {
-        self.iter().next()
-    }
+    // /// Attempt to parse the syntax tree root once.
+    // ///
+    // /// Note that if you are parsing multiple roots, it's more efficient to use [`Parser::iter`]
+    // pub fn once<ST: Root<T=T>>(&mut self) -> Option<ST> {
+    //     self.iter().next()
+    // }
 
-    /// Attempt to parse one syntax tree into the state, may skip invalid tokens and characters
-    /// to form a valid syntax tree
-    ///
-    /// Return None if a valid syntax tree could not be formed
-    /// when the end of the source is reached
-    fn next_with_follow_table<ST: Root<T=T>>(&mut self, f_table: &SyntaxTreeTable<T>) -> Option<ST> {
-        let mut error_already_added = false;
-        loop {
-            match self.try_parse_internal(f_table) {
-                Ok(tree) => {
-                    return Some(tree);
-                }
-                Err(errors) => {
-                    self.errors.extend(errors.errors);
-                    if errors.obj.is_some() {
-                        return errors.obj;
-                    }
-                }
-            }
-            // cannot parse a tree, skip a token and try again
-            let token = match self.consume_token() {
-                None => {
-                    // no more tokens
-                    return None;
-                }
-                Some(token) => token,
-            };
-            // only add error if this is the first token being skipped
-            // for this attempt
-            if !error_already_added {
-                self.errors.push(
-                    SyntaxError::new(
-                        token.span, 
-                        SyntaxErrorKind::UnexpectedToken));
-                error_already_added = true;
-            }
-        }
-    }
+    // /// Attempt to parse one syntax tree into the state, may skip invalid tokens and characters
+    // /// to form a valid syntax tree
+    // ///
+    // /// Return None if a valid syntax tree could not be formed
+    // /// when the end of the source is reached
+    // fn next_with_follow_table<ST: Root<T=T>>(&mut self, f_table: &SyntaxTreeTable<T>) -> Option<ST> {
+    //     let mut error_already_added = false;
+    //     loop {
+    //         match self.try_parse_internal(f_table) {
+    //             Ok(tree) => {
+    //                 return Some(tree);
+    //             }
+    //             Err(errors) => {
+    //                 self.errors.extend(errors.errors);
+    //                 if errors.obj.is_some() {
+    //                     return errors.obj;
+    //                 }
+    //             }
+    //         }
+    //         // cannot parse a tree, skip a token and try again
+    //         let token = match self.consume_token() {
+    //             None => {
+    //                 // no more tokens
+    //                 return None;
+    //             }
+    //             Some(token) => token,
+    //         };
+    //         // only add error if this is the first token being skipped
+    //         // for this attempt
+    //         if !error_already_added {
+    //             self.errors.push(
+    //                 SyntaxError::new(
+    //                     token.span, 
+    //                     SyntaxErrorKind::UnexpectedToken));
+    //             error_already_added = true;
+    //         }
+    //     }
+    // }
 
-    /// Create an iterator that can be used to parse all syntax tree roots in the source
-    pub fn iter<ST: Root<T=T>>(&mut self) -> ParserIter<'s, '_, T, ST> {
-        ParserIter { state: self, metadata: ST::root_metadata() }
-    }
+    // /// Create an iterator that can be used to parse all syntax tree roots in the source
+    // pub fn iter<ST: Root<T=T>>(&mut self) -> ParserIter<'s, '_, T, ST> {
+    //     ParserIter { state: self, metadata: ST::root_metadata() }
+    // }
+    //
+    // /// Parses all syntax trees in the source until the end
+    // pub fn parse_all <ST:Root<T=T>> (&mut self) -> Vec<ST> {
+    //     self.iter().collect()
+    // }
 
-    /// Parses all syntax trees in the source until the end
-    pub fn parse_all <ST:Root<T=T>> (&mut self) -> Vec<ST> {
-        self.iter().collect()
-    }
-
-    /// Internally parse a syntax tree node from the state and apply semantic info
-    fn try_parse_internal <ST: SyntaxTree<T=T>> (&mut self, f_table: &SyntaxTreeTable<T>) -> SyntaxResult<T, ST> {
-        ST::try_parse_ast(self, f_table, true).map_ext(|ast| {
-            ST::into_parse_tree(ast, self)
-        })
-    }
+    // /// Internally parse a syntax tree node from the state and apply semantic info
+    // fn try_parse_internal <ST: SyntaxTree<T=T>> (&mut self, f_table: &SyntaxTreeTable<T>) -> SyntaxResult<T, ST> {
+    //     ST::try_parse_ast(self, f_table, true).map_ext(|ast| {
+    //         ST::into_parse_tree(ast, self)
+    //     })
+    // }
 
 }
 
-pub struct ParserIter<'s, 'p, T: TokenType, ST: Root<T=T>> {
-    state: &'p mut Parser<'s, T>,
-    metadata: &'static RootMetadata<ST>,
-}
-
-impl<'s, 'p, T: TokenType, ST: Root<T=T>> Iterator for ParserIter<'s, 'p, T, ST> {
-    type Item = ST;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.state.next_with_follow_table(&self.metadata.follow_table)
-    }
-}
+// pub struct ParserIter<'s, 'p, T: TokenType, ST: Root<T=T>> {
+//     state: &'p mut Parser<'s, T>,
+//     metadata: &'static RootMetadata<ST>,
+// }
+//
+// impl<'s, 'p, T: TokenType, ST: Root<T=T>> Iterator for ParserIter<'s, 'p, T, ST> {
+//     type Item = ST;
+//
+//     fn next(&mut self) -> Option<Self::Item> {
+//         self.state.next_with_follow_table(&self.metadata.follow_table)
+//     }
+// }
 
 
 /// Internal state management for the parser
@@ -140,10 +140,10 @@ impl<'s, 'p, T: TokenType, ST: Root<T=T>> Iterator for ParserIter<'s, 'p, T, ST>
 pub trait ParserState<'s> {
     type T: TokenType;
 
-    /// Push the current position to the stack so it can be restored later
-    ///
-    /// Returns false if the stack is full
-    fn push_state(&mut self) -> Result<(), SyntaxError<Self::T>>;
+    // /// Push the current position to the stack so it can be restored later
+    // ///
+    // /// Returns false if the stack is full
+    // fn push_state(&mut self) -> Result<(), SyntaxError<Self::T>>;
 
     /// Pop the stack but do not restore the position
     fn pop_state(&mut self);
@@ -169,70 +169,70 @@ pub trait ParserState<'s> {
     /// Peek the token as TokenSrc
     fn peek_token_src(&mut self) -> Option<TokenSrc<'s, Self::T>>;
 
-    /// Create a syntax error for an unexpected end of file
-    fn unexpected_eof(&mut self) -> SyntaxError<Self::T>{
-        SyntaxError::new(self.current_span(), SyntaxErrorKind::UnexpectedEof)
-    }
+    // /// Create a syntax error for an unexpected end of file
+    // fn unexpected_eof(&mut self) -> SyntaxError<Self::T>{
+    //     SyntaxError::new(self.current_span(), SyntaxErrorKind::UnexpectedEof)
+    // }
 
-    fn expecting(&mut self, expected: TermSet<Self::T>) -> SyntaxError<Self::T> {
-        SyntaxError::new(self.current_span(), SyntaxErrorKind::Expecting(expected))
-    }
+    // fn expecting(&mut self, expected: FirstSet<Self::T>) -> SyntaxError<Self::T> {
+    //     SyntaxError::new(self.current_span(), SyntaxErrorKind::Expecting(expected))
+    // }
 
-    /// Parse a token of a specific type
-    #[inline(never)]
-    fn parse_token( &mut self, ty: Self::T) -> Result<Token<Self::T>, SyntaxError<Self::T>> {
-        let token = self.parse_token_type(ty)?;
-        // let next = self.peek_token_src();
-        Ok(token)
-        // if follows.contains(next) {
-        // } else {
-        //     Err(self.expecting(follows.clone()))
-        // }
-    }
+    // /// Parse a token of a specific type
+    // #[inline(never)]
+    // fn parse_token( &mut self, ty: Self::T) -> Result<Token<Self::T>, SyntaxError<Self::T>> {
+    //     let token = self.parse_token_type(ty)?;
+    //     // let next = self.peek_token_src();
+    //     Ok(token)
+    //     // if follows.contains(next) {
+    //     // } else {
+    //     //     Err(self.expecting(follows.clone()))
+    //     // }
+    // }
 
-    #[inline(never)]
-    fn parse_token_match( &mut self, ty: Self::T, match_lit: &'static str) -> Result<Token<Self::T>, SyntaxError<Self::T>> {
-        let token = self.parse_token_type(ty)?;
-        if self.get_src(&token) != match_lit {
-            let mut expected = TermSet::default();
-            expected.insert_token_type_match(ty, match_lit.into());
-            return Err(self.expecting(expected));
-        }
-        // let next = self.peek_token_src();
-        // if follows.contains(next) {
-            Ok(token)
-        // } else {
-        //     Err(self.expecting(follows.clone()))
-        // }
-    }
+    // #[inline(never)]
+    // fn parse_token_match( &mut self, ty: Self::T, match_lit: &'static str) -> Result<Token<Self::T>, SyntaxError<Self::T>> {
+    //     let token = self.parse_token_type(ty)?;
+    //     if self.get_src(&token) != match_lit {
+    //         let mut expected = FirstSet::default();
+    //         expected.insert_token_type_match(ty, match_lit.into());
+    //         return Err(self.expecting(expected));
+    //     }
+    //     // let next = self.peek_token_src();
+    //     // if follows.contains(next) {
+    //         Ok(token)
+    //     // } else {
+    //     //     Err(self.expecting(follows.clone()))
+    //     // }
+    // }
 
-    #[inline]
-    fn parse_token_type( &mut self, ty: Self::T) -> Result<Token<Self::T>, SyntaxError<Self::T>> {
-        let token = match self.consume_token() {
-            Some(token) => token,
-            None => Err(self.unexpected_eof())?,
-        };
-        if token.ty != ty {
-            Err(token.unexpected())
-        } else {
-            Ok(token)
-        }
-    }
+    // #[inline]
+    // fn parse_token_type( &mut self, ty: Self::T) -> Result<Token<Self::T>, SyntaxError<Self::T>> {
+    //     let token = match self.consume_token() {
+    //         Some(token) => token,
+    //         None => Err(self.unexpected_eof())?,
+    //     };
+    //     if token.ty != ty {
+    //         Err(token.unexpected())
+    //     } else {
+    //         Ok(token)
+    //     }
+    // }
 }
 
 impl<'s, T: TokenType> ParserState<'s> for Parser<'s, T> {
     type T = T;
 
-    fn push_state(&mut self) -> Result<(), SyntaxError<T>> {
-        if self.pos_stack.len() >= self.max_stack_size {
-            return Err(SyntaxError::new(
-                self.current_span(),
-                SyntaxErrorKind::StackOverflow,
-            ))
-        }
-        self.pos_stack.push(self.idx);
-        Ok(())
-    }
+    // fn push_state(&mut self) -> Result<(), SyntaxError<T>> {
+    //     if self.pos_stack.len() >= self.max_stack_size {
+    //         return Err(SyntaxError::new(
+    //             self.current_span(),
+    //             SyntaxErrorKind::StackOverflow,
+    //         ))
+    //     }
+    //     self.pos_stack.push(self.idx);
+    //     Ok(())
+    // }
 
     #[inline]
     fn pop_state(&mut self) {

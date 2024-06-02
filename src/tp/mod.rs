@@ -6,11 +6,11 @@ use crate::{Span, ToSpan};
 
 
 // pub mod blanket;
-pub mod iter;
+// pub mod iter;
 mod option;
 pub use option::*;
-mod string;
-pub use string::*;
+// mod string;
+// pub use string::*;
 mod tuple;
 
 #[derive(Deref, DerefMut, ToSpan)]
@@ -59,7 +59,7 @@ macro_rules! ast_passthrough {
     #[inline]
     fn build_first_table(
         s_table: &mut crate::table::SyntaxTreeTable<Self::T>,
-        lits: &mut crate::table::LitTable) {
+        lits: &mut crate::table::LitTable) -> bool{
         ST::build_first_table(s_table, lits)
         }
 

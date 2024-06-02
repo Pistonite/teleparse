@@ -2,8 +2,10 @@ use std::any::TypeId;
 use std::borrow::Cow;
 use std::collections::BTreeSet;
 
-use crate::table::{SyntaxTreeTable, LitTable, TermSet};
-use crate::{Parser, SyntaxResult, ToSpan, TokenType};
+// use crate::table::{SyntaxTreeTable, LitTable, FirstSet};
+use crate::{ToSpan, Span, TokenType};
+use crate::table::first::{First, FirstBuilder};
+use crate::table::follow::{Follow, FollowBuilder};
 
 
 pub trait SyntaxTree: Sized + ToSpan {
@@ -14,37 +16,37 @@ pub trait SyntaxTree: Sized + ToSpan {
     ///
     /// Note that multiple Syntax tree implementation could have the same AST type,
     /// and thus the same type id. For example, [`Quote`](crate::tp::Quote) and [`Parse`](crate::tp::Parse)
+    #[inline]
     fn type_id() -> TypeId {
         TypeId::of::<Self::AST>()
     }
 
-    fn can_be_empty() -> bool;
+    #[inline]
+    fn debug_type(f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", std::any::type_name::<Self::AST>())
+    }
 
-    fn check_left_recursive(stack: &mut Vec<TypeId>, set: &mut BTreeSet<TypeId>) -> bool;
+    fn produces_epsilon() -> bool;
 
-    fn build_first_table(
-        first: &mut SyntaxTreeTable<Self::T>, 
-        lits: &mut LitTable);
+    fn check_left_recursive(stack: &mut Vec<TypeId>, set: &mut BTreeSet<TypeId>) -> Option<Vec<TypeId>>;
+    
+    fn build_first(builder: &mut FirstBuilder<Self::T>);
+    
+    fn check_conflict(first: &First<Self::T>) -> bool;
 
-    fn has_first_collision(first: &SyntaxTreeTable<Self::T>) -> bool;
+    fn build_follow(builder: &mut FollowBuilder<Self::T>);
 
-    fn build_follow_table(
-        first: &SyntaxTreeTable<Self::T>, 
-        follow: &mut SyntaxTreeTable<Self::T>,
-        // follows: &TermSet<Self::T>
-        ) -> bool;
+    // /// Attempt to parse one AST node
+    // ///
+    // /// This is a recursive API that should be derived instead of implemented
+    // fn try_parse_ast<'s>(
+    //     parser: &mut Parser<'s, Self::T>, 
+    //     // f_table: &SyntaxTreeTable<Self::T>,
+    //     should_recover: bool
+    // ) -> SyntaxResult<Self::T, Self::AST>;
 
-    /// Attempt to parse one AST node
-    ///
-    /// This is a recursive API that should be derived instead of implemented
-    fn try_parse_ast<'s>(
-        parser: &mut Parser<'s, Self::T>, 
-        f_table: &SyntaxTreeTable<Self::T>,
-        should_recover: bool
-    ) -> SyntaxResult<Self::T, Self::AST>;
-
-    /// Transform the parsed AST node into the final tree node
-    ///
-    /// This is a recursive API that should be derived instead of implemented
-    fn into_parse_tree<'s>(ast: Self::AST, parser: &mut Parser<'s, Self::T>) -> Self;
+    // /// Transform the parsed AST node into the final tree node
+    // ///
+    // /// This is a recursive API that should be derived instead of implemented
+    // fn into_parse_tree<'s>(ast: Self::AST, parser: &mut Parser<'s, Self::T>) -> Self;
 }

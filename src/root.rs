@@ -79,9 +79,10 @@ macro_rules! derive_root_impl {
                 let mut follow_table = $crate::table::SyntaxTreeTable::default();
 
                 let mut is_ll1 = !is_left_recursive;
+                // can only check LL1 if not left-recursive
                 if is_ll1 {
-                    // can only check LL1 if not left-recursive
-                    Self::build_first_table(&mut first_table, &mut lit_table);
+                   while Self::build_first_table(&mut first_table, &mut lit_table) {
+                    }
                     let first_collision = Self::has_first_collision(&first_table);
             
                     // let mut follows = $crate::table::TermSet::default();

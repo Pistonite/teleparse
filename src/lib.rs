@@ -16,8 +16,8 @@ pub mod prelude {
     pub use crate::TokenTypeNoCtx as _;
     pub use crate::Lexer as _;
     pub use crate::SyntaxTree as _;
-    pub use crate::Root as _;
-    pub use crate::RootNoCtx as _;
+    // pub use crate::Root as _;
+    // pub use crate::RootNoCtx as _;
 
     pub use crate::tp;
     // util
@@ -25,7 +25,7 @@ pub mod prelude {
         Pos,Span,Token
     };
 
-    pub use crate::derive_root;
+    // pub use crate::derive_root;
 
 }
 
@@ -39,10 +39,10 @@ pub mod lexer;
 pub use lexer::Lexer;
 
 pub mod parser;
-pub use parser::{Parser, ParserIter};
+// pub use parser::{Parser, ParserIter};
 
-pub mod root;
-pub use root::{Root, RootNoCtx};
+// pub mod root;
+// pub use root::{Root, RootNoCtx};
 
 mod syntax_tree;
 pub use syntax_tree::*;
@@ -51,3 +51,6 @@ pub use syntax_error::*;
 
 
 pub mod table;
+
+#[cfg(test)]
+pub(crate) mod test;
