@@ -1,53 +1,51 @@
-use std::marker::PhantomData;
+use teleparse_macros::ToSpan;
 
-use crate::{table::first::FirstSet, Pos, Span, SyntaxTree, TokenType};
+use crate::{Lexicon, Span};
 
-#[derive(Debug, Clone)]
-pub struct Error<T: TokenType> {
+use super::FirstSet;
+
+/// Error encountered during syntax analysis
+#[derive(Debug, Clone, ToSpan)]
+pub struct Error<L: Lexicon> {
     pub span: Span,
-    pub data: ErrorKind<T>,
+    pub data: ErrorKind<L>,
 }
 
-impl<T: TokenType> Error<T> {
-    pub fn new(span: Span, data: ErrorKind<T>) -> Self {
+impl<L: Lexicon> Error<L> {
+    pub fn new(span: Span, data: ErrorKind<L>) -> Self {
         Self { span, data }
     }
 }
 
 #[derive(Debug, Clone)]
-pub enum ErrorKind<T: TokenType> {
+pub enum ErrorKind<L: Lexicon> {
+    Custom(String),
     UnexpectedCharacters,
-    UnexpectedToken,
-    Expecting(FirstSet<T>),
+    UnexpectedTokens,
+    Expecting(FirstSet<L>),
     UnexpectedEof,
     StackOverflow,
 }
 
-// impl<T: TokenType, O> Into<SyntaxResult<T, O>> for SyntaxError<T> {
-//     fn into(self) -> SyntaxResult<T, O> {
-//         Err(SyntaxErrors::new(None, vec![self]))
-//     }
-// }
-
 /// Result of parsing an AST node
-pub enum AstResult<T: TokenType, O> {
+pub enum Result<T, L: Lexicon> {
     /// The AST node was successfully parsed, with the corresponding tokens consumed
-    Success(O),
+    Success(T),
     /// The parser panicked while parsing the AST node, but it was able to skip some tokens and
     /// recover.
-    Recovered(O, Vec<Error<T>>),
+    Recovered(T, Vec<Error<L>>),
     /// The parser panicked while parsing the AST node, and was unable to recover.
     /// The parser might have advanced its position in the input.
-    Panic(Vec<Error<T>>),
+    Panic(Vec<Error<L>>),
 }
 
-impl<T: TokenType, O> AstResult<T, O> {
+impl<T, L: Lexicon> Result<T, L> {
     #[inline]
-    pub fn map<O2, F: FnOnce(O) -> O2>(self, f: F) -> AstResult<T, O2> {
+    pub fn map<T2, F: FnOnce(T) -> T2>(self, f: F) -> Result<T2, L> {
         match self {
-            Self::Success(obj) => AstResult::Success(f(obj)),
-            Self::Recovered(obj, errors) => AstResult::Recovered(f(obj), errors),
-            Self::Panic(errors) => AstResult::Panic(errors),
+            Self::Success(obj) => Result::Success(f(obj)),
+            Self::Recovered(obj, errors) => Result::Recovered(f(obj), errors),
+            Self::Panic(errors) => Result::Panic(errors),
         }
     }
     

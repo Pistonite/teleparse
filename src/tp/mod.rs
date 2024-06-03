@@ -5,15 +5,15 @@ use deref_derive::{Deref, DerefMut};
 use crate::{Span, ToSpan};
 
 
-mod ptr;
-pub use ptr::*;
+// mod ptr;
+// pub use ptr::*;
 // pub mod blanket;
 // pub mod iter;
-mod option;
-pub use option::*;
+// mod option;
+// pub use option::*;
 // mod string;
 // pub use string::*;
-mod tuple;
+// mod tuple;
 
 #[derive(Deref, DerefMut, ToSpan)]
 pub struct Node<T> {

@@ -13,6 +13,8 @@ use crate::table::first::{First, FirstBuilder};
 use crate::table::follow::{Follow, FollowBuilder};
 
 
+
+
 pub trait SyntaxTree: Sized + ToSpan {
     type T: TokenType;
     type AST: ToSpan + 'static;

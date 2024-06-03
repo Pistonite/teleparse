@@ -1,4 +1,3 @@
-use std::fmt::{self, Debug, Formatter};
 use std::collections::BTreeSet;
 
 use derivative::Derivative;
@@ -14,8 +13,8 @@ pub enum LitSet {
     Any,
 }
 
-impl Debug for LitSet {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+impl std::fmt::Debug for LitSet {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Match(set) => write!(f, "{:?}", set),
             Self::Any => write!(f, "*"),
@@ -23,10 +22,9 @@ impl Debug for LitSet {
     }
 }
 
-impl<T> From<T> for LitSet
-where
-    T: IntoIterator<Item = &'static str>,
+impl<T : IntoIterator<Item = &'static str>, > From<T> for LitSet
 {
+    #[inline]
     fn from(set: T) -> Self {
         Self::Match(set.into_iter().collect())
     }
@@ -39,11 +37,13 @@ impl LitSet {
         Self::Any
     }
 
+    /// Check if this set is the universal set `U`
     #[inline]
     pub fn is_universe(&self) -> bool {
         matches!(self, Self::Any)
     }
 
+    /// Clear the set
     #[inline]
     pub fn clear(&mut self) {
         match self {
@@ -52,6 +52,7 @@ impl LitSet {
         }
     }
 
+    /// Check if the set is empty
     #[inline]
     pub fn is_empty(&self) -> bool {
         match self {
@@ -61,6 +62,8 @@ impl LitSet {
     }
 
     /// Insert a literal constants into the set
+    ///
+    /// Returns if the set is changed (i.e. not already containing the literal)
     #[inline]
     pub fn insert(&mut self, lit: &'static str) -> bool {
         match self {
@@ -78,9 +81,9 @@ impl LitSet {
         }
     }
 
-    /// Union `self` with the universal set `U` to make self the universal set.
+    /// Union this set with the universal set `U` to make self the universal set.
     ///
-    /// Returns if `self` is changed (i.e. not already equal to `U`)
+    /// Returns if the set is changed (i.e. not already equal to `U`)
     #[inline]
     pub fn union_universe(&mut self) -> bool {
         match self {
@@ -118,6 +121,7 @@ impl LitSet {
         }
     }
 
+    /// Create a new set containing the intersection of this set and another set
     pub fn intersection(&self, other: &Self) -> Self {
         match (self, other) {
             (Self::Match(set), Self::Match(other_set)) => {
@@ -130,6 +134,9 @@ impl LitSet {
         }
     }
 
+    /// Get an iterator over the literals in the set
+    ///
+    /// If the set is the universal set `U`, `None` is returned since the set has infinite size
     pub fn iter(&self) -> Option<impl Iterator<Item = &&'static str>> {
         match self {
             Self::Match(set) => Some(set.iter()),
@@ -137,30 +144,6 @@ impl LitSet {
         }
     }
 
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum Intersects {
-    None,
-    First(&'static str),
-    Universe
-}
-
-pub enum Intersection<'a> {
-    Single(std::collections::btree_set::Iter<'a, &'static str>),
-    Both(std::collections::btree_set::Intersection<'a, &'static str>),
-}
-
-impl<'a> Iterator for Intersection<'a> {
-    type Item = &'static str;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let next = match self {
-            Self::Single(iter) => iter.next(),
-            Self::Both(iter) => iter.next(),
-        };
-        next.map(|x|*x)
-    }
 }
 
 #[cfg(test)]

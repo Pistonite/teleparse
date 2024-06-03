@@ -430,7 +430,7 @@ fn derive_terminal(
             parser.parse_token(#enum_ident::#variant_ident)
         },
     };
-    let first_impl = match match_lit {
+    let match_option_impl = match match_lit {
         Some(match_lit) => quote! {Some(#match_lit) },
         None => quote! {None },
     };
@@ -441,76 +441,30 @@ fn derive_terminal(
         #vis struct #terminal_ident(pub #teleparse::Token<#enum_ident>);
         #[automatically_derived]
         const _: () = {
-            use #teleparse::{LL1Error, AstResult, ToSpan, Span, Token, Parser, SyntaxTree};
-            use #teleparse::parser::ParserState;
-            use #teleparse::root::RootMetadata;
-            use #teleparse::table::first::{FirstBuilder, FirstExpr, First};
-            use #teleparse::table::follow::{FollowBuilder, Follow};
-            use #teleparse::table::parsing::Parsing;
-            use ::core::any::TypeId;
-            use ::std::vec::Vec;
-            use ::std::collections::BTreeSet;
-            use ::std::option::Option;
-            use ::std::borrow::Cow;
-            impl SyntaxTree for #terminal_ident {
+            impl ::core::convert::From<#teleparse::Token<#enum_ident>> for #terminal_ident {
+                #[inline]
+                fn from(token: #teleparse::Token<#enum_ident>) -> Self {
+                    Self(token)
+                }
+            }
+            impl #teleparse::syntax::Terminal for #terminal_ident {
                 type T = #enum_ident;
-                type AST = Token<#enum_ident>;
 
                 #[inline]
-                fn type_id() -> TypeId {
-                    // need to override this because 2 terminals are different AST
-                    // but they both use Token<T> to represent their AST
-                    TypeId::of::<Self>()
-                }
-                #[inline]
-                fn debug() -> Cow<'static, str> {
-                    Cow::Borrowed(#terminal_ident_str)
+                fn ident() -> &'static str {
+                    #terminal_ident_str
                 }
 
                 #[inline]
-                fn produces_epsilon() -> bool {
-                    false
+                fn token_type() -> Self::T {
+                    #enum_ident::#variant_ident
                 }
 
                 #[inline]
-                fn check_left_recursive(_stack: &mut Vec<String>, _set: &mut BTreeSet<TypeId>) -> Result<(), LL1Error> {
-                    Ok(())
+                fn match_literal() -> ::core::option::Option<&'static str> {
+                    #match_option_impl
                 }
 
-                fn build_first(builder: &mut FirstBuilder<Self::T>) {
-                    let t = Self::type_id();
-                    let expr = FirstExpr::insert_token(t, #enum_ident::#variant_ident, #first_impl);
-                    builder.add(expr);
-                }
-
-                #[inline]
-                fn check_first_conflict_recursive(seen: &mut BTreeSet<TypeId>, first: &First<Self::T>) -> Result<(), LL1Error> {
-                    Ok(())
-                }
-
-                #[inline]
-                fn build_follow(builder: &mut FollowBuilder<Self::T>) { }
-
-                #[inline]
-                fn check_first_follow_conflict_recursive(seen: &mut BTreeSet<TypeId>, first: &First<Self::T>, follow: &Follow<Self::T>) -> Result<(), LL1Error> {
-                    Ok(())
-                }
-
-                #[inline]
-                fn build_parsing(seen: &mut BTreeSet<TypeId>, parsing: &mut Parsing<Self::T>) { 
-                    seen.insert(Self::type_id());
-                }
-
-                #[inline]
-                fn try_parse_ast<'s>(parser: &mut Parser<'s, Self::T>, meta: &RootMetadata<Self::T>) -> AstResult<Self::T, Self::AST> {
-                    let follow = meta.follow.get(&Self::type_id());
-                    #parse_impl
-                }
-                //
-                // #[inline]
-                // fn into_parse_tree<'s>(ast: Self::AST, _parser: &mut Parser<'s, Self::T>) -> Self {
-                //     Self(ast)
-                // }
             }
         };
     }
