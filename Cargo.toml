@@ -9,6 +9,8 @@ edition = "2021"
 description = "teleparse"
 license = "MIT"
 exclude = ["**/*.expanded.rs", "**/*.txtpp.md"]
+repository = "https://github.com/Pistonite/teleparse"
+authors = ["Pistonight <terrabyte100k@gmail.com>"]
 
 [dependencies]
 bit-set = "0.5.3"
