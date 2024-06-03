@@ -4,16 +4,16 @@ members = ["macros"]
 
 [package]
 name = "teleparse"
-version = "0.0.1"
+version = "0.0.2"
 edition = "2021"
 description = "teleparse"
 license = "MIT"
-exclude = ["**/*.expanded.rs"]
+exclude = ["**/*.expanded.rs", "**/*.txtpp.md"]
 
 [dependencies]
 bit-set = "0.5.3"
 deref-derive = "0.1.0"
-teleparse-macros = { path = "macros", version = "=0.0.1" }
+teleparse-macros = { path = "macros", version = "=0.0.2" }
 num = "0.4.3"
 regex = "1.10.4"
 thiserror = "1.0.61"

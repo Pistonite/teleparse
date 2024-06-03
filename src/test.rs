@@ -1,7 +1,6 @@
 //! Test utilities
 
-use crate::table::LitSet;
-use crate::{Lexer, Span, Token, TokenType};
+use crate::{lex::Token, GrammarError, Lexer, Lexicon, Span};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TestTokenType {
@@ -10,11 +9,10 @@ pub enum TestTokenType {
     C
 }
 
-impl TokenType for TestTokenType {
+impl Lexicon for TestTokenType {
     type Bit = u8;
     type Lexer<'s> = LexerStub;
     type Map<T: Default+Clone> = [T; 3];
-    type Ctx = ();
 
     fn id(&self) -> usize {
         match self {
@@ -56,17 +54,17 @@ impl TokenType for TestTokenType {
         false
     }
 
-    fn lexer<'s>(_: &'s str) -> Self::Lexer<'s> {
-        LexerStub
+    fn lexer<'s>(_: &'s str) -> Result<Self::Lexer<'s>, GrammarError> {
+        Ok(LexerStub)
     }
 }
 
 pub struct LexerStub;
 
 impl<'s> Lexer<'s> for LexerStub {
-    type T = TestTokenType;
+    type L = TestTokenType;
 
-    fn next(&mut self) -> (Option<Span>, Option<Token<Self::T>>) {
+    fn next(&mut self) -> (Option<Span>, Option<Token<Self::L>>) {
         (None, None)
     }
 }

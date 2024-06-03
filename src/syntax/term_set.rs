@@ -184,13 +184,13 @@ mod tests {
     #[test]
     fn insert_epsilon() {
         let mut set = TerminalSet::<T>::new();
-        assert!(!set.contains_epsilon());
+        assert!(!set.contains_e());
         assert!(!set.contains(None));
-        assert_eq!(set.insert_epsilon(), true);
-        assert!(set.contains_epsilon());
+        assert_eq!(set.insert_e(), true);
+        assert!(set.contains_e());
         assert!(set.contains(None));
-        assert_eq!(set.insert_epsilon(), false);
-        assert!(set.contains_epsilon());
+        assert_eq!(set.insert_e(), false);
+        assert!(set.contains_e());
         assert!(set.contains(None));
     }
 

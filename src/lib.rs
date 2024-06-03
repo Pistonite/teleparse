@@ -1,3 +1,4 @@
+#![doc = include_str!("../README.md")]
 
 // So macro works in tests, see 
 // https://github.com/bkchr/proc-macro-crate/issues/14
