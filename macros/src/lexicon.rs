@@ -2,41 +2,37 @@ use std::collections::BTreeSet;
 
 use crate::*;
 
-/// Derive the `TokenType` trait for an enum and generate variant representation
-pub fn expand(input: TokenStream, derive_ident: &syn::Ident) -> TokenStream {
-    let mut derive_input = {
-        let input = input.clone();
-        parse_macro_input!(input as syn::DeriveInput)
-    };
-    let result = expand_internal(&mut derive_input, derive_ident);
-    from_result_keep_input(quote! {#derive_input}, result)
-}
+pub fn expand(input: &mut syn::DeriveInput) -> syn::Result<TokenStream2> {
+    if !input.generics.params.is_empty() {
+        syn_error!(input, "derive_lexicon cannot be used with generics")
+    }
 
-fn expand_internal(
-    input: &mut syn::DeriveInput,
-    derive_ident: &syn::Ident,
-) -> syn::Result<TokenStream2> {
-    // parse the root attributes
-    let RootAttr { ignore, context_ty } = parse_root_attributes(input, derive_ident)?;
-    let mut rule_exprs = Vec::new();
     let teleparse = crate_ident();
+
+    // parse the root attributes
+    let RootAttr { ignore } = parse_root_attributes(input)?;
+
+    // check ignore regex
+    let mut rule_exprs = Vec::new();
     for ignore in ignore {
         checked_regex_rule(&ignore)?;
         rule_exprs.push(quote! {
-            #teleparse::lexer::LexerRule::ignore(#ignore),
+            #teleparse::lex::Rule::ignore(#ignore),
         });
     }
+
+    // Separate the attributes on the variants and the enum data
     let (variant_attrs, enum_data) = {
         // strip attributes early for better error experience
         let mut variant_attrs = Vec::new();
         // has to be enum
         match &mut input.data {
             syn::Data::Enum(data) => {
-            for variant in &mut data.variants {
-                variant_attrs.push(strip_take_attrs(&mut variant.attrs));
+                for variant in &mut data.variants {
+                    variant_attrs.push(strip_take_attrs(&mut variant.attrs));
+                }
             }
-            },
-            _ => syn_error!(input, "TokenType can only be derived for enums"),
+            _ => syn_error!(input, "derive_lexicon can only be used with enums"),
         };
 
         let enum_data = match &input.data {
@@ -46,41 +42,30 @@ fn expand_internal(
 
         (variant_attrs, enum_data)
     };
-    if !input.generics.params.is_empty() {
-        syn_error!(input, "TokenType derive cannot be used with generics")
-    }
-    let (repr_ty, repr_one) = match enum_data.variants.len() {
+
+    check_enum_precondition(enum_data, &variant_attrs)?;
+
+    let repr_ty = match enum_data.variants.len() {
         0 => syn_error!(
             input,
-            "TokenType derive cannot be used with enums with no variants"
+            "derive_lexicon needs at least one variant in the enum"
         ),
-        1..=8 => (quote!(u8), "1u8"),
-        9..=16 => (quote!(u16), "1u16"),
-        17..=32 => (quote!(u32), "1u32"),
-        33..=64 => (quote!(u64), "1u64"),
-        65..=128 => (quote!(u128), "1u128"),
-        _ => syn_error!(input, "TokenType derive can have at most 128 variants"),
+        1..=8 => quote!(u8),
+        9..=16 => quote!(u16),
+        17..=32 => quote!(u32),
+        33..=64 => quote!(u64),
+        65..=128 => quote!(u128),
+        _ => syn_error!(input, "derive_lexicon can have at most 128 variants"),
     };
-    let repr_one = syn::LitInt::new(repr_one, Span::call_site());
 
     let enum_ident = &input.ident;
     let enum_vis = &input.vis;
+
     // parse enum body
     let mut enum_body = TokenStream2::new();
     let mut should_extract_match_clauses = TokenStream2::new();
     let mut extra_derives = TokenStream2::new();
     for (i, (variant, attrs)) in enum_data.variants.iter().zip(variant_attrs).enumerate() {
-        if !matches!(variant.fields, syn::Fields::Unit) {
-            syn_error!(variant, "TokenType derive must be used with enums with only unit variants, as integer representation will be generated");
-        }
-        if attrs.is_empty() {
-            syn_error!(
-                variant,
-                "Missing `{}` attribute for variant to derive TokenType",
-                CRATE
-            );
-        }
-
         let variant_ident = &variant.ident;
         enum_body.extend(quote! {
             #variant_ident = #i,
@@ -94,14 +79,11 @@ fn expand_internal(
             for meta in metas {
                 let meta = match meta {
                     syn::Meta::List(meta) => meta,
-                    _ => syn_error!(
-                        meta,
-                        "Unknown attribute for deriving TokenType enum variant"
-                    ),
+                    _ => syn_error!(meta, "Unknown {} attribute", CRATE),
                 };
                 if meta.path.is_ident("regex") {
                     if regex.is_some() {
-                        syn_error!(meta, "Multiple `regex` attributes found for TokenType enum variant! You can put all regexes into the same attribute and separate them with comma");
+                        syn_error!(meta, "Multiple `regex` attributes found for enum variant! You can put all regexes into the same attribute and separate them with comma");
                     }
                     regex = Some(meta.parse_args_with(
                         Punctuated::<syn::LitStr, syn::Token![,]>::parse_terminated,
@@ -110,7 +92,7 @@ fn expand_internal(
                 }
                 if meta.path.is_ident("terminal") {
                     if terminal.is_some() {
-                        syn_error!(meta, "Multiple `terminal` attributes found for TokenType enum variant! You might want to merge them.");
+                        syn_error!(meta, "Multiple `terminal` attributes found for enum variant! You might want to merge them.");
                     }
                     terminal = Some(meta.parse_args_with(
                         Punctuated::<syn::Meta, syn::Token![,]>::parse_terminated,
@@ -149,13 +131,12 @@ fn expand_internal(
                         }
                         infer_literals = None;
                         let doc = format!(
-                            " SyntaxTree terminal derived from [`{}`] with `terminal({})`",
+                            " Terminal symbol derived from [`{}`] with `terminal({})`",
                             enum_ident, ident
                         );
                         extra_derives.extend(derive_terminal(
                             &doc,
                             enum_vis,
-                            &context_ty,
                             enum_ident,
                             variant_ident,
                             ident,
@@ -179,7 +160,7 @@ fn expand_internal(
                             if infer_literal_set.contains(&match_lit) {
                                 syn_error!(
                                     value,
-                                    "Duplicate literal pattern `{}` for token type `{}`.",
+                                    "Duplicate literal pattern `{}` for variant `{}`.",
                                     match_lit,
                                     variant_ident
                                 );
@@ -188,7 +169,7 @@ fn expand_internal(
                         }
                         infer_literal_set.insert(match_lit);
                         let doc = format!(
-                            " SyntaxTree terminal derived from [`{}`] with `terminal({} = {})`",
+                            " Terminal symbol derived from [`{}`] with `terminal({} = {})`",
                             enum_ident,
                             ident,
                             quote! {#value}
@@ -196,7 +177,6 @@ fn expand_internal(
                         extra_derives.extend(derive_terminal(
                             &doc,
                             enum_vis,
-                            &context_ty,
                             enum_ident,
                             variant_ident,
                             ident,
@@ -235,18 +215,26 @@ fn expand_internal(
                 let regex_obj = checked_regex_rule(&regex)?;
                 for match_lit in &infer_literal_set {
                     // if we are able to match, we must be able to match the entire string
-                    if let Some(mat)= regex_obj.find(&match_lit) {
+                    // For example, if the regex matches `key` and the literal is `keyboard`.
+                    // If we were to match `keyboard`, `key` should be matched instead
+                    if let Some(mat) = regex_obj.find(&match_lit) {
                         if mat.end() != match_lit.len() {
                             syn_error!(
                                 regex,
-                                "The literal pattern `{}` is not fully matched by the regex. This is like a mistake because a token produced using this regex will never be able to match the literal",
+                                "This regex matches a proper prefix of `{}`. This is likely a mistake, because the terminal will never be matched (the prefix will instead)",
                                 match_lit,
                             );
                         }
+                    } else {
+                        syn_error!(
+                            regex,
+                            "This regex does not match the literal `{}`. This is likely a mistake, because the terminal will never be matched",
+                            match_lit,
+                        );
                     }
                 }
                 rule_exprs.push(quote! {
-                    #teleparse::lexer::LexerRule::token(#enum_ident::#variant_ident, #regex),
+                    #teleparse::lex::Rule::token(#enum_ident::#variant_ident, #regex),
                 });
             }
         } else if let Some(infer_literals) = infer_literals {
@@ -257,7 +245,7 @@ fn expand_internal(
                 });
             }
             rule_exprs.push(quote! {
-                #teleparse::lexer::LexerRule::token_literal(#enum_ident::#variant_ident, &[#slice]),
+                #teleparse::lex::Rule::token_literal(#enum_ident::#variant_ident, &[#slice]),
             });
         }
     }
@@ -282,11 +270,10 @@ fn expand_internal(
         #[automatically_derived]
         const _: () = {
             use #teleparse::Lexer as _;
-            impl #teleparse::TokenType for #enum_ident {
+            impl #teleparse::Lexicon for #enum_ident {
                 type Bit = #repr_ty;
-                type Lexer<'s> = DerivedLexer<'s>;
+                type Lexer<'s> = #teleparse::lex::LexerImpl<'s, Self>;
                 type Map<T: Default + Clone> = [T; #enum_len];
-                type Ctx = #context_ty;
 
                 #[inline]
                 fn id(&self) -> usize {
@@ -313,7 +300,7 @@ fn expand_internal(
                         Self::#enum_last_variant => None,
                         _ => {
                             let next = self.id() + 1;
-                            Some(unsafe { std::mem::transmute(next) })
+                            Some(Self::from_id(next))
                         }
                     }
                 }
@@ -326,32 +313,12 @@ fn expand_internal(
                     }
                 }
 
-                #[inline]
-                fn lexer<'s>(source: &'s str) -> Self::Lexer<'s> {
-                    DerivedLexer::new(source)
-                }
-            }
-            #[doc(hidden)]
-            type Rules = [ #teleparse::lexer::LexerRule<#enum_ident>; #rule_count];
-            #[doc(hidden)]
-            fn derived_lexer_rules() -> &'static Rules {
-                static RULES: std::sync::OnceLock<Rules> = std::sync::OnceLock::new();
-                RULES.get_or_init(|| { [ #rule_exprs ] })
-            }
-            #[doc(hidden)]
-            #enum_vis struct DerivedLexer<'s>(#teleparse::lexer::LexerState<'s>, &'static Rules);
-            impl<'s> #teleparse::Lexer<'s> for DerivedLexer<'s> {
-                type T = #enum_ident;
-                #[inline]
-                fn next(&mut self) -> (Option<#teleparse::Span>, Option<#teleparse::Token<Self::T>>) {
-                    self.0.next(self.1)
-                }
-            }
-            #[doc(hidden)]
-            impl<'s> DerivedLexer<'s> {
-                #[inline]
-                fn new(source: &'s str) -> Self {
-                    Self(#teleparse::lexer::LexerState::new(source), derived_lexer_rules())
+                fn lexer<'s>(source: &'s str) -> Result<Self::Lexer<'s>, #teleparse::GrammarError> {
+                    static RULES: ::std::sync::OnceLock<
+            [ #teleparse::lex::Rule<#enum_ident>; #rule_count]
+                    > = ::std::sync::OnceLock::new();
+                    let rules = RULES.get_or_init(|| { [ #rule_exprs ] });
+                    Ok(#teleparse::lex::LexerImpl::new(source, rules)?)
                 }
             }
         };
@@ -362,16 +329,11 @@ fn expand_internal(
 
 struct RootAttr {
     ignore: Vec<syn::LitStr>,
-    context_ty: syn::Type,
 }
 
-fn parse_root_attributes(
-    input: &mut syn::DeriveInput,
-    derive_ident: &syn::Ident,
-) -> syn::Result<RootAttr> {
-    let root_metas = parse_strip_root_meta_optional(input, derive_ident)?;
+fn parse_root_attributes(input: &mut syn::DeriveInput) -> syn::Result<RootAttr> {
+    let root_metas = parse_strip_root_meta_optional(input)?;
     let mut ignore = None;
-    let mut context_ty = None;
     if let Some(root_metas) = root_metas {
         for meta in root_metas {
             match meta {
@@ -385,16 +347,6 @@ fn parse_root_attributes(
                         )?);
                         continue;
                     }
-                    if meta.path.is_ident("context") {
-                        if context_ty.is_some() {
-                            syn_error!(
-                                meta,
-                                "Multiple `context` attributes found for TokenType! Keep only 1"
-                            );
-                        }
-                        context_ty = Some(meta.parse_args::<syn::Type>()?);
-                        continue;
-                    }
                     syn_error!(meta, "Unknown attribute for TokenType");
                 }
                 _ => syn_error!(meta, "Unknown attribute for TokenType"),
@@ -406,15 +358,30 @@ fn parse_root_attributes(
         Some(ignore) => ignore.into_iter().collect::<Vec<_>>(),
         None => Vec::new(),
     };
-    let context_ty = context_ty.unwrap_or(unit_type());
-    Ok(RootAttr { ignore, context_ty })
+    Ok(RootAttr { ignore })
+}
+
+fn check_enum_precondition(enum_data: &syn::DataEnum, variant_attrs: &[Vec<syn::Attribute>]) -> syn::Result<()> {
+    for (variant, attrs) in std::iter::zip(enum_data.variants.iter(), variant_attrs.iter()) {
+        if !matches!(variant.fields, syn::Fields::Unit) {
+            syn_error!(variant, "derive_lexicon must be used with enums with only unit variants. The integer values will be generated");
+        }
+        if attrs.is_empty() {
+            syn_error!(
+                variant,
+                "derive_lexicon needs an `{}` attribute to derive the lexer",
+                CRATE
+            );
+        }
+    }
+
+    Ok(())
 }
 
 /// Derive terminal struct and SyntaxTree implementation
 fn derive_terminal(
     doc: &str,
     vis: &syn::Visibility,
-    context_ty: &syn::Type,
     enum_ident: &syn::Ident,
     variant_ident: &syn::Ident,
     terminal_ident: &syn::Ident,
@@ -422,14 +389,6 @@ fn derive_terminal(
 ) -> TokenStream2 {
     let teleparse = crate_ident();
     let terminal_ident_str = terminal_ident.to_string();
-    let parse_impl = match match_lit {
-        Some(match_lit) => quote! {
-            parser.parse_token_lit(#enum_ident::#variant_ident, #match_lit, follow)
-        },
-        None => quote! {
-            parser.parse_token(#enum_ident::#variant_ident)
-        },
-    };
     let match_option_impl = match match_lit {
         Some(match_lit) => quote! {Some(#match_lit) },
         None => quote! {None },
@@ -438,17 +397,17 @@ fn derive_terminal(
         #[doc = #doc]
         #[automatically_derived]
         #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, #teleparse::ToSpan)]
-        #vis struct #terminal_ident(pub #teleparse::Token<#enum_ident>);
+        #vis struct #terminal_ident(pub #teleparse::lex::Token<#enum_ident>);
         #[automatically_derived]
         const _: () = {
-            impl ::core::convert::From<#teleparse::Token<#enum_ident>> for #terminal_ident {
+            impl ::core::convert::From<#teleparse::lex::Token<#enum_ident>> for #terminal_ident {
                 #[inline]
-                fn from(token: #teleparse::Token<#enum_ident>) -> Self {
+                fn from(token: #teleparse::lex::Token<#enum_ident>) -> Self {
                     Self(token)
                 }
             }
             impl #teleparse::syntax::Terminal for #terminal_ident {
-                type T = #enum_ident;
+                type L = #enum_ident;
 
                 #[inline]
                 fn ident() -> &'static str {
@@ -456,7 +415,7 @@ fn derive_terminal(
                 }
 
                 #[inline]
-                fn token_type() -> Self::T {
+                fn token_type() -> Self::L {
                     #enum_ident::#variant_ident
                 }
 

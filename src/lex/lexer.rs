@@ -8,11 +8,7 @@ use super::{Error, Lexicon, Pos, Span, Token};
 
 /// Trait for lexer
 ///
-/// ## Note
-/// This is normally derived with [`#[teleparse_derive(TokenType)]`](crate::teleparse_derive) on an
-/// enum. See [`TokenType`] for more information.
-/// 
-/// Once derived, you can create a lexer with [`TokenType::lexer()`].
+/// See [module level documentation](super) for more information
 pub trait Lexer<'s> {
     type L: Lexicon;
 

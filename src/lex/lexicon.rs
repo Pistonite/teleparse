@@ -9,21 +9,9 @@ use crate::GrammarError;
 
 use super::Lexer;
 
-// /// Trait for token types, derivable with [`#[derive_lexicon]`](crate::derive_lexicon)
-// ///
-// /// ## Note
-// /// This is normally derived from an enum instead of manually implementing it. The macro will derive the token type and lexer according
-// /// to the attributes
-// ///
-// /// Appriopriate size would be chosen automatically for the underlying representation:
-// /// `u8`, `u16`, `u32`, `u64`, or `u128` depending on the number of variants. You can
-// /// have at most 128 token types (which should be plenty).
-// ///
-// /// ## Example
-// /// This is a full example. See below for more details
-// /// ```rust
-// #[doc = include_str!("../../tests/expand/token_type_example.rs")]
-// /// ```
+/// Trait for defining the token types of a grammar
+///
+/// See [module level documentation](super) for more information
 #[doc(alias = "TokenType")]
 pub trait Lexicon: Debug + Clone + Copy + PartialEq + Eq + Hash + 'static {
     /// Bit flag representation of the token types
@@ -58,13 +46,3 @@ pub trait Lexicon: Debug + Clone + Copy + PartialEq + Eq + Hash + 'static {
     /// Create a lexer for parsing this token type
     fn lexer<'s>(source: &'s str) -> Result<Self::Lexer<'s>, GrammarError>;
 }
-
-// /// Convienence trait for [`Lexicon`] with no context (`()`)
-// pub trait LexiconNoCtx: Lexicon<Ctx=()> {
-//     // /// Create a parser for parsing syntax trees with this token type
-//     // fn parser<'s>(source: &'s str) -> Parser<'s, Self> {
-//     //     Self::parser_with_context(source, ())
-//     // }
-// }
-//
-// impl<L: Lexicon<Ctx=()>> LexiconNoCtx for L {}

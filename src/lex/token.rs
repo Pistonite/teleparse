@@ -2,8 +2,6 @@
 
 use std::fmt::Debug;
 
-use teleparse_macros::ToSpan;
-
 use super::{ToSpan, Span, Lexicon};
 
 ///////////////////////////////////////////////////////////

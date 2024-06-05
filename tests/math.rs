@@ -6,11 +6,12 @@
 //!
 
 use teleparse::prelude::*;
+use teleparse::lex::Token;
 
 // note that this example is not the only way to define the parser
 
 /// Token types for the lexer
-#[teleparse_derive(TokenType)]
+#[derive_lexicon]
 #[teleparse(
     ignore(r#"^\s+"#), // ignore whitespaces, separate multiple with comma
 )]
@@ -35,22 +36,22 @@ pub enum TokenType {
 
 #[test]
 fn empty() {
-    let mut lexer = TokenType::lexer("");
+    let mut lexer = TokenType::lexer("").unwrap();
     assert_eq!(lexer.next(), (None, None));
 
-    let mut lexer = TokenType::lexer("   ");
+    let mut lexer = TokenType::lexer("   ").unwrap();
     assert_eq!(lexer.next(), (None, None));
 }
 
 #[test]
 fn single() {
-    let mut lexer = TokenType::lexer("3");
+    let mut lexer = TokenType::lexer("3").unwrap();
     assert_eq!(lexer.next(), (None, Some(Token::new((0,1), TokenType::Integer))));
 
-    let mut lexer = TokenType::lexer("(");
+    let mut lexer = TokenType::lexer("(").unwrap();
     assert_eq!(lexer.next(), (None, Some(Token::new((0,1), TokenType::Param))));
 
-    let mut lexer = TokenType::lexer("*");
+    let mut lexer = TokenType::lexer("*").unwrap();
     assert_eq!(lexer.next(), (None, Some(Token::new((0,1), TokenType::Operator))));
 
 }
@@ -58,7 +59,7 @@ fn single() {
 #[test]
 fn basic() {
     let source = "3+4*(5-6)/7";
-    let mut lexer = TokenType::lexer(source);
+    let mut lexer = TokenType::lexer(source).unwrap();
     assert_eq!(lexer.next(), (None, Some(Token::new((0,1), TokenType::Integer))));
     assert_eq!(lexer.next(), (None, Some(Token::new((1,2), TokenType::Operator))));
     assert_eq!(lexer.next(), (None, Some(Token::new((2,3), TokenType::Integer))));
@@ -77,7 +78,7 @@ fn basic() {
 fn with_ignore() {
     // -----------0123456789101214
     let source = "3 + 4  *( 5 -6";
-    let mut lexer = TokenType::lexer(source);
+    let mut lexer = TokenType::lexer(source).unwrap();
     assert_eq!(lexer.next(), (None, Some(Token::new((0,1), TokenType::Integer))));
     assert_eq!(lexer.next(), (None, Some(Token::new((2,3), TokenType::Operator))));
     assert_eq!(lexer.next(), (None, Some(Token::new((4,5), TokenType::Integer))));
@@ -93,7 +94,7 @@ fn with_ignore() {
 fn invalid() {
     // -----------01234567891012141618202224262830
     let source = "3+ 4 what is (this 5)   invalid";
-    let mut lexer = TokenType::lexer(source);
+    let mut lexer = TokenType::lexer(source).unwrap();
     assert_eq!(lexer.next(), (None, Some(Token::new((0,1), TokenType::Integer))));
     assert_eq!(lexer.next(), (None, Some(Token::new((1,2), TokenType::Operator))));
     assert_eq!(lexer.next(), (None, Some(Token::new((3,4), TokenType::Integer))));

@@ -2,11 +2,11 @@ version: "3"
 
 tasks:
   doc:
-    desc: Watch and serve documentation (requires node)
+    desc: Watch and serve documentation
     cmds:
-      - cargo doc
-      - npx live-server target/doc &
-      - cargo watch -s "cargo doc --target-dir target/doc_live && cp -R target/doc_live/doc/* target/doc"
+      - txtpp src -r && cargo doc
+      - live-server target/doc -p 8080 &
+      - cargo watch -s "txtpp src -r -N && cargo doc"
 
   dev:
     desc: Dev inner loop. Run tests in watch mode

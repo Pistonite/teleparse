@@ -5,58 +5,46 @@
 mod prelude;
 use prelude::*;
 
-mod node_derive_impl;
-mod token_type_derive_impl;
-mod syntax_tree_derive_impl;
 
-/// Derive macro for traits in the library. Note this is not a normal derive macro, since it also
-/// transforms the input in some way
+/// Transform an enum into a token type (a lexicon)
+///
+/// This will derive the lexicon trait as well as the super traits, and also generate
+/// an implementation for the lexer, and implementation for terminal symbols for the AST
+///
+/// Note that this is not a derive macro, since it will transform the input.
 #[proc_macro_attribute]
-pub fn teleparse_derive(attr: TokenStream, input: TokenStream) -> TokenStream {
-    let ident = parse_macro_input!(attr as syn::Ident);
-    match teleparse_derive_internal(&ident, input) {
-        Ok(out) => out,
-        Err(err) => err.into_compile_error().into(),
-    }
+pub fn derive_lexicon(_: TokenStream, input: TokenStream) -> TokenStream {
+    expand_with_mut(input, lexicon::expand)
 }
+mod lexicon;
 
-fn teleparse_derive_internal(ident: &syn::Ident, input: TokenStream) -> syn::Result<TokenStream> {
-    let out = match ident.to_string().as_str() {
-        "TokenType" => {
-            token_type_derive_impl::expand(input, ident)
-        },
-        "Node" => {
-            node_derive_impl::expand(input, ident)
-        },
-        "SyntaxTree" => {
-            syntax_tree_derive_impl::expand(input, ident)
-        },
-        _ => syn_error!(ident, "unknown teleparse_derive input `{}`", ident),
-    };
-
-    Ok(out)
+/// Derive common traits for AST helper nodes (stores a Node as its first thing)
+#[proc_macro_derive(Node)]
+pub fn derive_node(input: TokenStream) -> TokenStream {
+    expand_with(input, node::expand)
 }
+mod node;
 
-mod derive_to_span_impl;
 
 /// Derive ToSpan from a type that stores a ToSpan as its first thing
 #[proc_macro_derive(ToSpan)]
 pub fn derive_to_span(input: TokenStream) -> TokenStream {
-    derive_to_span_impl::expand(input)
+    expand_with(input, derive_to_span_impl::expand)
 }
+mod derive_to_span_impl;
 
 mod derive_root_impl;
 
-/// Derive Root from a SyntaxTree type
-#[proc_macro_derive(Root)]
-pub fn derive_root(input: TokenStream) -> TokenStream {
-    derive_root_impl::expand(input)
-}
-
-mod derive_ll1_impl;
-
-/// Derive LL1 test for a Root type
-#[proc_macro_derive(LL1Test)]
-pub fn derive_ll1(input: TokenStream) -> TokenStream {
-    derive_ll1_impl::expand(input)
-}
+// /// Derive Root from a SyntaxTree type
+// #[proc_macro_derive(Root)]
+// pub fn derive_root(input: TokenStream) -> TokenStream {
+//     derive_root_impl::expand(input)
+// }
+//
+// mod derive_ll1_impl;
+//
+// /// Derive LL1 test for a Root type
+// #[proc_macro_derive(LL1Test)]
+// pub fn derive_ll1(input: TokenStream) -> TokenStream {
+//     derive_ll1_impl::expand(input)
+// }

@@ -1,3 +1,3 @@
 # teleparse
 
-Proc-macro powered LL(1) parsing library - Working in progress.
+Proc-macro powered LL(1) parsing library - Working in progress. B

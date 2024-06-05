@@ -1,16 +1,6 @@
-
 use crate::*;
 
-pub fn expand(input: TokenStream, derive_ident: &syn::Ident) -> TokenStream {
-    let mut derive_input = {
-        let input = input.clone();
-        parse_macro_input!(input as syn::DeriveInput)
-    };
-    let result = expand_internal(&mut derive_input, derive_ident);
-    from_result_keep_input(quote!{#derive_input}, result)
-}
-
-fn expand_internal(input: &mut syn::DeriveInput, _derive_ident: &syn::Ident) -> syn::Result<TokenStream2> {
+pub fn expand(input: &syn::DeriveInput) -> syn::Result<TokenStream2> {
     let teleparse = crate_ident();
     let ident = &input.ident;
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();

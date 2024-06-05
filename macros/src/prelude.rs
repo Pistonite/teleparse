@@ -18,6 +18,26 @@ pub(crate) fn crate_ident() -> syn::Ident {
         _ => syn::Ident::new(CRATE, Span::call_site()),
     }
 }
+pub(crate) fn expand_with<F>(input: TokenStream, f: F)  -> TokenStream
+where F:
+    FnOnce(&syn::DeriveInput) -> syn::Result<TokenStream2>
+{
+    let derive_input = parse_macro_input!(input as syn::DeriveInput);
+    let result = f(&derive_input);
+    from_result_keep_input(quote!{#derive_input}, result)
+}
+
+pub(crate) fn expand_with_mut<F>(input: TokenStream, f: F)  -> TokenStream
+where F:
+    FnOnce(&mut syn::DeriveInput) -> syn::Result<TokenStream2>
+{
+    let mut derive_input = {
+        let input = input.clone();
+        parse_macro_input!(input as syn::DeriveInput)
+    };
+    let result = f(&mut derive_input);
+    from_result_keep_input(quote!{#derive_input}, result)
+}
 
 pub(crate) fn parse_crate_attr_meta(attr: &syn::Attribute) -> syn::Result<
 Punctuated<syn::Meta, syn::Token![,]>> {
@@ -67,24 +87,22 @@ macro_rules! syn_error {
 }
 pub(crate) use syn_error;
 
-/// Parse the `llnparse` attribute on the input and return the meta list, also stripping the attribute
-pub(crate) fn parse_strip_root_meta_optional(input: &mut syn::DeriveInput, derive_ident: &syn::Ident) -> syn::Result<Option<Punctuated<syn::Meta, syn::Token![,]>>> {
-    let context = derive_ident.to_string();
+/// Parse the `teleparse` attribute on the input and return the meta list, also stripping the attribute
+pub(crate) fn parse_strip_root_meta_optional(input: &mut syn::DeriveInput) -> syn::Result<Option<Punctuated<syn::Meta, syn::Token![,]>>> {
     let root_attrs = strip_take_attrs(&mut input.attrs);
     let root_attr = match ensure_one(root_attrs) {
         EnsureOne::None => return Ok(None),
-        EnsureOne::More => syn_error!(derive_ident, "Multiple root {} attributes found for {}! You might want to merge them.", CRATE, context),
+        EnsureOne::More => syn_error!(&input.ident, "Multiple root {} attributes found! You might want to merge them.", CRATE),
         EnsureOne::One(attr) => attr,
     };
     Ok(Some(parse_crate_attr_meta(&root_attr)?))
 }
 
-pub(crate) fn parse_strip_root_meta(input: &mut syn::DeriveInput, derive_ident: &syn::Ident) -> syn::Result<Punctuated<syn::Meta, syn::Token![,]>> {
-    match parse_strip_root_meta_optional(input, derive_ident)? {
+pub(crate) fn parse_strip_root_meta(input: &mut syn::DeriveInput) -> syn::Result<Punctuated<syn::Meta, syn::Token![,]>> {
+    match parse_strip_root_meta_optional(input)? {
         Some(metas) => Ok(metas),
         None => {
-            let context = derive_ident.to_string();
-            syn_error!(derive_ident, "Deriving {} requires a {} attribute to define additional properties.", context, CRATE)
+            syn_error!(&input.ident, "This requires a {} attribute to define additional properties.", CRATE)
         }
     }
 }

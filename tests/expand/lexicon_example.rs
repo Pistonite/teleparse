@@ -1,7 +1,7 @@
 use teleparse::prelude::*;
 
-#[teleparse_derive(TokenType)]
-#[teleparse(ignore(r#"^\s+"#))]
+#[derive_lexicon]
+#[teleparse(ignore(r#"^\s+"#))] // ignore whitespaces
 pub enum TokenType {
     /// Numbers in the expression
     #[teleparse(regex(r#"^\d+"#), terminal(Integer))]
@@ -9,9 +9,7 @@ pub enum TokenType {
     /// The 4 basic operators
     #[teleparse(terminal(
         OpAdd = "+", 
-        OpSub = "-", 
         OpMul = "*", 
-        OpDiv = "/",
     ))]
     Operator,
     /// Parentheses

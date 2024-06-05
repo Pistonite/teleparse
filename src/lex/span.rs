@@ -74,6 +74,7 @@ pub trait ToSpan {
     /// Get the span of this type
     fn span(&self) -> Span;
 }
+pub use teleparse_macros::ToSpan;
 
 impl ToSpan for Span {
     #[inline]
