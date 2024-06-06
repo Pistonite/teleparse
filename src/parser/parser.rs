@@ -189,18 +189,16 @@ impl<'s, L: Lexicon> Parser<'s, L> {
         SynResult::Panic(vec![self.expecting(expecting)])
     }
 
-
-
-    fn peek_token_src(&mut self) -> Option<TokenSrc<'s, L>> {
+    pub fn peek_token_src(&mut self) -> Option<TokenSrc<'s, L>> {
         self.peek_token().map(|t| self.info.to_src(&t))
     }
 
     /// Create a syntax error for an unexpected end of file
-    fn unexpected_eof(&mut self) -> Error<L>{
+    pub fn unexpected_eof(&mut self) -> Error<L>{
         Error::new(self.current_span(), ErrorKind::UnexpectedEof)
     }
 
-    fn expecting(&mut self, expected: FirstSet<L>) -> Error<L> {
+    pub fn expecting(&mut self, expected: FirstSet<L>) -> Error<L> {
         Error::new(self.current_span(), ErrorKind::Expecting(expected))
     }
 
@@ -221,7 +219,7 @@ impl<'s, L: Lexicon> Parser<'s, L> {
     }
 
     /// Return the next token in the input but does not consume it
-    fn peek_token(&mut self) -> Option<Token<L>> {
+    pub fn peek_token(&mut self) -> Option<Token<L>> {
         if self.peeked.is_none() {
             self.try_read_next_token();
         }

@@ -18,6 +18,20 @@ pub fn derive_lexicon(_: TokenStream, input: TokenStream) -> TokenStream {
 }
 mod lexicon;
 
+/// Transform an enum or struct into a parse tree node, as well as deriving the production rule
+/// (the AST nodes)
+///
+/// This will derive the AbstractSyntaxTree trait as well as the super traits, and also generate
+/// an implementation for the lexer, and implementation for terminal symbols for the AST
+///
+/// Note that this is not a derive macro, since it will transform the input.
+#[proc_macro_attribute]
+pub fn derive_syntax(attr: TokenStream, input: TokenStream) -> TokenStream {
+    let lexicon_ident = parse_macro_input!(attr as syn::Ident);
+    expand_with_args_mut(input, lexicon_ident, syntax::expand)
+}
+mod syntax;
+
 /// Derive common traits for AST helper nodes (stores a Node as its first thing)
 #[proc_macro_derive(Node)]
 pub fn derive_node(input: TokenStream) -> TokenStream {
@@ -25,13 +39,12 @@ pub fn derive_node(input: TokenStream) -> TokenStream {
 }
 mod node;
 
-
 /// Derive ToSpan from a type that stores a ToSpan as its first thing
 #[proc_macro_derive(ToSpan)]
 pub fn derive_to_span(input: TokenStream) -> TokenStream {
-    expand_with(input, derive_to_span_impl::expand)
+    expand_with(input, to_span::expand)
 }
-mod derive_to_span_impl;
+mod to_span;
 
 mod derive_root_impl;
 

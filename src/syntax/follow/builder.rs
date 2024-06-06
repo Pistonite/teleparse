@@ -29,13 +29,14 @@ impl<L: Lexicon> FollowBuilder<L> {
             rels: Default::default(),
         }
     }
-    // #[inline(always)]
-    // pub fn build_recursive<AST: AbstractSyntaxTree<T=L>>(&mut self) {
-    //     let t = AST::type_id();
-    //     if self.seen.insert(t) {
-    //         AST::build_follow(self);
-    //     }
-    // }
+
+    /// Visit an AST node type and return true if it has not been visited
+    /// and rules should be constructed
+    #[must_use]
+    #[inline]
+    pub fn visit(&mut self, ast: TypeId) -> bool {
+        self.seen.insert(ast)
+    }
 
     /// Add a [FOLLOW relation](FollowRel) to the builder
     #[inline]
@@ -45,7 +46,7 @@ impl<L: Lexicon> FollowBuilder<L> {
 
     /// Build follow table for X -> Y1 | Y2 | ... | Yn
     #[inline]
-    pub fn build_for_enum(&mut self, x: TypeId, variants: &[TypeId]) {
+    pub fn build_enum(&mut self, x: TypeId, variants: &[TypeId]) {
         for y in variants {
             // for X -> Yi
             // FOLLOW(Yi) = FOLLOW(Yi) U FOLLOW(X)
@@ -54,7 +55,7 @@ impl<L: Lexicon> FollowBuilder<L> {
     }
 
     /// Build follow table for X -> Y1 Y2 ... Yn
-    pub fn build_for_sequence(&mut self, x: TypeId, sequence: &[TypeId]) {
+    pub fn build_sequence(&mut self, x: TypeId, sequence: &[TypeId]) {
         let mut set = BTreeSet::new();
         for yi in sequence.iter().rev() {
             // if Yi ... Yn all has epsilon in FIRST(Yi), then FOLLOW(Yi) = FOLLOW(Yi) U FOLLOW(X)

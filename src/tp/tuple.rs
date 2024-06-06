@@ -1,36 +1,20 @@
 use std::any::TypeId;
-use std::borrow::Cow;
 use std::collections::BTreeSet;
 
 use itertools::Itertools;
 
-use crate::root::RootMetadata;
-use crate::table::first::{First, FirstBuilder, FirstSet};
-use crate::table::follow::{Follow, FollowBuilder};
-use crate::table::parsing::Parsing;
-use crate::{prelude::*, LL1Error, ToSpan};
-use crate::parser::{Parser, ParserState};
-use crate::{SyntaxTree, AstResult};
-
-macro_rules! produces_epsilon_impl {
-    ($elem1:ty, $($elem:ty),* | $last:ty) => {{
-        <$elem1>::produces_epsilon()
-        $(&& <$elem>::produces_epsilon())*
-        && <$last>::produces_epsilon()
-    }}
-}
+use crate::parser::ParseTree;
+use crate::syntax::{FirstSet, First, FirstBuilder, Follow, FollowBuilder, Jump, Metadata};
+use crate::{AbstractSyntaxTree, GrammarError, Lexicon, Parser};
 
 macro_rules! check_left_recursive_impl {
-    ($stack:ident, $set:ident, $elem1:ty, $($elem:ty),* | $last:ty) => {{
+    ($stack:ident, $set:ident, $first:ident, $elem1:ty, $($elem:ty),* | $last:ty) => {{
         let t = Self::type_id();
-        if $set.contains(&t) {
-            let mut stack = $stack.clone();
-            stack.push(Self::debug().into_owned());
-        return Err(LL1Error::LeftRecursion(stack.join(" -> ")));
+        if !$set.insert(t) {
+            return Err(GrammarError::left_recursion(&$stack, &Self::debug()));
         }
         $stack.push(Self::debug().into_owned());
-        $set.insert(t);
-        if let Err(e) = <$elem1>::check_left_recursive($stack, $set) {
+        if let Err(e) = <$elem1>::check_left_recursive($stack, $set, $first) {
             $stack.pop();
             $set.remove(&t);
             return Err(e);
@@ -39,7 +23,7 @@ macro_rules! check_left_recursive_impl {
         let mut temp_stack = Vec::new();
         let mut temp_set = BTreeSet::new();
 
-        let (cur_stack, cur_set, cur_is_main) = if <$elem1>::produces_epsilon() {
+        let (cur_stack, cur_set, cur_is_main) = if $first.get(&<$elem1>::type_id()).contains_epsilon() {
             ($stack, $set, true)
         } else {
             $stack.pop();
@@ -48,14 +32,14 @@ macro_rules! check_left_recursive_impl {
         };
 
         $(
-            if let Err(e) = <$elem>::check_left_recursive(cur_stack, cur_set) {
+            if let Err(e) = <$elem>::check_left_recursive(cur_stack, cur_set, $first) {
                 if cur_is_main {
                     cur_stack.pop();
                     cur_set.remove(&t);
                 }
                 return Err(e);
             }
-            let (cur_stack, cur_set, cur_is_main) = if <$elem>::produces_epsilon() {
+            let (cur_stack, cur_set, cur_is_main) = if $first.get(&<$elem>::type_id()).contains_epsilon() {
                 (cur_stack, cur_set, cur_is_main)
             } else {
                 if cur_is_main {
@@ -68,7 +52,7 @@ macro_rules! check_left_recursive_impl {
             };
         )*
 
-        let check = <$last>::check_left_recursive(cur_stack, cur_set);
+        let check = <$last>::check_left_recursive(cur_stack, cur_set, $first);
         if cur_is_main {
             cur_stack.pop();
             cur_set.remove(&t);
@@ -79,12 +63,31 @@ macro_rules! check_left_recursive_impl {
 
 macro_rules! build_first_impl {
     ($builder:ident, $elem1:ty, $($elem:ty),* | $last:ty) => {{
-        $builder.build_recursive::<$elem1>();
+        let t = Self::type_id();
+        if !$builder.visit(t) {
+            return;
+        }
+        <$elem1>::build_first($builder);
         $(
-            $builder.build_recursive::<$elem>();
+            <$elem>::build_first($builder);
         )*
-        $builder.build_recursive::<$last>();
-        $builder.build_for_sequence(Self::type_id(), &[<$elem1>::type_id(), $(<$elem>::type_id()),* <$last>::type_id()]);
+        <$last>::build_first($builder);
+        $builder.build_sequence(t, &[<$elem1>::type_id(), $(<$elem>::type_id(),)* <$last>::type_id()]);
+    }}
+}
+
+macro_rules! build_follow_impl {
+    ($builder:ident, $elem1:ty, $($elem:ty),* | $last:ty) => {{
+        let t = Self::type_id();
+        if !$builder.visit(t) {
+            return;
+        }
+        <$elem1>::build_follow($builder);
+        $(
+            <$elem>::build_follow($builder);
+        )*
+        <$last>::build_follow($builder);
+        $builder.build_sequence(t, &[<$elem1>::type_id(), $(<$elem>::type_id(),)* <$last>::type_id()]);
     }}
 }
 
@@ -113,8 +116,9 @@ macro_rules! check_first_conflict_impl {
                     let current_symbol = current_symbol.into_owned();
                     let next_symbol = next_symbol.into_owned();
                     let self_symbol = Self::debug().into_owned();
-                    let terminals = current_check.intersection_terminal_minus_epsilon(next_first).into_iter().join(", ");
-                    return Err(LL1Error::FirstFollowStringConflict(self_symbol, current_symbol, next_symbol, terminals));
+                    let terminals = current_check
+                        .intersection_repr_minus_epsilon(next_first).into_iter().join(", ");
+                    return Err(GrammarError::FirstFollowStringConflict(self_symbol, current_symbol, next_symbol, terminals));
                 }
                 current_check.clear();
             }
@@ -129,8 +133,9 @@ macro_rules! check_first_conflict_impl {
                     let next_symbol = <$last>::debug();
                     let next_symbol = next_symbol.into_owned();
                     let self_symbol = Self::debug().into_owned();
-                    let terminals = current_check.intersection_terminal_minus_epsilon(next_first).into_iter().join(", ");
-                    return Err(LL1Error::FirstFollowStringConflict(self_symbol, current_symbol, next_symbol, terminals));
+                    let terminals = current_check
+                        .intersection_repr_minus_epsilon(next_first).into_iter().join(", ");
+                    return Err(GrammarError::FirstFollowStringConflict(self_symbol, current_symbol, next_symbol, terminals));
                 }
             }
 
@@ -147,123 +152,146 @@ macro_rules! check_first_follow_conflict_impl {
     }}
 }
 
-macro_rules! build_parsing_impl {
-    ($seen:ident, $parsing:ident, $elem1:ty, $($elem:ty),* | $last:ty) => {{
+macro_rules! build_jump_impl {
+    ($seen:ident, $first:ident, $jump:ident, $elem1:ty, $($elem:ty),* | $last:ty) => {{
         if $seen.insert(Self::type_id()) {
-            <$elem1>::build_parsing($seen, $parsing);
+            <$elem1>::build_jump($seen, $first, $jump);
             $(
-                <$elem>::build_parsing($seen, $parsing);
+                <$elem>::build_jump($seen, $first, $jump);
             )*
-            <$last>::build_parsing($seen, $parsing);
+            <$last>::build_jump($seen, $first, $jump);
         }
     }}
 }
 
-macro_rules! try_parse_ast_impl {
+macro_rules! parse_impl {
     ($parser:ident, $meta:ident, $elem1:ty, $($elem:ty),* | $last:ty) => {{
         let token = $parser.peek_token_src();
         let t = Self::type_id();
         let first = $meta.first.get(&t);
         if !first.contains(token) {
-            return AstResult::Panic(vec![$parser.expecting(first.clone())]);
+            return $crate::syntax::Result::Panic(vec![$parser.expecting(first.clone())]);
         }
         let mut errors = Vec::new();
         let result = (
-            match <$elem1>::try_parse_ast($parser, $meta) {
-                AstResult::Success(x) => x,
-                AstResult::Recovered(x, e) => { errors.extend(e); x },
-                AstResult::Panic(e) => {
+            match <$elem1>::parse($parser, $meta) {
+                $crate::syntax::Result::Success(x) => x,
+                $crate::syntax::Result::Recovered(x, e) => { errors.extend(e); x },
+                $crate::syntax::Result::Panic(e) => {
                     errors.extend(e);
-                    return AstResult::Panic(errors);
+                    return $crate::syntax::Result::Panic(errors);
                 }
             },  $(
 
-                match <$elem>::try_parse_ast($parser, $meta) {
-                    AstResult::Success(x) => x,
-                    AstResult::Recovered(x, e) => { errors.extend(e); x },
-                    AstResult::Panic(e) => {
+                match <$elem>::parse($parser, $meta) {
+                    $crate::syntax::Result::Success(x) => x,
+                    $crate::syntax::Result::Recovered(x, e) => { errors.extend(e); x },
+                    $crate::syntax::Result::Panic(e) => {
                         errors.extend(e);
-                        return AstResult::Panic(errors);
+                        return $crate::syntax::Result::Panic(errors);
                     }
                 },
 
-            ),*
-            match <$last>::try_parse_ast($parser, $meta) {
-                AstResult::Success(x) => x,
-                AstResult::Recovered(x, e) => { errors.extend(e); x },
-                AstResult::Panic(e) => {
+            )*
+            match <$last>::parse($parser, $meta) {
+                $crate::syntax::Result::Success(x) => x,
+                $crate::syntax::Result::Recovered(x, e) => { errors.extend(e); x },
+                $crate::syntax::Result::Panic(e) => {
                     errors.extend(e);
-                    return AstResult::Panic(errors);
+                    return $crate::syntax::Result::Panic(errors);
                 }
             }
         );
 
         if errors.is_empty() {
-            AstResult::Success(result)
+            $crate::syntax::Result::Success(result)
         } else {
-            AstResult::Recovered(result, errors)
+            $crate::syntax::Result::Recovered(result, errors)
         }
     }}
 }
 
-macro_rules! tuple_impl {
-    ($elem1:ty, $($elem:ty),* | $last:ty) => {{
-        impl<$elem1: SyntaxTree,
-        $($elem: SyntaxTree<T=$elem1::T>),*>
-        $last: SyntaxTree<T=$elem1::T>> SyntaxTree for ($elem1, $($elem),* $last) {
-            type T = $elem1::T;
-            type AST = ($elem1::AST, $($elem::AST),* $last::AST);
+macro_rules! derive_tuple_ast {
+    ($elem1:tt $( + $elem:tt)* | $last:tt) => {
 
-            #[inline]
-            fn produces_epsilon() -> bool {
-                produces_epsilon_impl!($elem1, $($elem),* | $last)
-            }
+const _: () = {
+    #[automatically_derived]
+    impl<$elem1: AbstractSyntaxTree,
+        $($elem: AbstractSyntaxTree<L=$elem1::L>,)* 
+        $last: AbstractSyntaxTree<L=$elem1::L>
+    > AbstractSyntaxTree for ($elem1, $($elem,)*  $last) {
+        type L = $elem1::L;
+        #[inline]
+        fn build_first(builder: &mut FirstBuilder<Self::L>) {
+            build_first_impl!(builder, $elem1, $($elem),* | $last);
         }
-    }}
-}
 
+        #[inline]
+        fn check_left_recursive(stack: &mut Vec<String>, set: &mut BTreeSet<TypeId>, first: &First<Self::L>) -> Result<(), GrammarError> {
+            check_left_recursive_impl!(stack, set, first, $elem1, $($elem),* | $last)
+        }
 
-impl<A: SyntaxTree, B: SyntaxTree<T=A::T>> SyntaxTree for (A, B) {
-    type T = A::T;
-    type AST = (A::AST, B::AST);
+        #[inline]
+        fn check_first_conflict(seen: &mut BTreeSet<TypeId>, first: &First<Self::L>) -> Result<(), GrammarError> {
+            check_first_conflict_impl!(seen, first, $elem1, $($elem),* | $last)
+        }
 
-    #[inline]
-    fn produces_epsilon() -> bool {
-        produces_epsilon_impl!(A,  | B)
+        #[inline]
+        fn build_follow(builder: &mut FollowBuilder<Self::L>) {
+            build_follow_impl!(builder, $elem1, $($elem),* | $last)
+        }
+
+        #[inline]
+        fn check_first_follow_conflict(seen: &mut BTreeSet<TypeId>, first: &First<Self::L>, follow: &Follow<Self::L>) -> Result<(), GrammarError> {
+            check_first_follow_conflict_impl!(seen, first, follow, $elem1, $($elem),* | $last)
+        }
+
+        #[inline]
+        fn build_jump(seen: &mut BTreeSet<TypeId>, first: &First<Self::L>, jump: &mut Jump<Self::L>) {
+            build_jump_impl!(seen, first, jump, $elem1, $($elem),* | $last)
+        }
+
+        #[inline]
+        fn parse<'s>( parser: &mut Parser<'s, Self::L>, meta: &Metadata<Self::L>,) -> crate::syntax::Result<Self, Self::L> {
+            parse_impl!(parser, meta, $elem1, $($elem),* | $last)
+        }
     }
+};
 
-    #[inline]
-    fn check_left_recursive(stack: &mut Vec<String>, set: &mut BTreeSet<TypeId>) -> Result<(), LL1Error> {
-        check_left_recursive_impl!(stack, set, A, | B)
-    }
-
-    #[inline]
-    fn build_first(builder: &mut FirstBuilder<Self::T>) {
-        build_first_impl!(builder, A,  | B)
-    }
-
-    #[inline]
-    fn check_first_conflict_recursive(seen: &mut BTreeSet<TypeId>, first: &First<Self::T>) -> Result<(), LL1Error> {
-        check_first_conflict_impl!(seen, first, A,  | B)
-    }
-
-    #[inline]
-    fn build_follow(builder: &mut FollowBuilder<Self::T>) {
-        build_first_impl!(builder, A,  | B)
-    }
-
-    #[inline]
-    fn build_parsing(seen: &mut BTreeSet<TypeId>, parsing: &mut Parsing<Self::T>) {
-        build_parsing_impl!(seen, parsing, A,  | B)
-    }
-
-    #[inline]
-    fn check_first_follow_conflict_recursive(seen: &mut BTreeSet<TypeId>, first: &First<Self::T>, follow: &Follow<Self::T>) -> Result<(), LL1Error> {
-        check_first_follow_conflict_impl!(seen, first, follow, A,  | B)
-    }
-
-    #[inline]
-    fn try_parse_ast<'s>( parser: &mut Parser<'s, Self::T>, meta: &RootMetadata<Self::T>,) -> AstResult<Self::T, Self::AST> {
-        try_parse_ast_impl!(parser, meta, A,  | B)
     }
 }
+
+macro_rules! derive_tuple_parse_tree {
+    ($elem1:tt $( + $elem:tt)* | $last:tt) => {
+const _: () = {
+    #[automatically_derived]
+    impl<L: Lexicon, $elem1: ParseTree,
+        $($elem: ParseTree,)*
+        $last: ParseTree
+    > ParseTree for ($elem1, $($elem,)* $last) 
+    where
+        $elem1::AST: AbstractSyntaxTree<L=L>,
+        $($elem::AST: AbstractSyntaxTree<L=L>,)*
+        $last::AST: AbstractSyntaxTree<L=L>
+    {
+        type AST = ($elem1::AST, $($elem::AST,)* $last::AST);
+
+        fn from_ast<'s>(ast: Self::AST, parser: &mut Parser<'s, L>) -> Self {
+            #[allow(non_snake_case)]
+            let (a, $($elem,)* b) = ast;
+            (<$elem1>::from_ast(a, parser), $(<$elem>::from_ast($elem, parser),)* <$last>::from_ast(b, parser))
+        }
+    }
+};
+
+    }
+}
+
+derive_tuple_ast!(A | B);
+derive_tuple_ast!(A + B | C);
+derive_tuple_ast!(A + B + C | D);
+derive_tuple_ast!(A + B + C + D | E);
+derive_tuple_parse_tree!(A | B);
+derive_tuple_parse_tree!(A + B | C);
+derive_tuple_parse_tree!(A + B + C | D);
+derive_tuple_parse_tree!(A + B + C + D | E);

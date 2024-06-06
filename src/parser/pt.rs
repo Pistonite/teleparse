@@ -30,4 +30,5 @@ where Self::AST : AbstractSyntaxRoot
     }
 }
 
-
+/// Type alias to get the AST associated type of a [`ParseTree`]
+pub type AstOf<T> = <T as ParseTree>::AST;

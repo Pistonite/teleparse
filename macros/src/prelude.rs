@@ -1,10 +1,11 @@
+use regex::Regex;
 
 pub(crate) use proc_macro::TokenStream;
 pub(crate) use proc_macro2::Span;
 pub(crate) use quote::quote;
-use regex::Regex;
 pub(crate) use syn::{parse_macro_input, parse_quote};
 pub(crate) use syn::punctuated::Punctuated;
+pub(crate) use syn::spanned::Spanned;
 
 /// Type to distinct with proc_macro::TokenStream
 pub(crate) type TokenStream2 = proc_macro2::TokenStream;
@@ -18,24 +19,40 @@ pub(crate) fn crate_ident() -> syn::Ident {
         _ => syn::Ident::new(CRATE, Span::call_site()),
     }
 }
+
 pub(crate) fn expand_with<F>(input: TokenStream, f: F)  -> TokenStream
 where F:
     FnOnce(&syn::DeriveInput) -> syn::Result<TokenStream2>
 {
+    expand_with_args(input, (), |input, _| f(input))
+}
+
+pub(crate) fn expand_with_args<A, F>(input: TokenStream, args: A, f: F)  -> TokenStream
+where F:
+    FnOnce(&syn::DeriveInput, A) -> syn::Result<TokenStream2>
+{
     let derive_input = parse_macro_input!(input as syn::DeriveInput);
-    let result = f(&derive_input);
+    let result = f(&derive_input, args);
     from_result_keep_input(quote!{#derive_input}, result)
 }
+
 
 pub(crate) fn expand_with_mut<F>(input: TokenStream, f: F)  -> TokenStream
 where F:
     FnOnce(&mut syn::DeriveInput) -> syn::Result<TokenStream2>
 {
+    expand_with_args_mut(input, (), |input, _| f(input))
+}
+
+pub(crate) fn expand_with_args_mut<A, F>(input: TokenStream, args: A, f: F)  -> TokenStream
+where F:
+    FnOnce(&mut syn::DeriveInput, A) -> syn::Result<TokenStream2>
+{
     let mut derive_input = {
         let input = input.clone();
         parse_macro_input!(input as syn::DeriveInput)
     };
-    let result = f(&mut derive_input);
+    let result = f(&mut derive_input, args);
     from_result_keep_input(quote!{#derive_input}, result)
 }
 

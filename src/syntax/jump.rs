@@ -44,7 +44,6 @@ pub struct Jump<L: Lexicon> {
 }
 
 impl<L: Lexicon> Jump<L> {
-    #[inline]
     pub fn register(&mut self, t: TypeId, first: &FirstSet<L>, id: usize)->bool{
         if self.map.contains_key(&t) {
             return false;
@@ -56,8 +55,8 @@ impl<L: Lexicon> Jump<L> {
     }
 
     #[inline]
-    pub fn look_up<'s>(&self, t: TypeId, token: Option<TokenSrc<'s, L>>) -> Option<usize> {
-        self.map.get(&t).and_then(|entry| entry.look_up(token))
+    pub fn look_up<'s>(&self, t: &TypeId, token: Option<TokenSrc<'s, L>>) -> Option<usize> {
+        self.map.get(t).and_then(|entry| entry.look_up(token))
     }
 }
 

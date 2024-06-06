@@ -1,14 +1,4 @@
-
 use crate::*;
-
-// pub fn expand(input: TokenStream) -> TokenStream {
-//     let mut derive_input = {
-//         let input = input.clone();
-//         parse_macro_input!(input as syn::DeriveInput)
-//     };
-//     let result = expand_internal(&mut derive_input);
-//     from_result_keep_input(quote!{#derive_input}, result)
-// }
 
 pub fn expand(input: &syn::DeriveInput) -> syn::Result<TokenStream2> {
     let teleparse = crate_ident();
@@ -30,7 +20,6 @@ pub fn expand(input: &syn::DeriveInput) -> syn::Result<TokenStream2> {
     let out = quote! {
         #[automatically_derived]
         impl #impl_generics #teleparse::ToSpan for #ident #ty_generics #where_clause {
-            #[inline]
             fn span(&self) -> #teleparse::Span {
                 #body
             }
@@ -77,12 +66,12 @@ fn expand_enum(input: &syn::DataEnum) -> syn::Result<TokenStream2> {
                     }
                 };
                 arms.extend(quote! {
-                    Self::#ident { #field, .. } => #field.span()
+                    Self::#ident { #field, .. } => #field.span(),
                 });
             }
             syn::Fields::Unnamed(_) => {
                 arms.extend(quote! {
-                    Self::#ident(x, ..) => x.span()
+                    Self::#ident(x, ..) => x.span(),
                 });
             }
             syn::Fields::Unit => {

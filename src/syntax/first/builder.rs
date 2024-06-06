@@ -20,13 +20,13 @@ pub struct FirstBuilder<L: Lexicon> {
 }
 
 impl<L: Lexicon> FirstBuilder<L> {
-    // #[inline(always)]
-    // pub fn build_recursive<AST: AbstractSyntaxTree<T=L>>(&mut self) {
-    //     let t = AST::type_id();
-    //     if self.seen.insert(t) {
-    //         AST::build_first(self);
-    //     }
-    // }
+    /// Visit an AST node type and return true if it has not been visited
+    /// and rules should be constructed
+    #[must_use]
+    #[inline]
+    pub fn visit(&mut self, ast: TypeId) -> bool {
+        self.seen.insert(ast)
+    }
 
     /// Add a [FIRST relation](FirstRel) to the builder
     #[inline]

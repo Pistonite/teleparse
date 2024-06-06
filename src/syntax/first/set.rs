@@ -80,6 +80,12 @@ impl<L: Lexicon> FirstSet<L> {
 
     /// See [`TerminalSet::intersection_repr`]
     #[inline]
+    pub fn intersection_repr(&self, other: &Self) -> BTreeSet<String> {
+        self.0.intersection_repr(&other.0, true)
+    }
+
+    /// See [`TerminalSet::intersection_repr`]
+    #[inline]
     pub fn intersection_repr_minus_epsilon(&self, other: &Self) -> BTreeSet<String> {
         self.0.intersection_repr(&other.0, false)
     }
