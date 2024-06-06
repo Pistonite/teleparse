@@ -75,7 +75,7 @@ pub trait AbstractSyntaxTree: Sized + ToSpan + 'static {
     fn build_jump(seen: &mut BTreeSet<TypeId>, first: &First<Self::L>, jump: &mut Jump<Self::L>);
 
     /// Parse this AST node from the input stream
-    fn parse<'s>(
+    fn parse_ast<'s>(
         parser: &mut Parser<'s, Self::L>, 
         meta: &Metadata<Self::L>,
     ) -> super::Result<Self, Self::L>;

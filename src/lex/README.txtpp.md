@@ -93,15 +93,15 @@ pub enum MyToken {
 # fn main() {
 assert_eq!(
     Pizza::parse("pizza"),
-    Some(Pizza(Token::new((0, 5), MyToken::Food)))
+    Ok(Some(Pizza(Token::new((0, 5), MyToken::Food))))
 );
 assert_eq!(
     Pizza::parse("pasta"),
-    None
+    Ok(None)
 );
 assert_eq!(
     Pasta::parse("pasta"),
-    Some(Pasta(Token::new((0, 5), MyToken::Food)))
+    Ok(Some(Pasta(Token::new((0, 5), MyToken::Food))))
 );
 # }
 ```
@@ -140,22 +140,22 @@ let source = "rust";
 // Word can be parsed
 assert_eq!(
     Word::parse(source),
-    Some(Word(Token::new((0, 4), MyToken::Word)))
+    Ok(Some(Word(Token::new((0, 4), MyToken::Word))))
 );
 // so is Secret
 assert_eq!(
     Secret::parse(source),
-    Some(Secret(Token::new((0, 4), MyToken::Word)))
+    Ok(Some(Secret(Token::new((0, 4), MyToken::Word))))
 );
 // but not with others
 let source = "javascript";
 assert_eq!(
     Word::parse(source),
-    Some(Word(Token::new((0, 10), MyToken::Word)))
+    Ok(Some(Word(Token::new((0, 10), MyToken::Word))))
 );
 assert_eq!(
     Secret::parse(source),
-    None
+    Ok(None)
 );
 # }
 ```
@@ -250,7 +250,7 @@ use teleparse::prelude::*;
 
 #[derive_lexicon]
 pub enum MyToken {
-    #[teleparse(regex(r"/\*[\s\S]*?\*/"))]
+    #[teleparse(regex(r"^/\*[\s\S]*?\*/"))]
     Comment,
 }
 ```

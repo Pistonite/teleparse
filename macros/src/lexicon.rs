@@ -10,7 +10,7 @@ pub fn expand(input: &mut syn::DeriveInput) -> syn::Result<TokenStream2> {
     let teleparse = crate_ident();
 
     // parse the root attributes
-    let RootAttr { ignore } = parse_root_attributes(input)?;
+    let RootAttr { ignore, terminal_parse } = parse_root_attributes(input)?;
 
     // check ignore regex
     let mut rule_exprs = Vec::new();
@@ -135,6 +135,7 @@ pub fn expand(input: &mut syn::DeriveInput) -> syn::Result<TokenStream2> {
                             enum_ident, ident
                         );
                         extra_derives.extend(derive_terminal(
+                            terminal_parse,
                             &doc,
                             enum_vis,
                             enum_ident,
@@ -175,6 +176,7 @@ pub fn expand(input: &mut syn::DeriveInput) -> syn::Result<TokenStream2> {
                             quote! {#value}
                         );
                         extra_derives.extend(derive_terminal(
+                            terminal_parse,
                             &doc,
                             enum_vis,
                             enum_ident,
@@ -329,27 +331,36 @@ pub fn expand(input: &mut syn::DeriveInput) -> syn::Result<TokenStream2> {
 
 struct RootAttr {
     ignore: Vec<syn::LitStr>,
+    terminal_parse: bool,
 }
 
 fn parse_root_attributes(input: &mut syn::DeriveInput) -> syn::Result<RootAttr> {
     let root_metas = parse_strip_root_meta_optional(input)?;
     let mut ignore = None;
+    let mut terminal_parse = false;
     if let Some(root_metas) = root_metas {
         for meta in root_metas {
             match meta {
+                syn::Meta::Path(meta) => {
+                    if meta.is_ident("terminal_parse") {
+                        terminal_parse = true;
+                        continue;
+                    }
+                    syn_error!(meta, "Unknown attribute for derive_lexicon");
+                }
                 syn::Meta::List(meta) => {
                     if meta.path.is_ident("ignore") {
                         if ignore.is_some() {
-                            syn_error!(meta, "Multiple `ignore` attributes found for TokenType! You can put all regexes into the same `ignore` and separate them with comma");
+                            syn_error!(meta, "Multiple `ignore` attributes found for derive_lexicon! You can put all regexes into the same `ignore` and separate them with comma");
                         }
                         ignore = Some(meta.parse_args_with(
                             Punctuated::<syn::LitStr, syn::Token![,]>::parse_terminated,
                         )?);
                         continue;
                     }
-                    syn_error!(meta, "Unknown attribute for TokenType");
+                    syn_error!(meta, "Unknown attribute for derive_lexicon");
                 }
-                _ => syn_error!(meta, "Unknown attribute for TokenType"),
+                _ => syn_error!(meta, "Unknown attribute for derive_lexicon"),
             }
         }
     }
@@ -358,7 +369,7 @@ fn parse_root_attributes(input: &mut syn::DeriveInput) -> syn::Result<RootAttr> 
         Some(ignore) => ignore.into_iter().collect::<Vec<_>>(),
         None => Vec::new(),
     };
-    Ok(RootAttr { ignore })
+    Ok(RootAttr { ignore, terminal_parse })
 }
 
 fn check_enum_precondition(enum_data: &syn::DataEnum, variant_attrs: &[Vec<syn::Attribute>]) -> syn::Result<()> {
@@ -380,6 +391,7 @@ fn check_enum_precondition(enum_data: &syn::DataEnum, variant_attrs: &[Vec<syn::
 
 /// Derive terminal struct and SyntaxTree implementation
 fn derive_terminal(
+    terminal_parse: bool,
     doc: &str,
     vis: &syn::Visibility,
     enum_ident: &syn::Ident,
@@ -401,6 +413,12 @@ fn derive_terminal(
         None => quote! {
             parser.parse_token(#enum_ident::#variant_ident).map(Self::from)
         }
+    };
+    let terminal_parse_impl = if terminal_parse {
+        let ty = ident_to_type(terminal_ident);
+        root::expand(enum_ident, &ty, &ty)
+    } else {
+        TokenStream2::new()
     };
     quote! {
         #[doc = #doc]
@@ -428,25 +446,6 @@ fn derive_terminal(
                     Self(token)
                 }
             }
-            // #[automatically_derived]
-            // impl #teleparse::syntax::Terminal for #terminal_ident {
-            //     type L = #enum_ident;
-            //
-            //     #[inline]
-            //     fn ident() -> &'static str {
-            //         #terminal_ident_str
-            //     }
-            //
-            //     #[inline]
-            //     fn token_type() -> Self::L {
-            //         #enum_ident::#variant_ident
-            //     }
-            //
-            //     #[inline]
-            //     fn match_literal() -> ::core::option::Option<&'static str> {
-            //         #match_option_impl
-            //     }
-            // }
             #[automatically_derived]
             impl AbstractSyntaxTree for #terminal_ident {
                 type L = #enum_ident;
@@ -508,13 +507,22 @@ fn derive_terminal(
 
                 /// Parse this AST node from the input stream
                 #[inline]
-                fn parse<'s>(
+                fn parse_ast<'s>(
                     parser: &mut Parser<'s, Self::L>, 
                     meta: &Metadata<Self::L>,
                 ) -> SynResult<Self, Self::L> {
                     #match_parse_impl
                 }
             }
+            #[automatically_derived]
+            impl #teleparse::ParseTree for #terminal_ident {
+                type AST = Self;
+                #[inline]
+                fn from_ast<'s>(ast: Self, _: &mut Parser<'s, #enum_ident>) -> Self {
+                    ast
+                }
+            }
         };
+        #terminal_parse_impl
     }
 }

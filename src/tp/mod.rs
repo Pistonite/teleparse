@@ -8,8 +8,8 @@ use crate::{Span, ToSpan};
 mod boxed;
 // pub mod blanket;
 // pub mod iter;
-// mod option;
-// pub use option::*;
+mod option;
+pub use option::*;
 // mod string;
 // pub use string::*;
 mod tuple;
@@ -20,6 +20,7 @@ pub struct Node<T> {
     #[deref]
     pub value: T,
 }
+pub use teleparse_macros::Node;
 
 impl<T> Node<T> {
     pub fn new(span: Span, value: T) -> Self {

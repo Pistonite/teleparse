@@ -23,6 +23,20 @@ pub struct TerminalSet<L: Lexicon> {
     e: bool,
 }
 
+impl<L: Lexicon> PartialEq for TerminalSet<L> {
+    fn eq(&self, other: &Self) -> bool {
+        if self.e != other.e {
+            return false;
+        }
+        for (a, b) in std::iter::zip(self.map.iter(), other.map.iter()) {
+            if a != b {
+                return false;
+            }
+        }
+        true
+    }
+}
+
 impl<L: Lexicon> TerminalSet<L> {
     /// Clear the set
     #[inline]
@@ -79,7 +93,7 @@ impl<L: Lexicon> TerminalSet<L> {
     ///
     /// Returns if self is changed
     /// ## Excluding empty symbol
-    /// if `minus_e` is true, the empty symbol is excluded from `other`
+    /// if `include_e` is false, the empty symbol is excluded from `other`
     /// when unioning. 
     /// Effectively: 
     /// ```text
@@ -88,16 +102,16 @@ impl<L: Lexicon> TerminalSet<L> {
     /// The other way to interpret this operation is to consider the `empty`
     /// from the other set as a different symbol from the `empty` in this set,
     /// and is not allowed in this set.
-    pub fn union(&mut self, other: &Self, minus_e: bool) -> bool {
-        let mut changed = if minus_e {
-            false
-        } else {
+    pub fn union(&mut self, other: &Self, include_e: bool) -> bool {
+        let mut changed = if include_e {
             if !self.e && other.e {
                 self.insert_e();
                 true
             } else {
                 false
             }
+        } else {
+            false
         };
         for (set, other_set) in self.map.iter_mut().zip(other.map.iter()) {
             let next_changed = set.union(other_set);
@@ -210,8 +224,67 @@ mod tests {
     }
 
     #[test]
-    fn todo() {
-        todo!()
+    fn union_empty() {
+        let mut set_a = TerminalSet::<T>::new();
+        let set_b = TerminalSet::<T>::new();
+        assert_eq!(set_a, set_b);
+        assert_eq!(set_a, set_a);
+        set_a.union(&set_b, true);
+        assert_eq!(set_a, set_b);
+        assert_eq!(set_a, set_a);
     }
+
+    #[test]
+    fn union_disjoint_token() {
+        let mut set_a = TerminalSet::new();
+        assert!(set_a.insert(T::A, Some("a")));
+        assert!(set_a.insert(T::A, Some("b")));
+
+        let mut set_b = TerminalSet::new();
+        assert!(set_b.insert(T::B, None));
+
+        let mut expected = TerminalSet::new();
+        assert!(expected.insert(T::A, Some("a")));
+        assert!(expected.insert(T::A, Some("b")));
+        assert!(expected.insert(T::B, None));
+
+        assert!(set_a.union(&set_b, true));
+        assert_eq!(set_a, expected);
+        assert!(set_b.union(&set_a, true));
+        assert_eq!(set_b, expected);
+    }
+
+    #[test]
+    fn union_exclude_e() {
+        let mut set_a = TerminalSet::new();
+        assert!(set_a.insert(T::A, Some("a")));
+        assert!(set_a.insert(T::B, Some("b")));
+
+        let mut set_b = set_a.clone();
+        assert!(set_b.insert_e());
+
+        assert_ne!(set_a, set_b);
+        assert!(!set_a.union(&set_b, false));
+        assert!(set_a.union(&set_b, true));
+    }
+
+    #[test]
+    fn union_to_any() {
+        let mut set_a = TerminalSet::new();
+        assert!(set_a.insert(T::A, Some("a")));
+        assert!(set_a.insert(T::B, None));
+
+        let mut set_b = TerminalSet::new();
+        assert!(set_b.insert(T::A, None));
+        assert!(set_b.insert(T::B, Some("b")));
+
+        let mut expected = TerminalSet::new();
+        assert!(expected.insert(T::A, None));
+        assert!(expected.insert(T::B, None));
+
+        assert!(set_a.union(&set_b, true));
+        assert_eq!(set_a, expected);
+    }
+
 
 }

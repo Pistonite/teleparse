@@ -105,27 +105,84 @@ impl teleparse::ToSpan for Integer {
         self.0.span()
     }
 }
-#[automatically_derived]
 const _: () = {
-    impl ::core::convert::From<teleparse::lex::Token<TokenType>> for Integer {
+    use teleparse::lex::Token;
+    use teleparse::syntax::{
+        AbstractSyntaxTree, First, FirstBuilder, FirstRel, Follow, FollowBuilder, Jump,
+        Result as SynResult, Metadata,
+    };
+    use teleparse::{GrammarError, Parser};
+    use ::std::borrow::Cow;
+    use ::std::vec::Vec;
+    use ::std::collections::BTreeSet;
+    use ::std::string::String;
+    use ::std::any::TypeId;
+    #[automatically_derived]
+    impl ::core::convert::From<Token<TokenType>> for Integer {
         #[inline]
-        fn from(token: teleparse::lex::Token<TokenType>) -> Self {
+        fn from(token: Token<TokenType>) -> Self {
             Self(token)
         }
     }
-    impl teleparse::syntax::Terminal for Integer {
+    #[automatically_derived]
+    impl AbstractSyntaxTree for Integer {
         type L = TokenType;
         #[inline]
-        fn ident() -> &'static str {
-            "Integer"
+        fn debug() -> Cow<'static, str> {
+            Cow::Borrowed("Integer")
         }
         #[inline]
-        fn token_type() -> Self::L {
-            TokenType::Integer
+        fn build_first(builder: &mut FirstBuilder<Self::L>) {
+            let t = Self::type_id();
+            let expr = FirstRel::insert_token(t, TokenType::Integer, None);
+            builder.add(expr);
         }
         #[inline]
-        fn match_literal() -> ::core::option::Option<&'static str> {
-            None
+        fn check_left_recursive(
+            _stack: &mut Vec<String>,
+            _seen: &mut BTreeSet<TypeId>,
+            _first: &First<Self::L>,
+        ) -> Result<(), GrammarError> {
+            Ok(())
+        }
+        #[inline]
+        fn check_first_conflict(
+            _seen: &mut BTreeSet<TypeId>,
+            _first: &First<Self::L>,
+        ) -> Result<(), GrammarError> {
+            Ok(())
+        }
+        #[inline]
+        fn build_follow(_builder: &mut FollowBuilder<Self::L>) {}
+        #[inline]
+        fn check_first_follow_conflict(
+            _seen: &mut BTreeSet<TypeId>,
+            _first: &First<Self::L>,
+            _follow: &Follow<Self::L>,
+        ) -> Result<(), GrammarError> {
+            Ok(())
+        }
+        #[inline]
+        fn build_jump(
+            _seen: &mut BTreeSet<TypeId>,
+            _first: &First<Self::L>,
+            _jump: &mut Jump<Self::L>,
+        ) {}
+        /// Parse this AST node from the input stream
+        #[inline]
+        fn parse_ast<'s>(
+            parser: &mut Parser<'s, Self::L>,
+            meta: &Metadata<Self::L>,
+        ) -> SynResult<Self, Self::L> {
+            parser.parse_token(TokenType::Integer).map(Self::from)
+        }
+    }
+    #[automatically_derived]
+    impl teleparse::ParseTree for Integer {
+        type AST = Self;
+        #[inline]
+        fn from_ast<'s>(ast: Self, _: &mut Parser<'s, TokenType>) -> Self {
+            ast
         }
     }
 };
@@ -180,27 +237,85 @@ impl teleparse::ToSpan for OpAdd {
         self.0.span()
     }
 }
-#[automatically_derived]
 const _: () = {
-    impl ::core::convert::From<teleparse::lex::Token<TokenType>> for OpAdd {
+    use teleparse::lex::Token;
+    use teleparse::syntax::{
+        AbstractSyntaxTree, First, FirstBuilder, FirstRel, Follow, FollowBuilder, Jump,
+        Result as SynResult, Metadata,
+    };
+    use teleparse::{GrammarError, Parser};
+    use ::std::borrow::Cow;
+    use ::std::vec::Vec;
+    use ::std::collections::BTreeSet;
+    use ::std::string::String;
+    use ::std::any::TypeId;
+    #[automatically_derived]
+    impl ::core::convert::From<Token<TokenType>> for OpAdd {
         #[inline]
-        fn from(token: teleparse::lex::Token<TokenType>) -> Self {
+        fn from(token: Token<TokenType>) -> Self {
             Self(token)
         }
     }
-    impl teleparse::syntax::Terminal for OpAdd {
+    #[automatically_derived]
+    impl AbstractSyntaxTree for OpAdd {
         type L = TokenType;
         #[inline]
-        fn ident() -> &'static str {
-            "OpAdd"
+        fn debug() -> Cow<'static, str> {
+            Cow::Borrowed("OpAdd")
         }
         #[inline]
-        fn token_type() -> Self::L {
-            TokenType::Operator
+        fn build_first(builder: &mut FirstBuilder<Self::L>) {
+            let t = Self::type_id();
+            let expr = FirstRel::insert_token(t, TokenType::Operator, Some("+"));
+            builder.add(expr);
         }
         #[inline]
-        fn match_literal() -> ::core::option::Option<&'static str> {
-            Some("+")
+        fn check_left_recursive(
+            _stack: &mut Vec<String>,
+            _seen: &mut BTreeSet<TypeId>,
+            _first: &First<Self::L>,
+        ) -> Result<(), GrammarError> {
+            Ok(())
+        }
+        #[inline]
+        fn check_first_conflict(
+            _seen: &mut BTreeSet<TypeId>,
+            _first: &First<Self::L>,
+        ) -> Result<(), GrammarError> {
+            Ok(())
+        }
+        #[inline]
+        fn build_follow(_builder: &mut FollowBuilder<Self::L>) {}
+        #[inline]
+        fn check_first_follow_conflict(
+            _seen: &mut BTreeSet<TypeId>,
+            _first: &First<Self::L>,
+            _follow: &Follow<Self::L>,
+        ) -> Result<(), GrammarError> {
+            Ok(())
+        }
+        #[inline]
+        fn build_jump(
+            _seen: &mut BTreeSet<TypeId>,
+            _first: &First<Self::L>,
+            _jump: &mut Jump<Self::L>,
+        ) {}
+        /// Parse this AST node from the input stream
+        #[inline]
+        fn parse_ast<'s>(
+            parser: &mut Parser<'s, Self::L>,
+            meta: &Metadata<Self::L>,
+        ) -> SynResult<Self, Self::L> {
+            let follow = meta.follow.get(&Self::type_id());
+            parser.parse_token_lit(TokenType::Operator, "+", follow).map(Self::from)
+        }
+    }
+    #[automatically_derived]
+    impl teleparse::ParseTree for OpAdd {
+        type AST = Self;
+        #[inline]
+        fn from_ast<'s>(ast: Self, _: &mut Parser<'s, TokenType>) -> Self {
+            ast
         }
     }
 };
@@ -255,27 +370,85 @@ impl teleparse::ToSpan for OpMul {
         self.0.span()
     }
 }
-#[automatically_derived]
 const _: () = {
-    impl ::core::convert::From<teleparse::lex::Token<TokenType>> for OpMul {
+    use teleparse::lex::Token;
+    use teleparse::syntax::{
+        AbstractSyntaxTree, First, FirstBuilder, FirstRel, Follow, FollowBuilder, Jump,
+        Result as SynResult, Metadata,
+    };
+    use teleparse::{GrammarError, Parser};
+    use ::std::borrow::Cow;
+    use ::std::vec::Vec;
+    use ::std::collections::BTreeSet;
+    use ::std::string::String;
+    use ::std::any::TypeId;
+    #[automatically_derived]
+    impl ::core::convert::From<Token<TokenType>> for OpMul {
         #[inline]
-        fn from(token: teleparse::lex::Token<TokenType>) -> Self {
+        fn from(token: Token<TokenType>) -> Self {
             Self(token)
         }
     }
-    impl teleparse::syntax::Terminal for OpMul {
+    #[automatically_derived]
+    impl AbstractSyntaxTree for OpMul {
         type L = TokenType;
         #[inline]
-        fn ident() -> &'static str {
-            "OpMul"
+        fn debug() -> Cow<'static, str> {
+            Cow::Borrowed("OpMul")
         }
         #[inline]
-        fn token_type() -> Self::L {
-            TokenType::Operator
+        fn build_first(builder: &mut FirstBuilder<Self::L>) {
+            let t = Self::type_id();
+            let expr = FirstRel::insert_token(t, TokenType::Operator, Some("*"));
+            builder.add(expr);
         }
         #[inline]
-        fn match_literal() -> ::core::option::Option<&'static str> {
-            Some("*")
+        fn check_left_recursive(
+            _stack: &mut Vec<String>,
+            _seen: &mut BTreeSet<TypeId>,
+            _first: &First<Self::L>,
+        ) -> Result<(), GrammarError> {
+            Ok(())
+        }
+        #[inline]
+        fn check_first_conflict(
+            _seen: &mut BTreeSet<TypeId>,
+            _first: &First<Self::L>,
+        ) -> Result<(), GrammarError> {
+            Ok(())
+        }
+        #[inline]
+        fn build_follow(_builder: &mut FollowBuilder<Self::L>) {}
+        #[inline]
+        fn check_first_follow_conflict(
+            _seen: &mut BTreeSet<TypeId>,
+            _first: &First<Self::L>,
+            _follow: &Follow<Self::L>,
+        ) -> Result<(), GrammarError> {
+            Ok(())
+        }
+        #[inline]
+        fn build_jump(
+            _seen: &mut BTreeSet<TypeId>,
+            _first: &First<Self::L>,
+            _jump: &mut Jump<Self::L>,
+        ) {}
+        /// Parse this AST node from the input stream
+        #[inline]
+        fn parse_ast<'s>(
+            parser: &mut Parser<'s, Self::L>,
+            meta: &Metadata<Self::L>,
+        ) -> SynResult<Self, Self::L> {
+            let follow = meta.follow.get(&Self::type_id());
+            parser.parse_token_lit(TokenType::Operator, "*", follow).map(Self::from)
+        }
+    }
+    #[automatically_derived]
+    impl teleparse::ParseTree for OpMul {
+        type AST = Self;
+        #[inline]
+        fn from_ast<'s>(ast: Self, _: &mut Parser<'s, TokenType>) -> Self {
+            ast
         }
     }
 };
@@ -330,27 +503,85 @@ impl teleparse::ToSpan for ParamOpen {
         self.0.span()
     }
 }
-#[automatically_derived]
 const _: () = {
-    impl ::core::convert::From<teleparse::lex::Token<TokenType>> for ParamOpen {
+    use teleparse::lex::Token;
+    use teleparse::syntax::{
+        AbstractSyntaxTree, First, FirstBuilder, FirstRel, Follow, FollowBuilder, Jump,
+        Result as SynResult, Metadata,
+    };
+    use teleparse::{GrammarError, Parser};
+    use ::std::borrow::Cow;
+    use ::std::vec::Vec;
+    use ::std::collections::BTreeSet;
+    use ::std::string::String;
+    use ::std::any::TypeId;
+    #[automatically_derived]
+    impl ::core::convert::From<Token<TokenType>> for ParamOpen {
         #[inline]
-        fn from(token: teleparse::lex::Token<TokenType>) -> Self {
+        fn from(token: Token<TokenType>) -> Self {
             Self(token)
         }
     }
-    impl teleparse::syntax::Terminal for ParamOpen {
+    #[automatically_derived]
+    impl AbstractSyntaxTree for ParamOpen {
         type L = TokenType;
         #[inline]
-        fn ident() -> &'static str {
-            "ParamOpen"
+        fn debug() -> Cow<'static, str> {
+            Cow::Borrowed("ParamOpen")
         }
         #[inline]
-        fn token_type() -> Self::L {
-            TokenType::Param
+        fn build_first(builder: &mut FirstBuilder<Self::L>) {
+            let t = Self::type_id();
+            let expr = FirstRel::insert_token(t, TokenType::Param, Some("("));
+            builder.add(expr);
         }
         #[inline]
-        fn match_literal() -> ::core::option::Option<&'static str> {
-            Some("(")
+        fn check_left_recursive(
+            _stack: &mut Vec<String>,
+            _seen: &mut BTreeSet<TypeId>,
+            _first: &First<Self::L>,
+        ) -> Result<(), GrammarError> {
+            Ok(())
+        }
+        #[inline]
+        fn check_first_conflict(
+            _seen: &mut BTreeSet<TypeId>,
+            _first: &First<Self::L>,
+        ) -> Result<(), GrammarError> {
+            Ok(())
+        }
+        #[inline]
+        fn build_follow(_builder: &mut FollowBuilder<Self::L>) {}
+        #[inline]
+        fn check_first_follow_conflict(
+            _seen: &mut BTreeSet<TypeId>,
+            _first: &First<Self::L>,
+            _follow: &Follow<Self::L>,
+        ) -> Result<(), GrammarError> {
+            Ok(())
+        }
+        #[inline]
+        fn build_jump(
+            _seen: &mut BTreeSet<TypeId>,
+            _first: &First<Self::L>,
+            _jump: &mut Jump<Self::L>,
+        ) {}
+        /// Parse this AST node from the input stream
+        #[inline]
+        fn parse_ast<'s>(
+            parser: &mut Parser<'s, Self::L>,
+            meta: &Metadata<Self::L>,
+        ) -> SynResult<Self, Self::L> {
+            let follow = meta.follow.get(&Self::type_id());
+            parser.parse_token_lit(TokenType::Param, "(", follow).map(Self::from)
+        }
+    }
+    #[automatically_derived]
+    impl teleparse::ParseTree for ParamOpen {
+        type AST = Self;
+        #[inline]
+        fn from_ast<'s>(ast: Self, _: &mut Parser<'s, TokenType>) -> Self {
+            ast
         }
     }
 };
@@ -405,33 +636,91 @@ impl teleparse::ToSpan for ParamClose {
         self.0.span()
     }
 }
-#[automatically_derived]
 const _: () = {
-    impl ::core::convert::From<teleparse::lex::Token<TokenType>> for ParamClose {
+    use teleparse::lex::Token;
+    use teleparse::syntax::{
+        AbstractSyntaxTree, First, FirstBuilder, FirstRel, Follow, FollowBuilder, Jump,
+        Result as SynResult, Metadata,
+    };
+    use teleparse::{GrammarError, Parser};
+    use ::std::borrow::Cow;
+    use ::std::vec::Vec;
+    use ::std::collections::BTreeSet;
+    use ::std::string::String;
+    use ::std::any::TypeId;
+    #[automatically_derived]
+    impl ::core::convert::From<Token<TokenType>> for ParamClose {
         #[inline]
-        fn from(token: teleparse::lex::Token<TokenType>) -> Self {
+        fn from(token: Token<TokenType>) -> Self {
             Self(token)
         }
     }
-    impl teleparse::syntax::Terminal for ParamClose {
+    #[automatically_derived]
+    impl AbstractSyntaxTree for ParamClose {
         type L = TokenType;
         #[inline]
-        fn ident() -> &'static str {
-            "ParamClose"
+        fn debug() -> Cow<'static, str> {
+            Cow::Borrowed("ParamClose")
         }
         #[inline]
-        fn token_type() -> Self::L {
-            TokenType::Param
+        fn build_first(builder: &mut FirstBuilder<Self::L>) {
+            let t = Self::type_id();
+            let expr = FirstRel::insert_token(t, TokenType::Param, Some(")"));
+            builder.add(expr);
         }
         #[inline]
-        fn match_literal() -> ::core::option::Option<&'static str> {
-            Some(")")
+        fn check_left_recursive(
+            _stack: &mut Vec<String>,
+            _seen: &mut BTreeSet<TypeId>,
+            _first: &First<Self::L>,
+        ) -> Result<(), GrammarError> {
+            Ok(())
+        }
+        #[inline]
+        fn check_first_conflict(
+            _seen: &mut BTreeSet<TypeId>,
+            _first: &First<Self::L>,
+        ) -> Result<(), GrammarError> {
+            Ok(())
+        }
+        #[inline]
+        fn build_follow(_builder: &mut FollowBuilder<Self::L>) {}
+        #[inline]
+        fn check_first_follow_conflict(
+            _seen: &mut BTreeSet<TypeId>,
+            _first: &First<Self::L>,
+            _follow: &Follow<Self::L>,
+        ) -> Result<(), GrammarError> {
+            Ok(())
+        }
+        #[inline]
+        fn build_jump(
+            _seen: &mut BTreeSet<TypeId>,
+            _first: &First<Self::L>,
+            _jump: &mut Jump<Self::L>,
+        ) {}
+        /// Parse this AST node from the input stream
+        #[inline]
+        fn parse_ast<'s>(
+            parser: &mut Parser<'s, Self::L>,
+            meta: &Metadata<Self::L>,
+        ) -> SynResult<Self, Self::L> {
+            let follow = meta.follow.get(&Self::type_id());
+            parser.parse_token_lit(TokenType::Param, ")", follow).map(Self::from)
+        }
+    }
+    #[automatically_derived]
+    impl teleparse::ParseTree for ParamClose {
+        type AST = Self;
+        #[inline]
+        fn from_ast<'s>(ast: Self, _: &mut Parser<'s, TokenType>) -> Self {
+            ast
         }
     }
 };
-#[automatically_derived]
 const _: () = {
     use teleparse::Lexer as _;
+    #[automatically_derived]
     impl teleparse::Lexicon for TokenType {
         type Bit = u8;
         type Lexer<'s> = teleparse::lex::LexerImpl<'s, Self>;

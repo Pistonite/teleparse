@@ -57,8 +57,8 @@ fn expand_enum(ident: syn::Ident, input: &mut syn::DataEnum, lexicon_ident: syn:
                 let t = quote_spanned! { id.span() => #id(#id) };
                 let v = syn::parse2::<syn::Variant>(t).expect("internal error in derive_syntax: fail to parse enum variant");
                 *unit = v.fields;
-                let ty = syn::parse2::<syn::Type>(quote! { #id }).expect("internal error in derive_syntax: fail to parse enum variant");
-                pt_types.push(ty.clone());
+                let ty = ident_to_type(id);
+                pt_types.push(ty);
             }
         }
     }
@@ -236,7 +236,7 @@ fn expand_enum(ident: syn::Ident, input: &mut syn::DataEnum, lexicon_ident: syn:
                     #build_jump_recur
                 }
 
-                fn parse<'s>(
+                fn parse_ast<'s>(
                     parser: &mut Parser<'s, Self::L>, 
                     meta: &Metadata<Self::L>,
                 ) -> #teleparse::syntax::Result<Self, Self::L> {

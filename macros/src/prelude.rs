@@ -162,6 +162,10 @@ pub(crate) fn is_unit_type(ty: &syn::Type) -> bool {
     }
 }
 
+pub(crate) fn ident_to_type(ident: &syn::Ident) -> syn::Type {
+    parse_quote! { #ident }
+}
+
 pub(crate) fn checked_regex_rule(input: &syn::LitStr) -> syn::Result<Regex> {
     let regex = input.value();
     if !regex.starts_with("^") {

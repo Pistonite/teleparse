@@ -194,7 +194,7 @@ const _: () = {
             <AstOf<Bar>>::build_jump(seen, jump);
             <AstOf<Biz>>::build_jump(seen, jump);
         }
-        fn parse<'s>(
+        fn parse_ast<'s>(
             parser: &mut Parser<'s, Self::L>,
             meta: &Metadata<Self::L>,
         ) -> teleparse::syntax::Result<Self, Self::L> {
@@ -422,7 +422,7 @@ const _: () = {
             <AstOf<Quaak>>::build_jump(seen, jump);
             <AstOf<Box<Biz>>>::build_jump(seen, jump);
         }
-        fn parse<'s>(
+        fn parse_ast<'s>(
             parser: &mut Parser<'s, Self::L>,
             meta: &Metadata<Self::L>,
         ) -> teleparse::syntax::Result<Self, Self::L> {

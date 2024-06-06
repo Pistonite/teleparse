@@ -84,7 +84,7 @@ impl<'s, L: Lexicon> Parser<'s, L> {
             return None;
         }
         loop {
-            match AST::parse(self, meta) {
+            match AST::parse_ast(self, meta) {
                 SynResult::Success(tree) => {
                     return Some(tree);
                 }
@@ -251,7 +251,7 @@ impl<'s, L: Lexicon> Parser<'s, L> {
     }
 
     #[inline]
-    fn current_span(&mut self) -> Span {
+    pub fn current_span(&mut self) -> Span {
         self.peek_token().map(|t| t.span).unwrap_or_else(|| self.info.eof())
     }
 

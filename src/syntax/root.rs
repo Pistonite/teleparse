@@ -23,20 +23,15 @@ use super::{AbstractSyntaxTree, First, Follow, Jump};
 /// Deriving this trait provides static storage of the metadata of the grammar such as 
 /// the FIRST and FOLLOW functions.
 pub trait AbstractSyntaxRoot: AbstractSyntaxTree {
-    // fn parse_with_context( source: &str, context: CtxOf<Self::T>) -> (Option<Self>, CtxOf<Self::T>) {
-    //     let mut parser = Self::T::parser_with_context(source, context);
-    //     let result = parser.once();
-    //     (result, parser.context)
-    // }
-    //
-    // fn parse_all_with_context( source: &str, context: CtxOf<Self::T>) -> (Vec<Self>, CtxOf<Self::T>) {
-    //     let mut parser = Self::T::parser_with_context(source, context);
-    //     let result = parser.parse_all();
-    //     (result, parser.context)
-    // }
-
     /// Get the static metadata
     fn metadata() -> &'static Result<Metadata<Self::L>, GrammarError>;
+
+    #[cfg(test)]
+    fn assert_ll1() {
+        if let Err(e) = Self::metadata() {
+            assert!(false, "{} is not LL(1): {}", Self::debug(), e);
+        }
+    }
 }
 
 pub struct Metadata<L: Lexicon>{
@@ -44,28 +39,6 @@ pub struct Metadata<L: Lexicon>{
     pub follow: Follow<L>,
     pub jump: Jump<L>,
 }
-//
-//
-// // pub trait RootNoCtx: Root {
-// //     // fn parse(source: &str) -> Option<Self>;
-// //     //
-// //     // fn parse_all(source: &str) -> Vec<Self>;
-// // }
-// //
-// // impl<T: TokenTypeNoCtx, AST, ST: Root<T=T, AST=AST>> RootNoCtx for ST {
-// //     // #[inline]
-// //     // fn parse(source: &str) -> Option<Self> {
-// //     //     let (result, _) = Self::parse_with_context(source, ());
-// //     //     result
-// //     // }
-// //     //
-// //     // #[inline]
-// //     // fn parse_all(source: &str) -> Vec<Self> {
-// //     //     let (result, _) = Self::parse_all_with_context(source, ());
-// //     //     result
-// //     // }
-// // }
-//
 // /// Macro to derive [`Root`] for generated Terminal types.
 // /// This is used internally in tests and examples. Library users
 // /// should simply `#[derive(Root)]` instead.

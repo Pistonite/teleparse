@@ -174,7 +174,7 @@ macro_rules! parse_impl {
         }
         let mut errors = Vec::new();
         let result = (
-            match <$elem1>::parse($parser, $meta) {
+            match <$elem1>::parse_ast($parser, $meta) {
                 $crate::syntax::Result::Success(x) => x,
                 $crate::syntax::Result::Recovered(x, e) => { errors.extend(e); x },
                 $crate::syntax::Result::Panic(e) => {
@@ -183,7 +183,7 @@ macro_rules! parse_impl {
                 }
             },  $(
 
-                match <$elem>::parse($parser, $meta) {
+                match <$elem>::parse_ast($parser, $meta) {
                     $crate::syntax::Result::Success(x) => x,
                     $crate::syntax::Result::Recovered(x, e) => { errors.extend(e); x },
                     $crate::syntax::Result::Panic(e) => {
@@ -193,7 +193,7 @@ macro_rules! parse_impl {
                 },
 
             )*
-            match <$last>::parse($parser, $meta) {
+            match <$last>::parse_ast($parser, $meta) {
                 $crate::syntax::Result::Success(x) => x,
                 $crate::syntax::Result::Recovered(x, e) => { errors.extend(e); x },
                 $crate::syntax::Result::Panic(e) => {
@@ -252,7 +252,7 @@ const _: () = {
         }
 
         #[inline]
-        fn parse<'s>( parser: &mut Parser<'s, Self::L>, meta: &Metadata<Self::L>,) -> crate::syntax::Result<Self, Self::L> {
+        fn parse_ast<'s>( parser: &mut Parser<'s, Self::L>, meta: &Metadata<Self::L>,) -> crate::syntax::Result<Self, Self::L> {
             parse_impl!(parser, meta, $elem1, $($elem),* | $last)
         }
     }

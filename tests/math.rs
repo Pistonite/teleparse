@@ -6,7 +6,6 @@
 //!
 
 use teleparse::prelude::*;
-use teleparse::lex::Token;
 
 // note that this example is not the only way to define the parser
 
@@ -28,7 +27,8 @@ pub enum TokenType {
     ))]
     Operator,
     /// Parentheses
-    #[teleparse(terminal(ParamOpen = "(",
+    #[teleparse(terminal(
+        ParamOpen = "(",
         ParamClose = ")"
     ))]
     Param,

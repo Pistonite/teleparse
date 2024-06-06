@@ -8,6 +8,11 @@ mod own_src {
     fn tuple() {
         macrotest::expand("src/tp/tuple.rs");
     }
+
+    #[test]
+    fn lex() {
+        macrotest::expand("src/lex/expand/*.rs");
+    }
 }
 
 

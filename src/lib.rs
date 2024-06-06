@@ -17,11 +17,13 @@ pub mod prelude {
     pub use crate::Lexer as _;
     pub use crate::AbstractSyntaxTree as _;
     pub use crate::AbstractSyntaxRoot as _;
+    pub use crate::ParseTree as _;
+    pub use crate::ParseRoot as _;
 
     pub use crate::tp;
     // util
     pub use crate::{
-        Pos,Span
+        Pos, Span, Token
     };
 
     // pub use crate::{derive_root, assert_ll1};
@@ -30,15 +32,15 @@ pub mod prelude {
 
 pub mod lex;
 #[doc(inline)]
-pub use lex::{ToSpan, Lexer, Lexicon};
-#[doc(inline)]
-pub use lex::{Pos, Span};
+pub use lex::{ToSpan, Lexer, Lexicon, Pos, Span, Token};
 
 pub mod syntax;
+#[doc(inline)]
 pub use syntax::{AbstractSyntaxTree, AbstractSyntaxRoot};
 
 pub mod parser;
-pub use parser::Parser;
+#[doc(inline)]
+pub use parser::{Parser, ParseTree, ParseRoot};
 
 pub mod tp;
 
@@ -48,7 +50,7 @@ pub mod tp;
 pub(crate) mod test;
 
 /// Error when constructing the grammar (i.e. not actually parsing yet).
-#[derive(Debug, Clone, thiserror::Error)]
+#[derive(Debug, Clone, PartialEq, thiserror::Error)]
 pub enum GrammarError {
     #[error("Cannot construct lexer: {0}")]
     LexerError(#[from] lex::Error),

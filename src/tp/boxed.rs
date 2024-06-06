@@ -8,11 +8,11 @@ use super::ast_passthrough;
 impl<AST: AbstractSyntaxTree> AbstractSyntaxTree for Box<AST> {
     ast_passthrough!();
 
-    fn parse<'s>(
+    fn parse_ast<'s>(
         parser: &mut Parser<'s, Self::L>, 
         meta: &Metadata<Self::L>,
     ) -> SynResult<Self, Self::L> {
-        AST::parse(parser, meta).map(|ast| Box::new(ast))
+        AST::parse_ast(parser, meta).map(|ast| Box::new(ast))
     }
 }
 

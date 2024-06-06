@@ -74,37 +74,27 @@ impl<'s, L: Lexicon> From<(L, &'s str)> for TokenSrc<'s, L> {
 mod tests {
     use super::*;
 
-    #[test]
-    fn todo() {
-        todo!()
-    }
+    use crate::test::TestTokenType as T;
 
-    // #[crate::teleparse_derive(TokenType)]
-    // pub enum TT {
-    //     #[teleparse(regex(r"^//.*"))]
-    //     Comment,
-    //     #[teleparse(terminal(Keyword = r"fn"))]
-    //     Keyword,
-    // }
-    // #[test]
-    // fn test_token() {
-    //     let token = Token::new((0, 1), TT::Comment);
-    //     assert_eq!(token.get_src("abc"), "a");
-    // }
-    //
-    // #[test]
-    // fn test_empty() {
-    //     let token = Token::new((0, 0), TT::Comment);
-    //     assert_eq!(token.get_src("abc"), "");
-    //     let token = Token::new((1, 1), TT::Comment);
-    //     assert_eq!(token.get_src("abc"), "");
-    //     let token = Token::new((1, 0), TT::Comment);
-    //     assert_eq!(token.get_src("abc"), "");
-    // }
-    //
-    // #[test]
-    // fn test_overflows() {
-    //     let token = Token::new(0..100, TT::Comment);
-    //     assert_eq!(token.get_src("abc"), "abc");
-    // }
+    #[test]
+    fn test_src() {
+        let token = Token::new((0, 1), T::A);
+        assert_eq!(token.src("abc"), "a");
+    }
+    
+    #[test]
+    fn test_src_empty() {
+        let token = Token::new((0, 0), T::A);
+        assert_eq!(token.src("abc"), "");
+        let token = Token::new((1, 1), T::A);
+        assert_eq!(token.src("abc"), "");
+        let token = Token::new((1, 0), T::A);
+        assert_eq!(token.src("abc"), "");
+    }
+    
+    #[test]
+    fn test_overflows() {
+        let token = Token::new(0..100, T::A);
+        assert_eq!(token.src("abc"), "abc");
+    }
 }

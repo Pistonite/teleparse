@@ -1,5 +1,5 @@
 /// Error related to constructing lexers
-#[derive(Debug, Clone, thiserror::Error)]
+#[derive(Debug, Clone, PartialEq, thiserror::Error)]
 pub enum Error {
     #[error("The lexer has no rules")]
     NoRules,
