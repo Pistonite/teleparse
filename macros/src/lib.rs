@@ -27,8 +27,8 @@ mod lexicon;
 /// Note that this is not a derive macro, since it will transform the input.
 #[proc_macro_attribute]
 pub fn derive_syntax(attr: TokenStream, input: TokenStream) -> TokenStream {
-    let lexicon_ident = parse_macro_input!(attr as syn::Ident);
-    expand_with_args_mut(input, lexicon_ident, syntax::expand)
+    let lex_ty = parse_macro_input!(attr as syn::Type);
+    expand_with_args_mut(input, lex_ty, syntax::expand)
 }
 mod syntax;
 
@@ -46,18 +46,26 @@ pub fn derive_to_span(input: TokenStream) -> TokenStream {
 }
 mod to_span;
 
-mod root;
+/// Derive AbstractSyntaxTree from a struct or an enum.
+#[proc_macro_attribute]
+pub fn derive_ast(attr: TokenStream, input: TokenStream) -> TokenStream {
+    let lex_ty = parse_macro_input!(attr as syn::Type);
+    expand_with_args(input, lex_ty, ast::expand)
+}
+mod ast;
 
-// /// Derive Root from a SyntaxTree type
-// #[proc_macro_derive(Root)]
-// pub fn derive_root(input: TokenStream) -> TokenStream {
-//     derive_root_impl::expand(input)
-// }
-//
-// mod derive_ll1_impl;
-//
-// /// Derive LL1 test for a Root type
-// #[proc_macro_derive(LL1Test)]
-// pub fn derive_ll1(input: TokenStream) -> TokenStream {
-//     derive_ll1_impl::expand(input)
-// }
+/// Derive AST for a tuple
+#[proc_macro]
+pub fn derive_tuple_ast(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as syn::ExprTuple);
+    match tuple::expand(&input) {
+        Ok(ts) => ts.into(),
+        Err(e) => e.to_compile_error().into(),
+    }
+}
+mod tuple;
+
+// internal helpers
+
+mod sequence;
+mod root;

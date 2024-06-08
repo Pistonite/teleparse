@@ -182,3 +182,12 @@ pub(crate) fn checked_regex_rule(input: &syn::LitStr) -> syn::Result<Regex> {
     }
     Ok(regex)
 }
+
+/// Put a block in an anonymous const block
+pub(crate) fn anon_const_block(block: TokenStream2) -> TokenStream2 {
+    quote! {
+        const _: () = {
+            #block
+        };
+    }
+}

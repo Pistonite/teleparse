@@ -81,14 +81,7 @@ A variant can have these combinations of attributes:
 Each `terminal` then must have a literal string value to be matched. The rule to match the token type
 is automatically inferred to be a pattern that matches any of the literal strings.
 ```rust
-use teleparse::prelude::*;
-
-#[derive_lexicon]
-#[teleparse(terminal_parse)]
-pub enum MyToken {
-    #[teleparse(terminal(Pizza = "pizza", Pasta = "pasta"))]
-    Food,
-}
+TXTPP#include ./expand/pizza.rs
 
 # fn main() {
 assert_eq!(
@@ -246,13 +239,7 @@ However, the lexer will still produce those tokens and store them (unlike `ignor
 You can use this for things like comments.
 
 ```rust
-use teleparse::prelude::*;
-
-#[derive_lexicon]
-pub enum MyToken {
-    #[teleparse(regex(r"^/\*[\s\S]*?\*/"))]
-    Comment,
-}
+TXTPP#include ./expand/comment.rs
 ```
 
 <br>

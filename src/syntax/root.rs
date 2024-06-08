@@ -52,13 +52,6 @@ pub struct Metadata<L: Lexicon>{
 //     }
 // }
 //
-// #[macro_export]
-// macro_rules! assert_ll1 {
-//     ($root:ty) => {{
-//         let r = <$root as $crate::root::Root>::root_metadata();
-//         assert!(r.is_ok(), "{} is not LL(1): {}", <$root as $crate::SyntaxTree>::debug(), r.unwrap_err());
-//     }}
-// }
 //
 // /// Internal implementation for deriving syntax tree [`Root`]
 // #[macro_export]

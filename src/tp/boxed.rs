@@ -6,7 +6,7 @@ use crate::{AbstractSyntaxTree, ToSpan, Parser};
 use super::ast_passthrough;
 
 impl<AST: AbstractSyntaxTree> AbstractSyntaxTree for Box<AST> {
-    ast_passthrough!();
+    ast_passthrough!(AST);
 
     fn parse_ast<'s>(
         parser: &mut Parser<'s, Self::L>, 

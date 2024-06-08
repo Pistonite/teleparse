@@ -58,8 +58,8 @@ pub enum GrammarError {
     LeftRecursion(String),
     #[error("The non-terminal `{0}` has a FIRST/FIRST conflict producing `{1}`. The conflicting terminals are: {2}")]
     FirstFirstConflict(String, String, String),
-    #[error("The non-terminal `{0}` has a FIRST/FOLLOW conflict producing `{1}`/`{2}`. The conflicting terminals are: {3}")]
-    FirstFollowStringConflict(String, String, String, String),
+    #[error("The non-terminal `{0}` has a FIRST/FOLLOW conflict producing `{1}` followed by `{2}`. The conflicting terminals are: {3}")]
+    FirstFollowSeqConflict(String, String, String, String),
     #[error("The non-terminal `{0}` has conflict in its FIRST and FOLLOW sets. The conflicting terminals are: {1}")]
     FirstFollowConflict(String, String),
 }
@@ -69,4 +69,10 @@ impl GrammarError {
         let message = format!("{} -> {}", stack.join(" -> "), current);
         Self::LeftRecursion(message)
     }
+}
+
+// private module for macros
+#[doc(hidden)]
+pub mod __priv {
+    pub use teleparse_macros::*;
 }
