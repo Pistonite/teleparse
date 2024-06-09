@@ -1,6 +1,9 @@
 # teleparse
 
-Proc-macro powered LL(1) parsing library
+working in progress - Proc-macro powered LL(1) parsing library
+
+This library is comparable to `serde` for parsing - All you need is define the syntax
+as data types and call `parse()` on the root type.
 
 Features:
 - Syntax tree defined by macro attributes on structs and enums - no separate grammar file
