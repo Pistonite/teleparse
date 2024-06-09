@@ -71,10 +71,10 @@ impl<'s> Lexer<'s> for LexerStub {
 
 #[derive_lexicon]
 #[teleparse(
-    ignore(r#"^\s+"#), // ignore whitespaces, separate multiple with comma
+    ignore(r#"\s+"#), // ignore whitespaces, separate multiple with comma
 )]
 pub enum MathTokenType {
-    #[teleparse(regex(r#"^\w+"#), terminal(Ident))]
+    #[teleparse(regex(r#"\w+"#), terminal(Ident))]
     Ident,
     #[teleparse(terminal(
         OpAdd = "+",

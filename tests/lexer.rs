@@ -12,11 +12,11 @@ use teleparse::prelude::*;
 /// Token types for the lexer
 #[derive_lexicon]
 #[teleparse(
-    ignore(r#"^\s+"#), // ignore whitespaces, separate multiple with comma
+    ignore(r#"\s"#), // ignore whitespaces, separate multiple with comma
 )]
 pub enum TokenType {
     /// Numbers in the expression
-    #[teleparse(regex(r#"^\d+"#), terminal(Integer, Zero = "0"))]
+    #[teleparse(regex(r#"\d+"#), terminal(Integer, Zero = "0"))]
     Integer,
     /// The 4 basic operators
     #[teleparse(terminal(
@@ -105,76 +105,3 @@ fn invalid() {
     assert_eq!(lexer.next(), (None, Some(Token::new((20,21), TokenType::Param))));
     assert_eq!(lexer.next(), (Some((24, 31).into()), None));
 }
-// //
-// // // The "grammar"
-// // // This is simplified to allow lists, thus with quotes
-// // // It reflects how the attributes are actually used later
-// // // Expr => ExprWithParam | ExprWithoutParam | Integer
-// // // ExprWithParam => "(" Expr ")"
-// // // ExprWithoutParam => SepListNoTrail<Term, OpAddSub>
-// // // Term => SepListNoTrail<Expr, OpMulDiv>
-// // // OpAddSub => "+" | "-"
-// // // OpMulDiv => "*" | "/"
-// //
-// // /// Convenience type for the syntax tree node
-// // type Node = llnparse::Node<TokenType>;
-// //
-// // /// An expression
-// // #[derive(llnparse::SyntaxTree)]
-// // #[token(TokenType)]
-// // pub enum Expr {
-// //     /// An expression surrounded by parentheses
-// //     WithParam(ExprWithParam),
-// //     /// An expression not surrounded by parentheses
-// //     WithoutParam(SepList<Term, OpAddSub>),
-// //     // ^ note this is in order so WithoutParam must be before Integer
-// //     /// An integer
-// //     #[token(Integer)]
-// //     Integer(Token), 
-// //     // ^ note you can put token here instead of making a separate struct
-// //     // because Token implements SyntaxTree
-// // }
-// //
-// // /// An expression surrounded by parentheses
-// // #[derive(llnparse::SyntaxTree)]
-// // #[token(TokenType)]
-// // pub struct ExprWithParam {
-// //     pub node: Node,
-// //     #[token(Param, "(")]
-// //     pub open: Token,
-// //     pub expr: Box<Expr>, // boxed to avoid infinite size
-// //     #[token(Param, ")")]
-// //     pub close: Token,
-// // }
-// //
-// // /// A term with just multiplication and division
-// // #[derive(llnparse::SyntaxTree)]
-// // #[token(TokenType)]
-// // pub struct Term {
-// //     pub node: Node,
-// //     #[list(non_empty)]
-// //     pub operands: llnparse::SepListNoTrail<Expr, OpMulDiv>,
-// // }
-// //
-// // /// An addition or subtraction operator
-// // #[derive(llnparse::SyntaxTree)]
-// // #[token(TokenType)]
-// // pub enum OpAddSub {
-// //     #[token(Operator, "+")]
-// //     Add(Token),
-// //     #[token(Operator, "-")]
-// //     Sub(Token),
-// // }
-// //
-// // /// An multiplication or division operator
-// // #[derive(llnparse::SyntaxTree)]
-// // #[token(TokenType)]
-// // pub enum OpMulDiv {
-// //     #[token(Operator, "*")]
-// //     Mul(Token),
-// //     #[token(Operator, "/")]
-// //     Div(Token),
-// // }
-//
-// fn main() {
-// }

@@ -52,8 +52,6 @@ pub(crate) mod test;
 /// Error when constructing the grammar (i.e. not actually parsing yet).
 #[derive(Debug, Clone, PartialEq, thiserror::Error)]
 pub enum GrammarError {
-    #[error("Cannot construct lexer: {0}")]
-    LexerError(#[from] lex::Error),
     #[error("Left recursion detected in the grammar! Stack: {0}")]
     LeftRecursion(String),
     #[error("The non-terminal `{0}` has a FIRST/FIRST conflict producing `{1}`. The conflicting terminals are: {2}")]

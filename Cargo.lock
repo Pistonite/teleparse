@@ -50,6 +50,8 @@ dependencies = [
 [[package]]
 name = "backtrace-on-stack-overflow"
 version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7fd2d70527f3737a1ad17355e260706c1badebabd1fa06a7a053407380df841b"
 dependencies = [
  "backtrace",
  "libc",
@@ -515,7 +517,7 @@ dependencies = [
 
 [[package]]
 name = "teleparse"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "backtrace-on-stack-overflow",
  "bit-set",
@@ -533,7 +535,7 @@ dependencies = [
 
 [[package]]
 name = "teleparse-macros"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",

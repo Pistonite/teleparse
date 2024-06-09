@@ -21,7 +21,7 @@ pub enum TokenType {
 }
 
 fn main() {
-    let source = "33+ 4 what is (this 5)   invalid";
+    let source = "  ";
 
     let mut lex = TokenType::lexer(source);
 

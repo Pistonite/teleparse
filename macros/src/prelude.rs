@@ -142,35 +142,12 @@ pub(crate) enum EnsureOne<T> {
     More,
 }
 
-pub(crate) fn get_doc(attrs: &[syn::Attribute]) -> TokenStream2 {
-    attrs.iter().fold(TokenStream2::new(), |mut acc, attr| {
-        if attr.path().is_ident("doc") {
-            acc.extend(quote! { #attr });
-        }
-        acc
-    })
-}
-
-pub(crate) fn unit_type() -> syn::Type {
-    parse_quote! { () }
-}
-
-pub(crate) fn is_unit_type(ty: &syn::Type) -> bool {
-    match ty {
-        syn::Type::Tuple(ty) => ty.elems.is_empty(),
-        _ => false,
-    }
-}
-
 pub(crate) fn ident_to_type(ident: &syn::Ident) -> syn::Type {
     parse_quote! { #ident }
 }
 
 pub(crate) fn checked_regex_rule(input: &syn::LitStr) -> syn::Result<Regex> {
     let regex = input.value();
-    // if !regex.starts_with("^") {
-    //     syn_error!(input, "expected a regular expression starting with `^`, because it always needs to match the beginning of the remaining input");
-    // }
     let regex = match Regex::new(&regex) {
         Err(e) => {
             syn_error!(input, e.to_string());

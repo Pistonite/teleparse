@@ -1,8 +1,8 @@
 error: regex parse error:
-           ^\
-            ^
+           \
+           ^
        error: incomplete escape sequence, reached end of pattern prematurely
  --> tests/ui/lex_invalid_regex.rs:5:23
   |
-5 |     #[teleparse(regex(r#"^\"#))]
-  |                       ^^^^^^^
+5 |     #[teleparse(regex(r#"\"#))]
+  |                       ^^^^^^

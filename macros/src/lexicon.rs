@@ -37,12 +37,13 @@ pub fn expand(input: &mut syn::DeriveInput) -> syn::Result<TokenStream2> {
     };
 
     // check ignore regex
-    let mut rule_exprs = Vec::new();
-    for ignore in ignore {
-        checked_regex_rule(&ignore)?;
-        rule_exprs.push(quote! {
-            #teleparse::lex::Rule::ignore(#ignore),
-        });
+    // let mut ignores = Vec::new();
+    for ignore in &ignore {
+        checked_regex_rule(ignore)?;
+        // ignores.push(ignore);
+        // rule_exprs.push(quote! {
+        //     #teleparse::lex::Rule::ignore(#ignore),
+        // });
     }
 
     check_enum_precondition(enum_data, &variant_attrs)?;
@@ -64,14 +65,16 @@ pub fn expand(input: &mut syn::DeriveInput) -> syn::Result<TokenStream2> {
     let enum_vis = &input.vis;
 
     // parse enum body
-    let mut enum_body = TokenStream2::new();
-    let mut should_extract_match_clauses = TokenStream2::new();
+    let mut variant_idents = Vec::new();
+    let mut variant_derived_attrs = Vec::new();
+    let mut variant_ordinals = Vec::new();
+    let mut extract_idents = Vec::new();
+
     let mut extra_derives = TokenStream2::new();
     for (i, (variant, attrs)) in enum_data.variants.iter().zip(variant_attrs).enumerate() {
         let variant_ident = &variant.ident;
-        enum_body.extend(quote! {
-            #variant_ident = #i,
-        });
+        variant_idents.push(variant_ident);
+        variant_ordinals.push(i);
 
         // check for attributes
         let mut terminal = None;
@@ -106,13 +109,15 @@ pub fn expand(input: &mut syn::DeriveInput) -> syn::Result<TokenStream2> {
 
         // if no terminal is provided, this token is extract type (like comments)
         if terminal.as_ref().map(|x| x.is_empty()).unwrap_or(true) {
-            should_extract_match_clauses.extend(quote! {
-                Self::#variant_ident => true,
-            });
+            extract_idents.push(variant_ident);
         }
 
         // derive the terminals
+        // infer_literals being None means we cannot infer rule from the literal
+        // i.e. there is a terminal without literal, or there is a regex
         let mut infer_literals = Some(Vec::new());
+        // literal set is used to check if the literal is matched by the regex
+        // if any
         let mut infer_literal_set = BTreeSet::new();
         if let Some(terminal) = terminal {
             for meta in terminal {
@@ -125,6 +130,7 @@ pub fn expand(input: &mut syn::DeriveInput) -> syn::Result<TokenStream2> {
                     syn::Meta::Path(_) => {
                         // since this will match any content of that token type
                         // we cannot infer literal patterns for the lexer
+                        // if there's already a terminal without match, it's an error
                         if infer_literals.is_none() {
                             syn_error!(
                                 &meta,
@@ -215,6 +221,7 @@ pub fn expand(input: &mut syn::DeriveInput) -> syn::Result<TokenStream2> {
                     );
                 }
             }
+            let mut regex_attr = TokenStream2::new();
             for regex in regexes {
                 let regex_obj = checked_regex_rule(&regex)?;
                 for match_lit in &infer_literal_set {
@@ -222,6 +229,13 @@ pub fn expand(input: &mut syn::DeriveInput) -> syn::Result<TokenStream2> {
                     // For example, if the regex matches `key` and the literal is `keyboard`.
                     // If we were to match `keyboard`, `key` should be matched instead
                     if let Some(mat) = regex_obj.find(&match_lit) {
+                        if mat.start() != 0 {
+                            syn_error!(
+                                regex,
+                                "This regex does not match the beginning of `{}`. This is likely a mistake, because the terminal will never be matched",
+                                match_lit,
+                            );
+                        }
                         if mat.end() != match_lit.len() {
                             syn_error!(
                                 regex,
@@ -237,69 +251,73 @@ pub fn expand(input: &mut syn::DeriveInput) -> syn::Result<TokenStream2> {
                         );
                     }
                 }
-                rule_exprs.push(quote! {
-                    #teleparse::lex::Rule::token(#enum_ident::#variant_ident, #regex),
+                regex_attr.extend(quote! {
+                    #[regex(#regex)]
                 });
+                // rule_exprs.push(quote! {
+                //     #teleparse::lex::Rule::token(#enum_ident::#variant_ident, #regex),
+                // });
             }
+            variant_derived_attrs.push(regex_attr);
         } else if let Some(infer_literals) = infer_literals {
-            let mut slice = TokenStream2::new();
+            let mut token_attr = TokenStream2::new();
             for lit in infer_literals {
-                slice.extend(quote! {
-                    #lit,
+                token_attr.extend(quote! {
+                    #[token(#lit)]
                 });
             }
-            rule_exprs.push(quote! {
-                #teleparse::lex::Rule::token_literal(#enum_ident::#variant_ident, &[#slice]),
-            });
+            variant_derived_attrs.push(token_attr);
+            // rule_exprs.push(quote! {
+            //     #teleparse::lex::Rule::token_literal(#enum_ident::#variant_ident, &[#slice]),
+            // });
         }
     }
     // variants size checked when determining repr
     let enum_len = enum_data.variants.len();
     let enum_first_variant = &enum_data.variants.first().unwrap().ident;
     let enum_last_variant = &enum_data.variants.last().unwrap().ident;
-    let rule_count = rule_exprs.len();
-    let rule_exprs = rule_exprs
-        .into_iter()
-        .fold(TokenStream2::new(), |mut acc, expr| {
-            acc.extend(expr);
-            acc
-        });
+    // let rule_count = rule_exprs.len();
+    // let rule_exprs = rule_exprs
+    //     .into_iter()
+    //     .fold(TokenStream2::new(), |mut acc, expr| {
+    //         acc.extend(expr);
+    //         acc
+    //     });
     let out = quote! {
         #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
         #[repr(usize)]
         #enum_vis enum #enum_ident {
-            #enum_body
+            #( #variant_idents = #variant_ordinals, )*
         }
         #extra_derives
         const _: () = {
-            use #teleparse::Lexer as _;
+            #[derive(#teleparse::__priv::logos::Logos)]
+        #(
+            #[logos(skip #ignore)]
+        )*
+            pub enum DerivedLogos {
+                #( #variant_derived_attrs #variant_idents, )*
+            }
+            #[automatically_derived]
+            impl ::core::convert::From<DerivedLogos> for #enum_ident {
+                fn from(token: DerivedLogos) -> Self {
+                    match token {
+                        #( DerivedLogos::#variant_idents => Self::#variant_idents, )*
+                    }
+                }
+            }
             #[automatically_derived]
             impl #teleparse::Lexicon for #enum_ident {
                 type Bit = #repr_ty;
-                type Lexer<'s> = #teleparse::lex::LexerImpl<'s, Self>;
+                type Lexer<'s> = #teleparse::lex::LogosLexerWrapper<'s, Self, DerivedLogos>;
                 type Map<T: Default + Clone> = [T; #enum_len];
 
-                #[inline]
-                fn id(&self) -> usize {
-                    *self as usize
-                }
+                fn id(&self) -> usize { *self as usize }
+                fn from_id(id: usize) -> Self { unsafe { std::mem::transmute(id) } }
+                fn to_bit(&self) -> Self::Bit { (1 << self.id()) as Self::Bit }
+                fn first() -> Self { Self::#enum_first_variant }
 
-                #[inline]
-                fn from_id(id: usize) -> Self {
-                    unsafe { std::mem::transmute(id) }
-                }
-
-                #[inline]
-                fn to_bit(&self) -> Self::Bit {
-                    (1 << self.id()) as Self::Bit
-                }
-
-                #[inline]
-                fn first() -> Self {
-                    Self::#enum_first_variant
-                }
-
-                fn next(&self) -> Option<Self> {
+                fn next(&self) -> ::core::option::Option<Self> {
                     match self {
                         Self::#enum_last_variant => None,
                         _ => {
@@ -309,20 +327,16 @@ pub fn expand(input: &mut syn::DeriveInput) -> syn::Result<TokenStream2> {
                     }
                 }
 
-                #[inline]
                 fn should_extract(&self) -> bool {
                     match self {
-                        #should_extract_match_clauses
+                        #( Self::#extract_idents => true, )*
                         _ => false
                     }
                 }
 
-                fn lexer<'s>(source: &'s str) -> Result<Self::Lexer<'s>, #teleparse::GrammarError> {
-                    static RULES: ::std::sync::OnceLock<
-            [ #teleparse::lex::Rule<#enum_ident>; #rule_count]
-                    > = ::std::sync::OnceLock::new();
-                    let rules = RULES.get_or_init(|| { [ #rule_exprs ] });
-                    Ok(#teleparse::lex::LexerImpl::new(source, rules)?)
+                fn lexer<'s>(source: &'s str) -> ::core::result::Result<Self::Lexer<'s>, #teleparse::GrammarError> {
+                    use #teleparse::__priv::logos::Logos;
+                    Ok(#teleparse::lex::LogosLexerWrapper::new( DerivedLogos::lexer(source)))
                 }
             }
         };
@@ -417,36 +431,22 @@ fn derive_terminal(
         }
     };
     let terminal_parse_impl = if terminal_parse {
-        let ty = ident_to_type(terminal_ident);
-        root::expand(&ty, &ty)
+        Some(root::expand(&terminal_ident, &terminal_ident))
     } else {
-        TokenStream2::new()
+        None
     };
     quote! {
         #[doc = #doc]
-        #[automatically_derived]
         #[derive(Clone, Copy, PartialEq, Eq, Hash, #teleparse::ToSpan)]
-        #vis struct #terminal_ident(pub #teleparse::lex::Token<#enum_ident>);
+        #vis struct #terminal_ident(pub #teleparse::Token<#enum_ident>);
         const _: () = {
-            use #teleparse::lex::Token;
-            use #teleparse::syntax::{
-                AbstractSyntaxTree,
-                First, FirstBuilder, FirstRel,
-                Follow, FollowBuilder,
-                Jump, Result as SynResult, Metadata
-            };
-            use #teleparse::{GrammarError, Parser};
-            use ::std::borrow::Cow;
-            use ::std::vec::Vec;
-            use ::std::collections::BTreeSet;
-            use ::std::string::String;
-            use ::std::any::TypeId;
             #[automatically_derived]
-            impl ::core::convert::From<Token<#enum_ident>> for #terminal_ident {
-                fn from(token: Token<#enum_ident>) -> Self {
+            impl ::core::convert::From<#teleparse::Token<#enum_ident>> for #terminal_ident {
+                fn from(token: #teleparse::Token<#enum_ident>) -> Self {
                     Self(token)
                 }
             }
+            // Make the terminal struct transparent in the debug output
             #[automatically_derived]
             impl ::core::fmt::Debug for #terminal_ident {
                 fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
@@ -454,19 +454,13 @@ fn derive_terminal(
                 }
             }
             #[automatically_derived]
-            impl AbstractSyntaxTree for #terminal_ident {
+            impl #teleparse::AbstractSyntaxTree for #terminal_ident {
                 type L = #enum_ident;
-                #[inline]
-
-                fn debug() -> Cow<'static, str> {
-                    Cow::Borrowed(#terminal_ident_str)
-                }
-
-                #[inline]
-                fn build_first(builder: &mut FirstBuilder<Self::L>) {
+                fn debug() -> ::std::borrow::Cow<'static, str> { ::std::borrow::Cow::Borrowed(#terminal_ident_str) }
+                fn build_first(builder: &mut #teleparse::syntax::FirstBuilder<Self::L>) {
                     let t = Self::type_id();
                     if builder.visit(t, #terminal_ident_str) {
-                        let expr = FirstRel::insert_token(
+                        let expr = #teleparse::syntax::FirstRel::insert_token(
                             t, 
                             #enum_ident::#variant_ident,
                             #match_option_impl
@@ -474,61 +468,52 @@ fn derive_terminal(
                         builder.add(expr);
                     }
                 }
-
-                #[inline]
                 fn check_left_recursive(
-                    _seen: &mut BTreeSet<TypeId>,
-                    _stack: &mut Vec<String>, 
-                    _set: &mut BTreeSet<TypeId>,
-                    _first: &First<Self::L>
-                ) -> Result<(), GrammarError> {
+                    _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
+                    _stack: &mut ::std::vec::Vec<::std::string::String>, 
+                    _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
+                    _first: &#teleparse::syntax::First<Self::L>
+                ) -> ::core::result::Result<(), #teleparse::GrammarError> {
                     // a terminal has no recursive rules
                     Ok(())
                 }
-   
-                #[inline]
                 fn check_first_conflict(
-                    _seen: &mut BTreeSet<TypeId>, 
-                    _first: &First<Self::L>
-                ) -> Result<(), GrammarError> {
+                    _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>, 
+                    _first: &#teleparse::syntax::First<Self::L>
+                ) -> ::core::result::Result<(), #teleparse::GrammarError> {
                     // a terminal has no recursive rules and therefore no conflicts
                     Ok(())
                 }
-
-                #[inline]
-                fn build_follow(_builder: &mut FollowBuilder<Self::L>) {
+                fn build_follow(_builder: &mut #teleparse::syntax::FollowBuilder<Self::L>) {
                     // no FOLLOW rules are produced from a terminal
                 }
-
-                #[inline]
                 fn check_first_follow_conflict(
-                    _seen: &mut BTreeSet<TypeId>, 
-                    _first: &First<Self::L>, 
-                    _follow: &Follow<Self::L>
-                ) -> Result<(), GrammarError> {
+                    _seen: &mut std::collections::BTreeSet<::core::any::TypeId>, 
+                    _first: &#teleparse::syntax::First<Self::L>, 
+                    _follow: &#teleparse::syntax::Follow<Self::L>
+                ) -> ::core::result::Result<(), #teleparse::GrammarError> {
                     // terminals don't produce epsilon and therefore has no FIRST/FOLLOW conflict
                     Ok(())
                 }
-
-                #[inline]
-                fn build_jump(_seen: &mut BTreeSet<TypeId>, _first: &First<Self::L>, _jump: &mut Jump<Self::L>) {
+                fn build_jump(
+                    _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>, 
+                    _first: &#teleparse::syntax::First<Self::L>,
+                    _jump: &mut #teleparse::syntax::Jump<Self::L>
+                ) {
                     // no parse table needed
                 }
-
-                /// Parse this AST node from the input stream
                 #[inline]
                 fn parse_ast<'s>(
-                    parser: &mut Parser<'s, Self::L>, 
-                    meta: &Metadata<Self::L>,
-                ) -> SynResult<Self, Self::L> {
+                    parser: &mut #teleparse::Parser<'s, Self::L>, 
+                    meta: &#teleparse::syntax::Metadata<Self::L>,
+                ) -> #teleparse::syntax::Result<Self, Self::L> {
                     #match_parse_impl
                 }
             }
             #[automatically_derived]
             impl #teleparse::ParseTree for #terminal_ident {
                 type AST = Self;
-                #[inline]
-                fn from_ast<'s>(ast: Self, _: &mut Parser<'s, #enum_ident>) -> Self {
+                fn from_ast<'s>(ast: Self, _: &mut #teleparse::Parser<'s, #enum_ident>) -> Self {
                     ast
                 }
             }

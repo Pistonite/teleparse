@@ -1,0 +1,5 @@
+error: There can only be one terminals without a matching literal. Having multiple is likely a mistake since they are interchangable in the AST.
+ --> tests/ui/lex_no_dupe_no_literal.rs:4:50
+  |
+4 |     #[teleparse(regex(r"\d+"), terminal(Integer, FancyInteger))]
+  |                                                  ^^^^^^^^^^^^

@@ -18,12 +18,6 @@ pub fn derive_lexicon(_: TokenStream, input: TokenStream) -> TokenStream {
 }
 mod lexicon;
 
-#[proc_macro_attribute]
-pub fn derive_lexicon_logos(_: TokenStream, input: TokenStream) -> TokenStream {
-    expand_with_mut(input, lexicon_logos::expand)
-}
-mod lexicon_logos;
-
 /// Transform an enum or struct into a parse tree node, as well as deriving the production rule
 /// (the AST nodes)
 ///

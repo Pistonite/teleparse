@@ -1,0 +1,5 @@
+error: This regex does not match the beginning of `keyboard`. This is likely a mistake, because the terminal will never be matched
+ --> tests/ui/lex_regex_not_match_start.rs:5:23
+  |
+5 |     #[teleparse(regex(r#"board"#), terminal(Board, Keyboard = "keyboard"))]
+  |                       ^^^^^^^^^^

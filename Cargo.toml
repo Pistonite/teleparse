@@ -4,7 +4,7 @@ members = ["macros"]
 
 [package]
 name = "teleparse"
-version = "0.0.2"
+version = "0.0.3"
 edition = "2021"
 description = "teleparse"
 license = "MIT"
@@ -15,7 +15,7 @@ authors = ["Pistonight <terrabyte100k@gmail.com>"]
 [dependencies]
 bit-set = "0.5.3"
 deref-derive = "0.1.0"
-teleparse-macros = { path = "macros", version = "=0.0.2" }
+teleparse-macros = { path = "macros", version = "=0.0.3" }
 num = "0.4.3"
 regex = "1.10.4"
 thiserror = "1.0.61"
@@ -24,6 +24,6 @@ itertools = "0.13.0"
 logos = "0.14.0"
 
 [dev-dependencies]
-backtrace-on-stack-overflow = { path = "../backtrace-on-stack-overflow" }
+backtrace-on-stack-overflow = "0.3.0"
 macrotest = "1.0.12"
 trybuild = "1.0.96"

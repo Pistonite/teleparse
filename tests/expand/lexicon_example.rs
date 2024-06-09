@@ -1,10 +1,10 @@
 use teleparse::prelude::*;
 
 #[derive_lexicon]
-#[teleparse(ignore(r#"^\s+"#))] // ignore whitespaces
+#[teleparse(ignore(r"\s"))] // ignore whitespaces
 pub enum TokenType {
     /// Numbers in the expression
-    #[teleparse(regex(r#"^\d+"#), terminal(Integer))]
+    #[teleparse(regex(r"\d+"), terminal(Integer))]
     Integer,
     /// The 4 basic operators
     #[teleparse(terminal(

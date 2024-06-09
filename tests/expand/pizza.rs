@@ -6,3 +6,5 @@ pub enum MyToken {
     #[teleparse(terminal(Pizza = "pizza", Pasta = "pasta"))]
     Food,
 }
+
+fn main() {}

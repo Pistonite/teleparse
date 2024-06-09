@@ -41,13 +41,12 @@ impl ::core::hash::Hash for MyToken {
     fn hash<__H: ::core::hash::Hasher>(&self, state: &mut __H) -> () {}
 }
 /// Terminal symbol derived from [`MyToken`] with `terminal(Pizza = "pizza")`
-#[automatically_derived]
-pub struct Pizza(pub teleparse::lex::Token<MyToken>);
+pub struct Pizza(pub teleparse::Token<MyToken>);
 #[automatically_derived]
 impl ::core::clone::Clone for Pizza {
     #[inline]
     fn clone(&self) -> Pizza {
-        let _: ::core::clone::AssertParamIsClone<teleparse::lex::Token<MyToken>>;
+        let _: ::core::clone::AssertParamIsClone<teleparse::Token<MyToken>>;
         *self
     }
 }
@@ -68,7 +67,7 @@ impl ::core::cmp::Eq for Pizza {
     #[doc(hidden)]
     #[coverage(off)]
     fn assert_receiver_is_total_eq(&self) -> () {
-        let _: ::core::cmp::AssertParamIsEq<teleparse::lex::Token<MyToken>>;
+        let _: ::core::cmp::AssertParamIsEq<teleparse::Token<MyToken>>;
     }
 }
 #[automatically_derived]
@@ -85,20 +84,9 @@ impl teleparse::ToSpan for Pizza {
     }
 }
 const _: () = {
-    use teleparse::lex::Token;
-    use teleparse::syntax::{
-        AbstractSyntaxTree, First, FirstBuilder, FirstRel, Follow, FollowBuilder, Jump,
-        Result as SynResult, Metadata,
-    };
-    use teleparse::{GrammarError, Parser};
-    use ::std::borrow::Cow;
-    use ::std::vec::Vec;
-    use ::std::collections::BTreeSet;
-    use ::std::string::String;
-    use ::std::any::TypeId;
     #[automatically_derived]
-    impl ::core::convert::From<Token<MyToken>> for Pizza {
-        fn from(token: Token<MyToken>) -> Self {
+    impl ::core::convert::From<teleparse::Token<MyToken>> for Pizza {
+        fn from(token: teleparse::Token<MyToken>) -> Self {
             Self(token)
         }
     }
@@ -109,58 +97,54 @@ const _: () = {
         }
     }
     #[automatically_derived]
-    impl AbstractSyntaxTree for Pizza {
+    impl teleparse::AbstractSyntaxTree for Pizza {
         type L = MyToken;
-        #[inline]
-        fn debug() -> Cow<'static, str> {
-            Cow::Borrowed("Pizza")
+        fn debug() -> ::std::borrow::Cow<'static, str> {
+            ::std::borrow::Cow::Borrowed("Pizza")
         }
-        #[inline]
-        fn build_first(builder: &mut FirstBuilder<Self::L>) {
+        fn build_first(builder: &mut teleparse::syntax::FirstBuilder<Self::L>) {
             let t = Self::type_id();
             if builder.visit(t, "Pizza") {
-                let expr = FirstRel::insert_token(t, MyToken::Food, Some("pizza"));
+                let expr = teleparse::syntax::FirstRel::insert_token(
+                    t,
+                    MyToken::Food,
+                    Some("pizza"),
+                );
                 builder.add(expr);
             }
         }
-        #[inline]
         fn check_left_recursive(
-            _seen: &mut BTreeSet<TypeId>,
-            _stack: &mut Vec<String>,
-            _set: &mut BTreeSet<TypeId>,
-            _first: &First<Self::L>,
-        ) -> Result<(), GrammarError> {
+            _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
+            _stack: &mut ::std::vec::Vec<::std::string::String>,
+            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
+            _first: &teleparse::syntax::First<Self::L>,
+        ) -> ::core::result::Result<(), teleparse::GrammarError> {
             Ok(())
         }
-        #[inline]
         fn check_first_conflict(
-            _seen: &mut BTreeSet<TypeId>,
-            _first: &First<Self::L>,
-        ) -> Result<(), GrammarError> {
+            _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
+            _first: &teleparse::syntax::First<Self::L>,
+        ) -> ::core::result::Result<(), teleparse::GrammarError> {
             Ok(())
         }
-        #[inline]
-        fn build_follow(_builder: &mut FollowBuilder<Self::L>) {}
-        #[inline]
+        fn build_follow(_builder: &mut teleparse::syntax::FollowBuilder<Self::L>) {}
         fn check_first_follow_conflict(
-            _seen: &mut BTreeSet<TypeId>,
-            _first: &First<Self::L>,
-            _follow: &Follow<Self::L>,
-        ) -> Result<(), GrammarError> {
+            _seen: &mut std::collections::BTreeSet<::core::any::TypeId>,
+            _first: &teleparse::syntax::First<Self::L>,
+            _follow: &teleparse::syntax::Follow<Self::L>,
+        ) -> ::core::result::Result<(), teleparse::GrammarError> {
             Ok(())
         }
-        #[inline]
         fn build_jump(
-            _seen: &mut BTreeSet<TypeId>,
-            _first: &First<Self::L>,
-            _jump: &mut Jump<Self::L>,
+            _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
+            _first: &teleparse::syntax::First<Self::L>,
+            _jump: &mut teleparse::syntax::Jump<Self::L>,
         ) {}
-        /// Parse this AST node from the input stream
         #[inline]
         fn parse_ast<'s>(
-            parser: &mut Parser<'s, Self::L>,
-            meta: &Metadata<Self::L>,
-        ) -> SynResult<Self, Self::L> {
+            parser: &mut teleparse::Parser<'s, Self::L>,
+            meta: &teleparse::syntax::Metadata<Self::L>,
+        ) -> teleparse::syntax::Result<Self, Self::L> {
             let follow = meta.follow.get(&Self::type_id());
             parser.parse_token_lit(MyToken::Food, "pizza", follow).map(Self::from)
         }
@@ -168,8 +152,7 @@ const _: () = {
     #[automatically_derived]
     impl teleparse::ParseTree for Pizza {
         type AST = Self;
-        #[inline]
-        fn from_ast<'s>(ast: Self, _: &mut Parser<'s, MyToken>) -> Self {
+        fn from_ast<'s>(ast: Self, _: &mut teleparse::Parser<'s, MyToken>) -> Self {
             ast
         }
     }
@@ -221,13 +204,12 @@ const _: () = {
     impl teleparse::ParseRoot for Pizza {}
 };
 /// Terminal symbol derived from [`MyToken`] with `terminal(Pasta = "pasta")`
-#[automatically_derived]
-pub struct Pasta(pub teleparse::lex::Token<MyToken>);
+pub struct Pasta(pub teleparse::Token<MyToken>);
 #[automatically_derived]
 impl ::core::clone::Clone for Pasta {
     #[inline]
     fn clone(&self) -> Pasta {
-        let _: ::core::clone::AssertParamIsClone<teleparse::lex::Token<MyToken>>;
+        let _: ::core::clone::AssertParamIsClone<teleparse::Token<MyToken>>;
         *self
     }
 }
@@ -248,7 +230,7 @@ impl ::core::cmp::Eq for Pasta {
     #[doc(hidden)]
     #[coverage(off)]
     fn assert_receiver_is_total_eq(&self) -> () {
-        let _: ::core::cmp::AssertParamIsEq<teleparse::lex::Token<MyToken>>;
+        let _: ::core::cmp::AssertParamIsEq<teleparse::Token<MyToken>>;
     }
 }
 #[automatically_derived]
@@ -265,20 +247,9 @@ impl teleparse::ToSpan for Pasta {
     }
 }
 const _: () = {
-    use teleparse::lex::Token;
-    use teleparse::syntax::{
-        AbstractSyntaxTree, First, FirstBuilder, FirstRel, Follow, FollowBuilder, Jump,
-        Result as SynResult, Metadata,
-    };
-    use teleparse::{GrammarError, Parser};
-    use ::std::borrow::Cow;
-    use ::std::vec::Vec;
-    use ::std::collections::BTreeSet;
-    use ::std::string::String;
-    use ::std::any::TypeId;
     #[automatically_derived]
-    impl ::core::convert::From<Token<MyToken>> for Pasta {
-        fn from(token: Token<MyToken>) -> Self {
+    impl ::core::convert::From<teleparse::Token<MyToken>> for Pasta {
+        fn from(token: teleparse::Token<MyToken>) -> Self {
             Self(token)
         }
     }
@@ -289,58 +260,54 @@ const _: () = {
         }
     }
     #[automatically_derived]
-    impl AbstractSyntaxTree for Pasta {
+    impl teleparse::AbstractSyntaxTree for Pasta {
         type L = MyToken;
-        #[inline]
-        fn debug() -> Cow<'static, str> {
-            Cow::Borrowed("Pasta")
+        fn debug() -> ::std::borrow::Cow<'static, str> {
+            ::std::borrow::Cow::Borrowed("Pasta")
         }
-        #[inline]
-        fn build_first(builder: &mut FirstBuilder<Self::L>) {
+        fn build_first(builder: &mut teleparse::syntax::FirstBuilder<Self::L>) {
             let t = Self::type_id();
             if builder.visit(t, "Pasta") {
-                let expr = FirstRel::insert_token(t, MyToken::Food, Some("pasta"));
+                let expr = teleparse::syntax::FirstRel::insert_token(
+                    t,
+                    MyToken::Food,
+                    Some("pasta"),
+                );
                 builder.add(expr);
             }
         }
-        #[inline]
         fn check_left_recursive(
-            _seen: &mut BTreeSet<TypeId>,
-            _stack: &mut Vec<String>,
-            _set: &mut BTreeSet<TypeId>,
-            _first: &First<Self::L>,
-        ) -> Result<(), GrammarError> {
+            _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
+            _stack: &mut ::std::vec::Vec<::std::string::String>,
+            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
+            _first: &teleparse::syntax::First<Self::L>,
+        ) -> ::core::result::Result<(), teleparse::GrammarError> {
             Ok(())
         }
-        #[inline]
         fn check_first_conflict(
-            _seen: &mut BTreeSet<TypeId>,
-            _first: &First<Self::L>,
-        ) -> Result<(), GrammarError> {
+            _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
+            _first: &teleparse::syntax::First<Self::L>,
+        ) -> ::core::result::Result<(), teleparse::GrammarError> {
             Ok(())
         }
-        #[inline]
-        fn build_follow(_builder: &mut FollowBuilder<Self::L>) {}
-        #[inline]
+        fn build_follow(_builder: &mut teleparse::syntax::FollowBuilder<Self::L>) {}
         fn check_first_follow_conflict(
-            _seen: &mut BTreeSet<TypeId>,
-            _first: &First<Self::L>,
-            _follow: &Follow<Self::L>,
-        ) -> Result<(), GrammarError> {
+            _seen: &mut std::collections::BTreeSet<::core::any::TypeId>,
+            _first: &teleparse::syntax::First<Self::L>,
+            _follow: &teleparse::syntax::Follow<Self::L>,
+        ) -> ::core::result::Result<(), teleparse::GrammarError> {
             Ok(())
         }
-        #[inline]
         fn build_jump(
-            _seen: &mut BTreeSet<TypeId>,
-            _first: &First<Self::L>,
-            _jump: &mut Jump<Self::L>,
+            _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
+            _first: &teleparse::syntax::First<Self::L>,
+            _jump: &mut teleparse::syntax::Jump<Self::L>,
         ) {}
-        /// Parse this AST node from the input stream
         #[inline]
         fn parse_ast<'s>(
-            parser: &mut Parser<'s, Self::L>,
-            meta: &Metadata<Self::L>,
-        ) -> SynResult<Self, Self::L> {
+            parser: &mut teleparse::Parser<'s, Self::L>,
+            meta: &teleparse::syntax::Metadata<Self::L>,
+        ) -> teleparse::syntax::Result<Self, Self::L> {
             let follow = meta.follow.get(&Self::type_id());
             parser.parse_token_lit(MyToken::Food, "pasta", follow).map(Self::from)
         }
@@ -348,8 +315,7 @@ const _: () = {
     #[automatically_derived]
     impl teleparse::ParseTree for Pasta {
         type AST = Self;
-        #[inline]
-        fn from_ast<'s>(ast: Self, _: &mut Parser<'s, MyToken>) -> Self {
+        fn from_ast<'s>(ast: Self, _: &mut teleparse::Parser<'s, MyToken>) -> Self {
             ast
         }
     }
@@ -401,29 +367,102 @@ const _: () = {
     impl teleparse::ParseRoot for Pasta {}
 };
 const _: () = {
-    use teleparse::Lexer as _;
+    pub enum DerivedLogos {
+        #[token("pizza")]
+        #[token("pasta")]
+        Food,
+    }
+    impl<'s> ::logos::Logos<'s> for DerivedLogos {
+        type Error = ();
+        type Extras = ();
+        type Source = str;
+        fn lex(lex: &mut ::logos::Lexer<'s, Self>) {
+            use ::logos::internal::{LexerInternal, CallbackResult};
+            type Lexer<'s> = ::logos::Lexer<'s, DerivedLogos>;
+            fn _end<'s>(lex: &mut Lexer<'s>) {
+                lex.end()
+            }
+            fn _error<'s>(lex: &mut Lexer<'s>) {
+                lex.bump_unchecked(1);
+                lex.error();
+            }
+            #[inline]
+            fn goto2_x<'s>(lex: &mut Lexer<'s>) {
+                lex.set(Ok(DerivedLogos::Food));
+            }
+            #[inline]
+            fn goto7_at2_with5<'s>(lex: &mut Lexer<'s>) {
+                match lex.read_at::<&[u8; 3usize]>(2usize) {
+                    Some(b"sta") => {
+                        lex.bump_unchecked(5usize);
+                        goto2_x(lex)
+                    }
+                    _ => _error(lex),
+                }
+            }
+            #[inline]
+            fn goto1_x<'s>(lex: &mut Lexer<'s>) {
+                lex.set(Ok(DerivedLogos::Food));
+            }
+            #[inline]
+            fn goto6_at2_with5<'s>(lex: &mut Lexer<'s>) {
+                match lex.read_at::<&[u8; 3usize]>(2usize) {
+                    Some(b"zza") => {
+                        lex.bump_unchecked(5usize);
+                        goto1_x(lex)
+                    }
+                    _ => _error(lex),
+                }
+            }
+            #[inline]
+            fn goto5_at1_with5<'s>(lex: &mut Lexer<'s>) {
+                let byte = unsafe { lex.read_unchecked::<u8>(1usize) };
+                match byte {
+                    b'a' => goto7_at2_with5(lex),
+                    b'i' => goto6_at2_with5(lex),
+                    _ => _error(lex),
+                }
+            }
+            #[inline]
+            fn goto8<'s>(lex: &mut Lexer<'s>) {
+                let arr = match lex.read::<&[u8; 5usize]>() {
+                    Some(arr) => arr,
+                    None => return _end(lex),
+                };
+                match arr[0] {
+                    b'p' => goto5_at1_with5(lex),
+                    _ => _error(lex),
+                }
+            }
+            goto8(lex)
+        }
+    }
+    #[automatically_derived]
+    impl ::core::convert::From<DerivedLogos> for MyToken {
+        fn from(token: DerivedLogos) -> Self {
+            match token {
+                DerivedLogos::Food => Self::Food,
+            }
+        }
+    }
     #[automatically_derived]
     impl teleparse::Lexicon for MyToken {
         type Bit = u8;
-        type Lexer<'s> = teleparse::lex::LexerImpl<'s, Self>;
+        type Lexer<'s> = teleparse::lex::LogosLexerWrapper<'s, Self, DerivedLogos>;
         type Map<T: Default + Clone> = [T; 1usize];
-        #[inline]
         fn id(&self) -> usize {
             *self as usize
         }
-        #[inline]
         fn from_id(id: usize) -> Self {
             unsafe { std::mem::transmute(id) }
         }
-        #[inline]
         fn to_bit(&self) -> Self::Bit {
             (1 << self.id()) as Self::Bit
         }
-        #[inline]
         fn first() -> Self {
             Self::Food
         }
-        fn next(&self) -> Option<Self> {
+        fn next(&self) -> ::core::option::Option<Self> {
             match self {
                 Self::Food => None,
                 _ => {
@@ -432,7 +471,6 @@ const _: () = {
                 }
             }
         }
-        #[inline]
         fn should_extract(&self) -> bool {
             match self {
                 _ => false,
@@ -440,20 +478,10 @@ const _: () = {
         }
         fn lexer<'s>(
             source: &'s str,
-        ) -> Result<Self::Lexer<'s>, teleparse::GrammarError> {
-            static RULES: ::std::sync::OnceLock<
-                [teleparse::lex::Rule<MyToken>; 1usize],
-            > = ::std::sync::OnceLock::new();
-            let rules = RULES
-                .get_or_init(|| {
-                    [
-                        teleparse::lex::Rule::token_literal(
-                            MyToken::Food,
-                            &["pizza", "pasta"],
-                        ),
-                    ]
-                });
-            Ok(teleparse::lex::LexerImpl::new(source, rules)?)
+        ) -> ::core::result::Result<Self::Lexer<'s>, teleparse::GrammarError> {
+            use teleparse::__priv::logos::Logos;
+            Ok(teleparse::lex::LogosLexerWrapper::new(DerivedLogos::lexer(source)))
         }
     }
 };
+fn main() {}

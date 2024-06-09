@@ -19,10 +19,10 @@ use teleparse::syntax::{Error, ErrorKind, FirstSet, FollowSet};
 
 #[derive_lexicon]
 #[teleparse(
-    ignore(r#"^\s+"#), // ignore whitespaces, separate multiple with comma
+    ignore(r#"\s+"#), // ignore whitespaces, separate multiple with comma
 )]
 pub enum TokenType {
-    #[teleparse(regex(r#"^\w+"#), terminal(Ident))]
+    #[teleparse(regex(r#"\w+"#), terminal(Ident))]
     Ident,
     #[teleparse(terminal(
         OpAdd = "+",

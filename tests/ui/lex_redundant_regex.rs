@@ -7,7 +7,7 @@ pub enum TokenType {
         OpSub = "-", 
         OpMul = "*", 
         OpDiv = "/",
-    ), regex(r#"^[\+\-\*/]"#))]
+    ), regex(r#"[\+\-\*/]"#))]
     Operator,
 }
 
