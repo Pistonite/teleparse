@@ -17,6 +17,7 @@ Credits:
 
 Progress:
 - [x] Lexer/Tokens
+  - [ ] Macro for terminals
 - [x] Parser
   - [x] LL(1) stuff
   - [x] Macros

@@ -27,7 +27,7 @@ pub trait Lexicon: Debug + Clone + Copy + PartialEq + Eq + Hash + 'static {
 
     /// Get the id of this token type (ordinal)
     fn id(&self) -> usize;
-    fn from_id(id: usize) -> Self;
+    fn from_id_unchecked(id: usize) -> Self;
 
     /// Convert to numeric representation for use in bit set
     fn to_bit(&self) -> Self::Bit;

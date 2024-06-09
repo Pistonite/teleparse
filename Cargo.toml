@@ -13,11 +13,10 @@ repository = "https://github.com/Pistonite/teleparse"
 authors = ["Pistonight <terrabyte100k@gmail.com>"]
 
 [dependencies]
-bit-set = "0.5.3"
-deref-derive = "0.1.0"
 teleparse-macros = { path = "macros", version = "=0.0.3" }
+deref-derive = "0.1.0"
 num = "0.4.3"
-regex = "1.10.4"
+regex = "1.10.4" # todo: need this?
 thiserror = "1.0.61"
 derivative = "2.2.0"
 itertools = "0.13.0"

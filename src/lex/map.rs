@@ -17,7 +17,7 @@ impl<L: Lexicon, T: Default + Clone + std::fmt::Debug> std::fmt::Debug for Map<L
         let mut s = f.debug_map();
         let slice: &[T] = self.0.borrow();
         for (ty,item) in slice.iter().enumerate() {
-            s.entry(&L::from_id(ty), item);
+            s.entry(&L::from_id_unchecked(ty), item);
         }
         s.finish()
     }
@@ -54,11 +54,11 @@ impl<L: Lexicon, T: Default + Clone> Map<L, T> {
 
     #[inline]
     pub fn iter_zip(&self) -> impl Iterator<Item = (L, &T)> {
-        self.iter().enumerate().map(|(ty, item)| (L::from_id(ty), item))
+        self.iter().enumerate().map(|(ty, item)| (L::from_id_unchecked(ty), item))
     }
 
     #[inline]
     pub fn iter_zip_mut(&mut self) -> impl Iterator<Item = (L, &mut T)> {
-        self.iter_mut().enumerate().map(|(ty, item)| (L::from_id(ty), item))
+        self.iter_mut().enumerate().map(|(ty, item)| (L::from_id_unchecked(ty), item))
     }
 }

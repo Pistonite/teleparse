@@ -36,14 +36,8 @@ pub fn expand(input: &mut syn::DeriveInput) -> syn::Result<TokenStream2> {
         (variant_attrs, enum_data)
     };
 
-    // check ignore regex
-    // let mut ignores = Vec::new();
     for ignore in &ignore {
         checked_regex_rule(ignore)?;
-        // ignores.push(ignore);
-        // rule_exprs.push(quote! {
-        //     #teleparse::lex::Rule::ignore(#ignore),
-        // });
     }
 
     check_enum_precondition(enum_data, &variant_attrs)?;
@@ -64,10 +58,15 @@ pub fn expand(input: &mut syn::DeriveInput) -> syn::Result<TokenStream2> {
     let enum_ident = &input.ident;
     let enum_vis = &input.vis;
 
-    // parse enum body
+    // all variants
     let mut variant_idents = Vec::new();
-    let mut variant_derived_attrs = Vec::new();
+    // ordinal for all variants
     let mut variant_ordinals = Vec::new();
+    // variants in lexer
+    let mut lex_variant_idents = Vec::new();
+    // derived attributes for variants in lexer
+    let mut lex_variant_derived_attrs = Vec::new();
+    // variants that have should_extract -> true
     let mut extract_idents = Vec::new();
 
     let mut extra_derives = TokenStream2::new();
@@ -202,14 +201,15 @@ pub fn expand(input: &mut syn::DeriveInput) -> syn::Result<TokenStream2> {
             }
         }
 
-        // if liternal is not inferred, regex must be provided
         if infer_literals
             .as_ref()
             .map(|x| x.is_empty())
             .unwrap_or(true)
             && regex.is_none()
         {
-            syn_error!(variant, "Missing lexer rule for this variant. If all `terminal` are specified with a literal pattern, the rule can be inferred. Otherwise you must provide a `regex`");
+            // if there are no rules and no infer literals, the token is semantic only
+        } else {
+            lex_variant_idents.push(variant_ident);
         }
         // add the rules
         if let Some(regexes) = regex {
@@ -254,11 +254,8 @@ pub fn expand(input: &mut syn::DeriveInput) -> syn::Result<TokenStream2> {
                 regex_attr.extend(quote! {
                     #[regex(#regex)]
                 });
-                // rule_exprs.push(quote! {
-                //     #teleparse::lex::Rule::token(#enum_ident::#variant_ident, #regex),
-                // });
             }
-            variant_derived_attrs.push(regex_attr);
+            lex_variant_derived_attrs.push(regex_attr);
         } else if let Some(infer_literals) = infer_literals {
             let mut token_attr = TokenStream2::new();
             for lit in infer_literals {
@@ -266,23 +263,13 @@ pub fn expand(input: &mut syn::DeriveInput) -> syn::Result<TokenStream2> {
                     #[token(#lit)]
                 });
             }
-            variant_derived_attrs.push(token_attr);
-            // rule_exprs.push(quote! {
-            //     #teleparse::lex::Rule::token_literal(#enum_ident::#variant_ident, &[#slice]),
-            // });
+            lex_variant_derived_attrs.push(token_attr);
         }
     }
     // variants size checked when determining repr
     let enum_len = enum_data.variants.len();
     let enum_first_variant = &enum_data.variants.first().unwrap().ident;
     let enum_last_variant = &enum_data.variants.last().unwrap().ident;
-    // let rule_count = rule_exprs.len();
-    // let rule_exprs = rule_exprs
-    //     .into_iter()
-    //     .fold(TokenStream2::new(), |mut acc, expr| {
-    //         acc.extend(expr);
-    //         acc
-    //     });
     let out = quote! {
         #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
         #[repr(usize)]
@@ -296,13 +283,13 @@ pub fn expand(input: &mut syn::DeriveInput) -> syn::Result<TokenStream2> {
             #[logos(skip #ignore)]
         )*
             pub enum DerivedLogos {
-                #( #variant_derived_attrs #variant_idents, )*
+                #( #lex_variant_derived_attrs #lex_variant_idents, )*
             }
             #[automatically_derived]
             impl ::core::convert::From<DerivedLogos> for #enum_ident {
                 fn from(token: DerivedLogos) -> Self {
                     match token {
-                        #( DerivedLogos::#variant_idents => Self::#variant_idents, )*
+                        #( DerivedLogos::#lex_variant_idents => Self::#lex_variant_idents, )*
                     }
                 }
             }
@@ -313,7 +300,7 @@ pub fn expand(input: &mut syn::DeriveInput) -> syn::Result<TokenStream2> {
                 type Map<T: Default + Clone> = [T; #enum_len];
 
                 fn id(&self) -> usize { *self as usize }
-                fn from_id(id: usize) -> Self { unsafe { std::mem::transmute(id) } }
+                fn from_id_unchecked(id: usize) -> Self { unsafe { std::mem::transmute(id) } }
                 fn to_bit(&self) -> Self::Bit { (1 << self.id()) as Self::Bit }
                 fn first() -> Self { Self::#enum_first_variant }
 
@@ -322,7 +309,7 @@ pub fn expand(input: &mut syn::DeriveInput) -> syn::Result<TokenStream2> {
                         Self::#enum_last_variant => None,
                         _ => {
                             let next = self.id() + 1;
-                            Some(Self::from_id(next))
+                            Some(Self::from_id_unchecked(next))
                         }
                     }
                 }
@@ -392,13 +379,6 @@ fn check_enum_precondition(enum_data: &syn::DataEnum, variant_attrs: &[Vec<syn::
     for (variant, attrs) in std::iter::zip(enum_data.variants.iter(), variant_attrs.iter()) {
         if !matches!(variant.fields, syn::Fields::Unit) {
             syn_error!(variant, "derive_lexicon must be used with enums with only unit variants. The integer values will be generated");
-        }
-        if attrs.is_empty() {
-            syn_error!(
-                variant,
-                "derive_lexicon needs an `{}` attribute to derive the lexer",
-                CRATE
-            );
         }
     }
 

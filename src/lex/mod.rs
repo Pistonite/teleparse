@@ -6,13 +6,12 @@ mod lexicon;
 pub use lexicon::*;
 mod map;
 pub use map::*;
+mod set;
+pub use set::*;
 mod span;
 pub use span::*;
 mod token;
 pub use token::*;
-
-// mod token_set;
-// pub use token_set::*;
-mod token_storage;
-pub use token_storage::*;
+mod vec;
+pub use vec::*;
 
