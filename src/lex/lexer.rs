@@ -60,7 +60,7 @@ impl<'s, L: Lexicon> LexerImpl<'s, L> {
         'outer: while self.idx < source_len {
             let rest = &self.source[self.idx..];
             for rule in self.rules {
-                if let Some(len) = rule.pat.get_prefix_len(rest) {
+                if let Some(len) = rule.pat.get_prefix_len(rest, 0) {
                     let start = self.idx;
                     self.idx += len;
                     let ty = match rule.ty {
@@ -111,7 +111,6 @@ impl<'s, L: Lexicon> Lexer<'s> for LexerImpl<'s, L> {
             invalid_end = self.idx;
         }
         let invalid_span = if has_invalid {
-            // note this might also include valid tokens that are ignored
             Some(Span::new(invalid_start, invalid_end))
         } else {
             None
@@ -148,7 +147,7 @@ impl<L: Lexicon> Rule<L> {
     pub fn token_literal(ty: L, pat: &'static[&'static str]) -> Self {
         Self {
             ty: Some(ty),
-            pat: Pattern::Literals(pat)
+            pat: Pattern::new_literals(pat)
         }
     }
 
@@ -175,7 +174,9 @@ pub enum Pattern {
     /// This is enforced when using the [`derive_lexicon`](crate::derive_lexicon) macro.
     Regex(Regex),
     /// A set of literals to match
-    Literals(&'static [&'static str]),
+    ///
+    /// The second argument is the max length of the literals
+    Literals(&'static [&'static str], usize),
     /// An error occurred when creating the regex
     RegexError(String, regex::Error),
 }
@@ -187,14 +188,23 @@ impl Pattern {
             Err(e) => Self::RegexError(pat.to_string(), e),
         }
     }
-    /// If this pattern is a prefix of the input, return the length of the prefix
+
+    pub fn new_literals(pat: &'static [&'static str]) -> Self {
+        let max_len = pat.iter().map(|s| s.len()).max().unwrap_or(0);
+        Self::Literals(pat, max_len)
+    }
+
+    /// If this pattern is a prefix of `input` with at least `at_least` bytes, return the length of the prefix
     #[inline]
-    pub fn get_prefix_len(&self, input: &str) -> Option<usize> {
+    pub fn get_prefix_len(&self, input: &str, at_least: usize) -> Option<usize> {
         match self {
             Self::Regex(regex) => {
                 regex.find(input).map(|m| m.end())
             }
-            Self::Literals(lits) => {
+            Self::Literals(lits, max_len) => {
+                if *max_len < at_least {
+                    return None;
+                }
                 for lit in *lits {
                     if input.starts_with(lit) {
                         return Some(lit.len());

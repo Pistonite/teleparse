@@ -14,7 +14,7 @@ use super::{First, FirstSet};
 #[derivative(Default(new="true", bound=""))]
 pub struct FirstBuilder<L: Lexicon> {
     /// Which AST types are already processed
-    seen: BTreeSet<TypeId>,
+    seen: BTreeMap<TypeId, String>,
     /// Relations to build the FIRST function
     rels: Vec<FirstRel<L>>,
 }
@@ -24,8 +24,12 @@ impl<L: Lexicon> FirstBuilder<L> {
     /// and rules should be constructed
     #[must_use]
     #[inline]
-    pub fn visit(&mut self, ast: TypeId) -> bool {
-        self.seen.insert(ast)
+    pub fn visit(&mut self, ast: TypeId, name: &str) -> bool {
+        if self.seen.contains_key(&ast) {
+            return false;
+        }
+        self.seen.insert(ast, name.to_string());
+        true
     }
 
     /// Add a [FIRST relation](FirstRel) to the builder
@@ -57,7 +61,7 @@ impl<L: Lexicon> FirstBuilder<L> {
     }
 
     /// Build the FIRST table into a [First] instance
-    pub fn build(self) -> First<L> {
+    pub fn build(self) -> (BTreeMap<TypeId, String>, First<L>) {
         let mut first = BTreeMap::<TypeId, FirstSet<L>>::new();
         let mut rels = self.rels;
         let mut changed = true;
@@ -66,7 +70,7 @@ impl<L: Lexicon> FirstBuilder<L> {
             changed = Self::process_rels(&mut first, &mut rels);
         }
 
-        First::new(first)
+        (self.seen, First::new(first))
     }
 
     /// Process the relations once and return if anything changed

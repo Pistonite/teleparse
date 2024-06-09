@@ -14,7 +14,7 @@ tasks:
       - cargo watch -s "cargo test {{.CLI_ARGS}}"
 
   refresh:
-    desc: Refresh macro tests
+    desc: Refresh test snapshots
     env:
       MACROTEST: overwrite
     cmds:

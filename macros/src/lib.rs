@@ -18,6 +18,12 @@ pub fn derive_lexicon(_: TokenStream, input: TokenStream) -> TokenStream {
 }
 mod lexicon;
 
+#[proc_macro_attribute]
+pub fn derive_lexicon_logos(_: TokenStream, input: TokenStream) -> TokenStream {
+    expand_with_mut(input, lexicon_logos::expand)
+}
+mod lexicon_logos;
+
 /// Transform an enum or struct into a parse tree node, as well as deriving the production rule
 /// (the AST nodes)
 ///
@@ -26,9 +32,8 @@ mod lexicon;
 ///
 /// Note that this is not a derive macro, since it will transform the input.
 #[proc_macro_attribute]
-pub fn derive_syntax(attr: TokenStream, input: TokenStream) -> TokenStream {
-    let lex_ty = parse_macro_input!(attr as syn::Type);
-    expand_with_args_mut(input, lex_ty, syntax::expand)
+pub fn derive_syntax(_: TokenStream, input: TokenStream) -> TokenStream {
+    expand_with_mut(input, syntax::expand)
 }
 mod syntax;
 
@@ -46,11 +51,12 @@ pub fn derive_to_span(input: TokenStream) -> TokenStream {
 }
 mod to_span;
 
-/// Derive AbstractSyntaxTree from a struct or an enum.
+/// Derive AbstractSyntaxTree from a struct with unnamed fields or an enum.
+/// This is not a derive macro because it's internal
 #[proc_macro_attribute]
 pub fn derive_ast(attr: TokenStream, input: TokenStream) -> TokenStream {
-    let lex_ty = parse_macro_input!(attr as syn::Type);
-    expand_with_args(input, lex_ty, ast::expand)
+    let name = parse_macro_input!(attr as syn::Ident);
+    expand_with_args(input, name, ast::expand)
 }
 mod ast;
 

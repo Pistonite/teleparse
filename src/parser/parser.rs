@@ -99,6 +99,9 @@ impl<'s, L: Lexicon> Parser<'s, L> {
             // cannot parse a tree, skip until a token in the FIRST set is found
             let first = meta.first.get(&AST::type_id());
             let mut span = self.current_span();
+
+            // skip at least one
+            self.consume_token();
             loop {
                 match self.peek_token() {
                     None => {
@@ -250,9 +253,13 @@ impl<'s, L: Lexicon> Parser<'s, L> {
         }
     }
 
-    #[inline]
     pub fn current_span(&mut self) -> Span {
         self.peek_token().map(|t| t.span).unwrap_or_else(|| self.info.eof())
+    }
+
+    pub fn current_span_empty(&mut self) -> Span {
+        let span = self.current_span();
+        Span::new(span.lo, span.lo)
     }
 
 

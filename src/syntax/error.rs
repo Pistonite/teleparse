@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use teleparse_macros::ToSpan;
 
 use crate::{Lexicon, Span};
@@ -5,26 +6,42 @@ use crate::{Lexicon, Span};
 use super::FirstSet;
 
 /// Error encountered during syntax analysis
-#[derive(Debug, Clone, ToSpan)]
+#[derive(Debug, Clone, ToSpan, PartialEq)]
 pub struct Error<L: Lexicon> {
     pub span: Span,
     pub data: ErrorKind<L>,
 }
 
 impl<L: Lexicon> Error<L> {
-    pub fn new(span: Span, data: ErrorKind<L>) -> Self {
-        Self { span, data }
+    pub fn new<S: Into<Span>>(span: S, data: ErrorKind<L>) -> Self {
+        Self { span: span.into(), data }
+    }
+
+    pub fn message(&self, input: &str) -> String {
+        match &self.data {
+            ErrorKind::Custom(msg) => msg.clone(),
+            ErrorKind::UnexpectedCharacters => {
+                format!("Unexpected: {}", self.span.get(input))
+            },
+            ErrorKind::UnexpectedTokens => {
+                format!("Unexpected token(s): {}", self.span.get(input))
+            },
+            ErrorKind::Expecting(set) => {
+                let set = set.as_terminal_set().to_repr().into_iter().join(", ");
+                format!("Expecting one of {}", set)
+            },
+            ErrorKind::UnexpectedEof => "Unexpected end of file".to_string(),
+        }
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ErrorKind<L: Lexicon> {
     Custom(String),
     UnexpectedCharacters,
     UnexpectedTokens,
     Expecting(FirstSet<L>),
     UnexpectedEof,
-    StackOverflow,
 }
 
 /// Result of parsing an AST node

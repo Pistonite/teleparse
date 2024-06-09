@@ -14,12 +14,18 @@ pub struct Map<L: Lexicon, T: Default + Clone>(L::Map<T>);
 
 impl<L: Lexicon, T: Default + Clone + std::fmt::Debug> std::fmt::Debug for Map<L, T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut s = f.debug_struct("Map");
+        let mut s = f.debug_map();
         let slice: &[T] = self.0.borrow();
         for (ty,item) in slice.iter().enumerate() {
-            s.field(&ty.to_string(), item);
+            s.entry(&L::from_id(ty), item);
         }
         s.finish()
+    }
+}
+
+impl<L: Lexicon, T: Default + Clone + PartialEq> PartialEq for Map<L, T> {
+    fn eq(&self, other: &Self) -> bool {
+        std::iter::zip(self.0.borrow().iter(), other.0.borrow().iter()).all(|(a, b)| a == b)
     }
 }
 

@@ -2,34 +2,46 @@ use quote::quote_spanned;
 
 use crate::*;
 
-pub fn expand(input: &mut syn::DeriveInput, lex_ty: syn::Type) -> syn::Result<TokenStream2> {
-    parse_root_attributes(input)?;
+pub fn expand(input: &mut syn::DeriveInput) -> syn::Result<TokenStream2> {
+    let root_attr = parse_root_attributes(input)?;
 
-    let output = match &mut input.data {
+    let teleparse = crate_ident();
+
+    let (extra_derive, output) = match &mut input.data {
         syn::Data::Struct(data) => {
-            expand_struct(input.ident.clone(), data, lex_ty)?
+            (None, expand_struct(input.ident.clone(), data, &root_attr)?)
         }
         syn::Data::Enum(data) => {
-            expand_enum(input.ident.clone(), data, lex_ty)?
+            (Some(
+                quote! {#[derive(#teleparse::ToSpan)]}
+            ), expand_enum(input.ident.clone(), data, &root_attr)?)
         }
         _ => syn_error!(input, "derive_syntax can only be used with structs or enums")
     };
 
+    let root_test = if !root_attr.root || root_attr.no_test {
+        None
+    } else {
+        Some(root::expand_test(&input.ident))
+    };
+
     let output = quote! {
+        #extra_derive
         #input
         #output
+        #root_test
     };
 
     Ok(output)
 }
 
-fn expand_struct(ident: syn::Ident, input: &mut syn::DataStruct, lex_ty: syn::Type) -> syn::Result<TokenStream2> {
+fn expand_struct(ident: syn::Ident, input: &mut syn::DataStruct, root_attr: &RootAttr) -> syn::Result<TokenStream2> {
     match &mut input.fields {
         syn::Fields::Unnamed(fields) => {
-            expand_struct_unnamed(ident, fields, lex_ty)
+            expand_struct_unnamed(ident, fields, root_attr)
         }
         syn::Fields::Named(fields) => {
-            expand_struct_named(ident, fields, lex_ty)
+            expand_struct_named(ident, fields, root_attr)
         }
         syn::Fields::Unit => {
             syn_error!(ident, "derive_syntax does not support unit structs");
@@ -37,58 +49,98 @@ fn expand_struct(ident: syn::Ident, input: &mut syn::DataStruct, lex_ty: syn::Ty
     }
 }
 
-fn expand_struct_unnamed(ident: syn::Ident, input: &mut syn::FieldsUnnamed, lex_ty: syn::Type) -> syn::Result<TokenStream2> {
+fn expand_struct_unnamed(ident: syn::Ident, input: &mut syn::FieldsUnnamed, root_attr: &RootAttr) -> syn::Result<TokenStream2> {
+    if input.unnamed.is_empty() {
+        syn_error!(input, "derive_syntax does not support struct with no fields");
+    }
     let pt_ty = input.unnamed.iter().map(|f| &f.ty).collect::<Vec<_>>();
     let teleparse = crate_ident();
-    let last = pt_ty.len()-1;
+    let last = syn::Index::from(pt_ty.len()-1);
+    let indices = (0..pt_ty.len()).map(syn::Index::from);
+    let root_derive = if root_attr.root {
+        Some(root::expand(quote! { DerivedAST }, &ident))
+    } else {
+        None
+    };
     let output = quote! {
-        #[#teleparse::__priv::derive_ast(#lex_ty)]
+        #[#teleparse::__priv::derive_ast(#ident)]
         struct DerivedAST(#( #teleparse::parser::AstOf< #pt_ty > ),*);
         #[automatically_derived]
         impl #teleparse::ToSpan for DerivedAST {
-            fn to_span(&self) -> #teleparse::Span {
+            fn span(&self) -> #teleparse::Span {
+                #teleparse::Span::new(self.0.span().lo, self.#last.span().hi)
+            }
+        }
+        #[automatically_derived]
+        impl #teleparse::ToSpan for #ident {
+            fn span(&self) -> #teleparse::Span {
                 #teleparse::Span::new(self.0.span().lo, self.#last.span().hi)
             }
         }
         #[automatically_derived]
         impl #teleparse::parser::ParseTree for #ident {
             type AST = DerivedAST;
-            fn from_ast<'s>(ast: Self::AST, parser: &mut #teleparse::parser::Parser<'s, Self::AST>) -> Self {
-                Self( #( <#pt_ty>::from_ast(ast, parser)),*)
+            fn from_ast<'s>(
+                ast: Self::AST, 
+                parser: &mut #teleparse::parser::Parser<'s, <Self::AST as #teleparse::syntax::AbstractSyntaxTree>::L>
+            ) -> Self {
+                Self( #( <#pt_ty>::from_ast(ast.#indices, parser)),*)
             }
         }
+        #root_derive
     };
 
     Ok(anon_const_block(output))
 }
 
-fn expand_struct_named(ident: syn::Ident, input: &mut syn::FieldsNamed, lex_ty: syn::Type) -> syn::Result<TokenStream2> {
+fn expand_struct_named(ident: syn::Ident, input: &mut syn::FieldsNamed, root_attr: &RootAttr) -> syn::Result<TokenStream2> {
+    if input.named.is_empty() {
+        syn_error!(input, "derive_syntax does not support struct with no fields");
+    }
     let pt_ty = input.named.iter().map(|f| &f.ty).collect::<Vec<_>>();
     let pt_ident = input.named.iter().map(|f| &f.ident).collect::<Vec<_>>();
+    let first_ident = pt_ident.first().unwrap();
+    let last_ident = pt_ident.last().unwrap();
     let teleparse = crate_ident();
-    let last = pt_ty.len()-1;
+    let last = syn::Index::from(pt_ty.len()-1);
+    let indices = (0..pt_ty.len()).map(syn::Index::from);
+    let root_derive = if root_attr.root {
+        Some(root::expand(quote! { DerivedAST }, &ident))
+    } else {
+        None
+    };
     let output = quote! {
-        #[#teleparse::__priv::derive_ast(#lex_ty)]
+        #[#teleparse::__priv::derive_ast(#ident)]
         struct DerivedAST(#( #teleparse::parser::AstOf< #pt_ty > ),*);
         #[automatically_derived]
         impl #teleparse::ToSpan for DerivedAST {
-            fn to_span(&self) -> #teleparse::Span {
+            fn span(&self) -> #teleparse::Span {
                 #teleparse::Span::new(self.0.span().lo, self.#last.span().hi)
+            }
+        }
+        #[automatically_derived]
+        impl #teleparse::ToSpan for #ident {
+            fn span(&self) -> #teleparse::Span {
+                #teleparse::Span::new(self.#first_ident.span().lo, self.#last_ident.span().hi)
             }
         }
         #[automatically_derived]
         impl #teleparse::parser::ParseTree for #ident {
             type AST = DerivedAST;
-            fn from_ast<'s>(ast: Self::AST, parser: &mut #teleparse::parser::Parser<'s, Self::AST>) -> Self {
-                let ( #(#pt_ident),* ) = ( #( <#pt_ty>::from_ast(ast, parser)),*);
+            fn from_ast<'s>(
+                ast: Self::AST, 
+                parser: &mut #teleparse::parser::Parser<'s, <Self::AST as #teleparse::syntax::AbstractSyntaxTree>::L>
+            ) -> Self {
+                let ( #(#pt_ident),* ) = ( #( <#pt_ty>::from_ast(ast.#indices, parser)),*);
                 Self { #(#pt_ident),* }
             }
         }
+        #root_derive
     };
     Ok(anon_const_block(output))
 }
 
-fn expand_enum(ident: syn::Ident, input: &mut syn::DataEnum, lex_ty: syn::Type) -> syn::Result<TokenStream2> {
+fn expand_enum(ident: syn::Ident, input: &mut syn::DataEnum, root_attr: &RootAttr) -> syn::Result<TokenStream2> {
     let mut pt_ident = Vec::with_capacity(input.variants.len());
     let mut pt_ty: Vec<syn::Type> = Vec::with_capacity(input.variants.len());
     for variant in &mut input.variants {
@@ -126,20 +178,27 @@ fn expand_enum(ident: syn::Ident, input: &mut syn::DataEnum, lex_ty: syn::Type) 
 
     let teleparse = crate_ident();
 
+    let root_derive = if root_attr.root {
+        Some(root::expand(quote! { DeriveAST }, &ident))
+    } else {
+        None
+    };
     
     let output = quote! {
-        #[#teleparse::__priv::derive_ast(#lex_ty)]
+        #[#teleparse::__priv::derive_ast(#ident)]
         #[derive(#teleparse::ToSpan)]
         #[doc(hidden)]
         enum DerivedAST {
             #( #pt_ident(#teleparse::parser::AstOf< #pt_ty >), )*
         }
-
         #[automatically_derived]
         impl #teleparse::parser::ParseTree for #ident {
             type AST = DerivedAST;
 
-            fn from_ast<'s>(ast: Self::AST, parser: &mut #teleparse::parser::Parser<'s, Self::AST>) -> Self {
+            fn from_ast<'s>(
+                ast: Self::AST, 
+                parser: &mut #teleparse::parser::Parser<'s, <Self::AST as #teleparse::syntax::AbstractSyntaxTree>::L>
+            ) -> Self {
                 match ast {
                     #(
                         DerivedAST::#pt_ident(ast) => Self::#pt_ident(<#pt_ty>::from_ast(ast, parser)),
@@ -147,6 +206,7 @@ fn expand_enum(ident: syn::Ident, input: &mut syn::DataEnum, lex_ty: syn::Type) 
                 }
             }
         }
+        #root_derive
     };
 
     Ok(anon_const_block(output))
@@ -262,10 +322,35 @@ impl<'a> StructDeriveState<'a> {
     }
 }
 
-fn parse_root_attributes(input: &mut syn::DeriveInput) -> syn::Result<()> {
+struct RootAttr {
+    root: bool,
+    no_test: bool,
+}
+
+fn parse_root_attributes(input: &mut syn::DeriveInput) -> syn::Result<RootAttr> {
     let root_metas = parse_strip_root_meta_optional(input)?;
-    if root_metas.is_some() {
-        syn_error!(input, "derive_syntax does not support any root attributes");
+    let mut root = false;
+    let mut no_test = false;
+    if let Some(root_metas) = root_metas {
+        for meta in root_metas {
+            match meta {
+                syn::Meta::Path(path) => {
+                    if path.is_ident("root") {
+                        root = true;
+                    } else if path.is_ident("no_test") {
+                        no_test = true;
+                    } else {
+                        syn_error!(path, "Unknown attribute");
+                    }
+                }
+                _ => {
+                    syn_error!(meta, "Unknown attribute");
+                }
+            }
+        }
     }
-    Ok(())
+    if no_test && !root {
+        syn_error!(input, "no_test can only be used with root");
+    }
+    Ok(RootAttr { root, no_test })
 }

@@ -1,5 +1,5 @@
 
-use std::marker::PhantomData;
+use std::any::TypeId;
 
 use crate::{syntax::Metadata, AbstractSyntaxRoot, AbstractSyntaxTree, GrammarError, Lexicon, ToSpan};
 
@@ -12,6 +12,11 @@ pub trait ParseTree: Sized + ToSpan {
 
     /// Transform the parsed AST node into the final tree node
     fn from_ast<'s>(ast: Self::AST, parser: &mut Parser<'s, Self::AST>) -> Self;
+
+    fn ast_id() -> TypeId {
+        <Self::AST as AbstractSyntaxTree>::type_id()
+    }
+
 }
 
 pub trait ParseRoot: ParseTree 
@@ -28,6 +33,11 @@ where Self::AST : AbstractSyntaxRoot
     fn parse_all(source: &str) -> Result<Vec<Self>, GrammarError> {
         super::Parser::new(source)?.parse_all()
     }
+
+    fn metadata() -> &'static Result<Metadata<<Self::AST as AbstractSyntaxTree>::L>, GrammarError> {
+        Self::AST::metadata()
+    }
+
 }
 
 /// Type alias to get the AST associated type of a [`ParseTree`]

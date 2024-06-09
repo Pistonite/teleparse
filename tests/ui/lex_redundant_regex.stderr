@@ -1,0 +1,5 @@
+error: Defining `regex` here is redundant because all terminals have a literal match pattern, so the rule can already be inferred.
+  --> tests/ui/lex_redundant_regex.rs:11:5
+   |
+11 |     Operator,
+   |     ^^^^^^^^

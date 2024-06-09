@@ -9,9 +9,15 @@ use crate::Lexicon;
 /// Implementation of the output of the FOLLOW function
 ///
 /// See [module-level documentation](super) for more information.
-#[derive(Derivative)]
+#[derive(Derivative, PartialEq, Clone)]
 #[derivative(Default(new = "true", bound = ""))]
 pub struct FollowSet<L: Lexicon>(TerminalSet<L>);
+
+impl<L: Lexicon> std::fmt::Debug for FollowSet<L> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
 
 impl<L: Lexicon> FollowSet<L> {
     /// Insert EOF into the set. 
@@ -26,6 +32,12 @@ impl<L: Lexicon> FollowSet<L> {
     #[inline]
     pub fn contains_eof(&self) -> bool {
         self.0.contains_e()
+    }
+
+    /// Insert the term `(ty, lit)` into the set. None indicates any literal.
+    #[inline]
+    pub fn insert(&mut self, ty: L, lit: Option<&'static str>) -> bool {
+        self.0.insert(ty, lit)
     }
 
     /// Check if the set contains the term `(ty, lit)`

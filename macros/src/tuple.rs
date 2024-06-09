@@ -23,6 +23,17 @@ pub fn expand(tuple: &syn::ExprTuple) -> syn::Result<TokenStream2> {
             #( #middle_ty: #teleparse::AbstractSyntaxTree<L=<#first_ty as #teleparse::AbstractSyntaxTree>::L> ),*
         > #teleparse::AbstractSyntaxTree for #tuple {
             #implementation
+            fn debug() -> ::std::borrow::Cow<'static, str> {
+                let mut s = ::std::string::String::from("(");
+                s.push_str(&<#first_ty>::debug()); 
+            #( 
+                s.push_str(", ");
+                s.push_str(&<#middle_ty>::debug()); 
+            )*
+                s.push_str(")");
+
+                ::std::borrow::Cow::Owned(s)
+            }
             fn parse_ast<'s>(
                 parser: &mut #teleparse::parser::Parser<'s, Self::L>, 
                 meta: &#teleparse::syntax::Metadata<Self::L>,

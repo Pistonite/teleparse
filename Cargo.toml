@@ -21,7 +21,9 @@ regex = "1.10.4"
 thiserror = "1.0.61"
 derivative = "2.2.0"
 itertools = "0.13.0"
+logos = "0.14.0"
 
 [dev-dependencies]
+backtrace-on-stack-overflow = { path = "../backtrace-on-stack-overflow" }
 macrotest = "1.0.12"
 trybuild = "1.0.96"

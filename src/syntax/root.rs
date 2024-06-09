@@ -1,22 +1,10 @@
-// use crate::table::first::First;
-// use crate::table::follow::Follow;
-// use crate::table::parsing::Parsing;
-// use crate::{TokenType, TokenTypeNoCtx};
-//
-// use super::ParseTree;
-//
-// macro_rules! Type {
-//     (T) => {
-//         <Self::AST as $crate::syntax::AbstractSyntaxTree>::T
-//     };
-//     (Ctx) => {
-//         <<Self::AST as $crate::syntax::AbstractSyntaxTree>::T as $crate::TokenType>::Ctx
-//     };
-// }
+
+use std::any::TypeId;
+use std::collections::BTreeMap;
 
 use crate::{GrammarError, Lexicon};
 
-use super::{AbstractSyntaxTree, First, Follow, Jump};
+use super::{AbstractSyntaxTree, DebugFirst, DebugFollow, DebugJump, First, Follow, Jump};
 
 /// The root of the Abstract Syntax Tree (AST) for a grammar
 ///
@@ -35,57 +23,18 @@ pub trait AbstractSyntaxRoot: AbstractSyntaxTree {
 }
 
 pub struct Metadata<L: Lexicon>{
+    pub names: BTreeMap<TypeId, String>,
     pub first: First<L>,
     pub follow: Follow<L>,
     pub jump: Jump<L>,
 }
-// /// Macro to derive [`Root`] for generated Terminal types.
-// /// This is used internally in tests and examples. Library users
-// /// should simply `#[derive(Root)]` instead.
-// #[macro_export]
-// macro_rules! derive_root {
-//     ($ident:ident) => {
-//         #[automatically_derived]
-//         impl $crate::root::Root for $ident {
-//             $crate::derive_root_impl!($ident);
-//         }
-//     }
-// }
-//
-//
-// /// Internal implementation for deriving syntax tree [`Root`]
-// #[macro_export]
-// macro_rules! derive_root_impl {
-//     ($ident:ty) => {
-//         fn root_metadata() -> &'static ::std::result::Result<$crate::root::RootMetadata<Self>, $crate::root::LL1Error>{
-//             static METADATA: ::std::sync::OnceLock<::std::result::Result<$crate::root::RootMetadata<$ident>, $crate::root::LL1Error>> = std::sync::OnceLock::new();
-//             METADATA.get_or_init(|| {
-//                 let mut stack = std::vec::Vec::new();
-//                 let mut seen = std::collections::BTreeSet::new();
-//                 Self::check_left_recursive(&mut stack, &mut seen)?;
-//
-//                 let mut first = $crate::table::first::FirstBuilder::new();
-//                 Self::build_first(&mut first);
-//                 let first = first.build();
-//                 seen.clear();
-//                 Self::check_first_conflict(&mut seen, &first)?;
-//                
-//                 let mut follow = $crate::table::follow::FollowBuilder::new(first);
-//                 Self::build_follow(&mut follow);
-//                 let (first, follow) = follow.build();
-//                 seen.clear();
-//                 Self::check_first_follow_conflict(&mut seen, &first, &follow)?;
-//
-//                 let mut parsing = $crate::table::parsing::Parsing::new();
-//                 seen.clear();
-//                 Self::build_parsing(&mut seen, &mut parsing);
-//
-//                 Ok($crate::root::RootMetadata {
-//                     first_table,
-//                     follow_table,
-//                     parsing
-//                 })
-//             })
-//         }
-//     }
-// }
+
+impl<L: Lexicon> std::fmt::Debug for Metadata<L> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Metadata")
+            .field("first", &DebugFirst(&self.first, &self.names))
+            .field("follow", &DebugFollow(&self.follow, &self.names))
+            .field("jump", &DebugJump(&self.jump, &self.names))
+            .finish()
+    }
+}

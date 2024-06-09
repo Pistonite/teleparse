@@ -1,6 +1,6 @@
 //! Test utilities
 
-use crate::{lex::Token, GrammarError, Lexer, Lexicon, Span};
+use crate::{lex::Token, GrammarError, Lexer, Lexicon, Span, derive_lexicon};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TestTokenType {
@@ -67,4 +67,41 @@ impl<'s> Lexer<'s> for LexerStub {
     fn next(&mut self) -> (Option<Span>, Option<Token<Self::L>>) {
         (None, None)
     }
+}
+
+#[derive_lexicon]
+#[teleparse(
+    ignore(r#"^\s+"#), // ignore whitespaces, separate multiple with comma
+)]
+pub enum MathTokenType {
+    #[teleparse(regex(r#"^\w+"#), terminal(Ident))]
+    Ident,
+    #[teleparse(terminal(
+        OpAdd = "+",
+        OpMul = "*",
+    ))]
+    Op,
+    /// Parentheses
+    #[teleparse(terminal(
+        ParamOpen = "(",
+        ParamClose = ")"
+    ))]
+    Param,
+}
+
+pub mod prelude {
+    macro_rules! assert_not_ll1 {
+        ($pt:ty, $err:expr) => {
+            use $crate::{AbstractSyntaxRoot, ParseRoot};
+            let err = if let Err(e) = <$pt as ParseTree>::AST::metadata() {
+                e.clone()
+            } else {
+                panic!("Expected {} to be not LL(1), but it is", stringify!($pt));
+            };
+            assert_eq!(err, $err);
+            assert!(<$pt>::parse("").is_err());
+        }
+    }
+    pub(crate) use assert_not_ll1;
+
 }

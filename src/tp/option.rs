@@ -13,8 +13,21 @@ use crate::{AbstractSyntaxTree, GrammarError, Parser, Span, ToSpan};
 use super::Node;
 
 /// Node that stores an optional subtree `Option<T> => T | epsilon`
-#[derive(Node, ToSpan)]
+#[derive(Node, ToSpan, Clone, PartialEq)]
 pub struct Option<T: ParseTree>(Node<StdOption<T>>);
+
+impl<T: std::fmt::Debug + ParseTree> std::fmt::Debug for Option<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match &self.0.value {
+            Some(node) => {
+                f.debug_tuple("Some").field(&node).finish()
+            }
+            None => {
+                f.debug_tuple("None").field(&self.0.span).finish()
+            }
+        }
+    }
+}
 
 impl<T: ParseTree> ParseTree for Option<T> {
     type AST = OptionAST<T::AST>;
@@ -32,9 +45,15 @@ impl<T: ParseTree> ParseTree for Option<T> {
     }
 }
 
-/// Node that stores if an optional subtree is parsed
-#[derive(Node, ToSpan)]
+/// Node that stores if an optional subtree is produced
+#[derive(Node, ToSpan, Clone, PartialEq)]
 pub struct Exists<T: ParseTree>(Node<bool>, PhantomData<T>);
+
+impl<T: ParseTree> std::fmt::Debug for Exists<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
 
 impl<T: ParseTree> ParseTree for Exists<T> {
     type AST = OptionAST<T::AST>;
@@ -52,6 +71,7 @@ impl<T: ParseTree> ParseTree for Exists<T> {
     }
 }
 
+#[doc(hidden)]
 #[derive(ToSpan)]
 pub enum OptionAST<T: AbstractSyntaxTree> {
     Some(T),
@@ -69,7 +89,7 @@ impl<AST: AbstractSyntaxTree> AbstractSyntaxTree for OptionAST<AST> {
     #[inline]
     fn build_first(builder: &mut FirstBuilder<Self::L>) {
         let t = Self::type_id();
-        if builder.visit(t) {
+        if builder.visit(t, &Self::debug()) {
             // recursive build
             AST::build_first(builder);
             let inner = AST::type_id();
@@ -84,8 +104,8 @@ impl<AST: AbstractSyntaxTree> AbstractSyntaxTree for OptionAST<AST> {
     }
 
     #[inline]
-    fn check_left_recursive(stack: &mut Vec<String>, set: &mut BTreeSet<TypeId>, first: &First<Self::L>) -> Result<(), GrammarError> {
-        AST::check_left_recursive(stack ,set, first)
+    fn check_left_recursive(seen: &mut BTreeSet<TypeId>, stack: &mut Vec<String>, set: &mut BTreeSet<TypeId>, first: &First<Self::L>) -> Result<(), GrammarError> {
+        AST::check_left_recursive(seen, stack ,set, first)
     }
 
     #[inline]
@@ -140,12 +160,12 @@ impl<AST: AbstractSyntaxTree> AbstractSyntaxTree for OptionAST<AST> {
         let token = parser.peek_token_src();
         if token.is_none() {
             // produces epsilon
-            return SynResult::Success(Self::None(parser.current_span()));
+            return SynResult::Success(Self::None(parser.current_span_empty()));
         }
         let first = meta.first.get(&AST::type_id());
         if !first.contains(token) {
             // produces epsilon
-            return SynResult::Success(Self::None(parser.current_span()));
+            return SynResult::Success(Self::None(parser.current_span_empty()));
         }
 
         // if parse fails, delay to parent to panic
@@ -156,7 +176,7 @@ impl<AST: AbstractSyntaxTree> AbstractSyntaxTree for OptionAST<AST> {
             SynResult::Recovered(ast, error) =>
                 SynResult::Recovered(Self::Some(ast), error),
             SynResult::Panic(error) =>
-                SynResult::Recovered(Self::None(parser.current_span()), error),
+                SynResult::Recovered(Self::None(parser.current_span_empty()), error),
         }
     }
 }
@@ -164,18 +184,89 @@ impl<AST: AbstractSyntaxTree> AbstractSyntaxTree for OptionAST<AST> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::prelude::*;
+    use crate::GrammarError;
+    use crate::ParseTree;
+    use crate::tp::Node;
 
-    // #[test]
-    // fn use_optional_as_option() {
-    //     let o = Option(Node::new(Span::new(0, 0), Some(42)));
-    //     assert_eq!(o.as_ref().copied(), Some(42));
-    //     let opt: &Option<i32> = &o;
-    //     assert_eq!(opt.as_ref().copied(), Some(42));
-    // }
-    // #[test]
-    // fn use_exists() {
-    //     let e = Exists::<String>::new(Span::new(0, 0), true);
-    //     assert!(e.exists());
-    // }
+    use crate::lex::Token;
+    use crate::test::prelude::*;
+    use crate::test::MathTokenType as T;
+    use crate::test::{Ident, OpAdd};
+
+    #[derive_syntax]
+    #[teleparse(root)]
+    #[derive(Debug, PartialEq)]
+    struct OptIdent(super::Option<Ident>);
+
+    #[test]
+    fn test_none() {
+        let t = OptIdent::parse("+").unwrap().unwrap();
+        let t_str = format!("{:?}", t.0);
+        assert_eq!(t_str, "None(0)");
+        assert_eq!(t, OptIdent(Node::new(0..0, None).into()));
+    }
+
+    #[test]
+    fn test_some() {
+        let t = OptIdent::parse("a").unwrap().unwrap();
+        let t_str = format!("{:?}", t.0);
+        assert_eq!(t_str, "Some(token Ident(0..1))");
+        assert_eq!(t, OptIdent(Node::new(0..1, Some(
+            Ident(Token::new(0..1, T::Ident))
+        )).into()));
+    }
+
+    #[test]
+    fn test_use_as_option() {
+        let t = OptIdent::parse("+").unwrap().unwrap();
+        assert!(t.0.is_none());
+    }
+
+    #[derive_syntax]
+    #[teleparse(root, no_test)]
+    struct Seq(super::Option<OpAdd>, OpAdd);
+
+    #[test]
+    fn test_seq_not_ll1() {
+        assert_not_ll1!(Seq, GrammarError::FirstFollowSeqConflict(
+            "Seq".to_string(),
+            "Option<OpAdd>".to_string(),
+            "OpAdd".to_string(),
+            "\"+\"".to_string()
+        ));
+    }
+
+    #[derive_syntax]
+    #[teleparse(root, no_test)]
+    struct Nested(super::Option<super::Option<Ident>>);
+
+    #[test]
+    fn test_nested_not_ll1() {
+        assert_not_ll1!(Nested, GrammarError::FirstFirstConflict(
+            "Option<Option<Ident>>".to_string(),
+            "Option<Ident>".to_string(),
+            "<epsilon>".to_string(),
+        ));
+    }
+
+    #[derive_syntax]
+    #[teleparse(root)]
+    #[derive(Debug, PartialEq)]
+    struct ExistIdent(super::Exists<Ident>);
+
+    #[test]
+    fn parse_exist() {
+        let t = ExistIdent::parse("a").unwrap().unwrap();
+        let t_str = format!("{:?}", t.0);
+        assert_eq!(t_str, "0..1 => true");
+        assert_eq!(t, ExistIdent(Node::new(0..1, true).into()));
+        assert_eq!(*t.0, true);
+
+        let t = ExistIdent::parse("+").unwrap().unwrap();
+        let t_str = format!("{:?}", t.0);
+        assert_eq!(t_str, "0 => false");
+        assert_eq!(t, ExistIdent(Node::new(0..0, false).into()));
+        assert_eq!(*t.0, false);
+    }
 }

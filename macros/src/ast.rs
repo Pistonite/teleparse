@@ -1,13 +1,13 @@
-
 use crate::*;
-pub fn expand(input: &syn::DeriveInput, lex_ty: syn::Type) -> syn::Result<TokenStream2> {
+
+pub fn expand(input: &syn::DeriveInput, name: syn::Ident) -> syn::Result<TokenStream2> {
 
     let output = match &input.data {
         syn::Data::Struct(data) => {
-            expand_struct(input.ident.clone(), data, lex_ty)?
+            expand_struct(input.ident.clone(), data, name)?
         }
         syn::Data::Enum(data) => {
-            expand_enum(input.ident.clone(), data, lex_ty)?
+            expand_enum(input.ident.clone(), data, name)?
         }
         _ => syn_error!(input, "derive_ast can only be used with structs or enums")
     };
@@ -20,7 +20,7 @@ pub fn expand(input: &syn::DeriveInput, lex_ty: syn::Type) -> syn::Result<TokenS
     Ok(output)
 }
 
-fn expand_struct(ident: syn::Ident, input: &syn::DataStruct, lex_ty: syn::Type) -> syn::Result<TokenStream2> {
+fn expand_struct(ident: syn::Ident, input: &syn::DataStruct, name: syn::Ident) -> syn::Result<TokenStream2> {
     let fields = match &input.fields {
         syn::Fields::Unnamed(fields) => fields,
         _ => syn_error!(&ident, "Only unnamed fields are supported for AST nodes")
@@ -34,6 +34,8 @@ fn expand_struct(ident: syn::Ident, input: &syn::DataStruct, lex_ty: syn::Type) 
 
     let first_ty = &first.ty;
     let teleparse = crate_ident();
+    let name_str = name.to_string();
+
     if iter.next().is_none() {
         let output = quote! {
             #[automatically_derived]
@@ -47,7 +49,7 @@ fn expand_struct(ident: syn::Ident, input: &syn::DataStruct, lex_ty: syn::Type) 
                 }
             }
         };
-        return Ok(anon_const_block(output));
+        return Ok(output);
     }
 
     let types = fields.unnamed.iter().map(|f| f.ty.clone()).collect::<Vec<_>>();
@@ -61,6 +63,9 @@ fn expand_struct(ident: syn::Ident, input: &syn::DataStruct, lex_ty: syn::Type) 
         #[automatically_derived]
         impl #teleparse::AbstractSyntaxTree for #ident {
             #implementation
+            fn debug() -> ::std::borrow::Cow<'static, str> {
+                ::std::borrow::Cow::Borrowed(#name_str)
+            }
             fn parse_ast<'s>(
                 parser: &mut #teleparse::parser::Parser<'s, Self::L>, 
                 meta: &#teleparse::syntax::Metadata<Self::L>,
@@ -72,10 +77,10 @@ fn expand_struct(ident: syn::Ident, input: &syn::DataStruct, lex_ty: syn::Type) 
         }
     };
 
-    Ok(anon_const_block(output))
+    Ok(output)
 }
 
-fn expand_enum(ident: syn::Ident, input: &syn::DataEnum, lex_ty: syn::Type) -> syn::Result<TokenStream2> {
+fn expand_enum(ident: syn::Ident, input: &syn::DataEnum, name: syn::Ident) -> syn::Result<TokenStream2> {
     let teleparse = crate_ident();
 
     if input.variants.is_empty() {
@@ -105,55 +110,60 @@ fn expand_enum(ident: syn::Ident, input: &syn::DataEnum, lex_ty: syn::Type) -> s
     let middle_ty = &variant_ty[0..variant_ty.len()-1];
     let last_ty = variant_ty.last().unwrap();
 
-    let ident_str = ident.to_string();
+    let name_str = name.to_string();
 
     let output = quote! {
         #[automatically_derived]
         impl #teleparse::AbstractSyntaxTree for #ident {
-            type L = #lex_ty;
-            fn debug() -> ::alloc::borrow::Cow<'static, str> {
-                ::alloc::borrow::Cow::Borrowed(#ident_str)
+            type L = <#last_ty as #teleparse::AbstractSyntaxTree>::L;
+            fn debug() -> ::std::borrow::Cow<'static, str> {
+                ::std::borrow::Cow::Borrowed(#name_str)
             }
             fn build_first(builder: &mut #teleparse::syntax::FirstBuilder<Self::L>) {
                 let t = Self::type_id();
-                if builder.visit(t) {
+                if builder.visit(t, &Self::debug()) {
                     #( <#variant_ty>::build_first(builder);   )*
                     builder.build_enum(t, &[ #( <#variant_ty>::type_id() ),* ]);
                 }
             }
             fn check_left_recursive(
-                stack: &mut ::alloc::vec::Vec<::alloc::string::String>,
-                seen: &mut ::alloc::collections::BTreeSet<::core::any::TypeId>,
-                first: &#teleparse::syntax::First<Self::L>,
-            ) -> ::core::result::Result<(), #teleparse::GrammarError> {
-                let t = Self::type_id();
-                if !seen.insert(t) {
-                    return Err(#teleparse::GrammarError::left_recursion(&stack, &Self::debug()));
-                }
-                stack.push(Self::debug().into_owned());
-            #(
-                if let Err(e) = <#middle_ty>::check_left_recursive(stack, seen) {
-                    stack.pop();
-                    seen.remove(&t);
-                    return Err(e);
-                }
-            )*
-                let r = <#last_ty>::check_left_recursive(stack, seen);
-                stack.pop();
-                seen.remove(&t);
-                r
-            }
-            fn check_first_conflict(
-                seen: &mut ::alloc::collections::BTreeSet<::core::any::TypeId>,
+                seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
+                stack: &mut ::std::vec::Vec<::std::string::String>,
+                set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
                 first: &#teleparse::syntax::First<Self::L>,
             ) -> ::core::result::Result<(), #teleparse::GrammarError> {
                 let t = Self::type_id();
                 if !seen.insert(t) {
                     return Ok(());
                 }
-                let check_set = #teleparse::syntax::FirstSet::new();
+                if !set.insert(t) {
+                    return Err(#teleparse::GrammarError::left_recursion(&stack, &Self::debug()));
+                }
+                stack.push(Self::debug().into_owned());
             #(
-                let first_set = first.get(<#middle_ty>::type_id());
+                if let Err(e) = <#middle_ty>::check_left_recursive(seen, stack, set, first) {
+                    stack.pop();
+                    set.remove(&t);
+                    return Err(e);
+                }
+            )*
+                let r = <#last_ty>::check_left_recursive(seen, stack, set, first);
+                stack.pop();
+                set.remove(&t);
+                r
+            }
+            fn check_first_conflict(
+                seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
+                first: &#teleparse::syntax::First<Self::L>,
+            ) -> ::core::result::Result<(), #teleparse::GrammarError> {
+                let t = Self::type_id();
+                if !seen.insert(t) {
+                    return Ok(());
+                }
+                #[allow(unused_mut)]
+                let mut check_set = #teleparse::syntax::FirstSet::new();
+            #(
+                let first_set = first.get(&<#middle_ty>::type_id());
                 if check_set.intersects(&first_set) {
                     let self_name = Self::debug().into_owned();
                     let produce_name = <#middle_ty>::debug().into_owned();
@@ -168,9 +178,9 @@ fn expand_enum(ident: syn::Ident, input: &syn::DataEnum, lex_ty: syn::Type) -> s
                         produce_name,
                         intersection));
                 }
-                let check_set = check_set.union(&first_set);
+                check_set.union(&first_set);
             )*
-                let first_set = first.get(<#last_ty>::type_id());
+                let first_set = first.get(&<#last_ty>::type_id());
                 if check_set.intersects(&first_set) {
                     let self_name = Self::debug().into_owned();
                     let produce_name = <#last_ty>::debug().into_owned();
@@ -197,7 +207,7 @@ fn expand_enum(ident: syn::Ident, input: &syn::DataEnum, lex_ty: syn::Type) -> s
                 }
             }
             fn check_first_follow_conflict(
-                seen: &mut ::alloc::collections::BTreeSet<::core::any::TypeId>, 
+                seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>, 
                 first: &#teleparse::syntax::First<Self::L>, 
                 follow: &#teleparse::syntax::Follow<Self::L>
             ) -> ::core::result::Result<(), #teleparse::GrammarError> {
@@ -206,11 +216,12 @@ fn expand_enum(ident: syn::Ident, input: &syn::DataEnum, lex_ty: syn::Type) -> s
                     return Ok(());
                 }
                 Self::check_self_first_follow_conflict(first, follow)?;
-                #( <#variant_ty>::check_first_follow_conflict(seen, first)?;)*
+                #( <#variant_ty>::check_first_follow_conflict(seen, first, follow)?;)*
                 Ok(())
             }
             fn build_jump(
-                seen: &mut ::alloc::collecitons::BTreeSet<::core::any::TypeId>, 
+                seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>, 
+                first: &#teleparse::syntax::First<Self::L>,
                 jump: &mut #teleparse::syntax::Jump<Self::L>
             ) {
                 let t = Self::type_id();
@@ -221,7 +232,7 @@ fn expand_enum(ident: syn::Ident, input: &syn::DataEnum, lex_ty: syn::Type) -> s
                 let first_set = first.get(&<#variant_ty>::type_id());
                 jump.register(t, first_set, #i);
             )*
-                #( <#variant_ty>::build_jump(seen, jump); )*
+                #( <#variant_ty>::build_jump(seen, first, jump); )*
             }
             fn parse_ast<'s>(
                 parser: &mut #teleparse::parser::Parser<'s, Self::L>, 
@@ -245,5 +256,5 @@ fn expand_enum(ident: syn::Ident, input: &syn::DataEnum, lex_ty: syn::Type) -> s
         }
     };
 
-    Ok(anon_const_block(output))
+    Ok(output)
 }

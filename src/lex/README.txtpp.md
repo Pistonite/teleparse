@@ -86,7 +86,7 @@ TXTPP#include ./expand/pizza.rs
 # fn main() {
 assert_eq!(
     Pizza::parse("pizza"),
-    Ok(Some(Pizza(Token::new((0, 5), MyToken::Food))))
+    Ok(Some(Pizza(Token::new(0..5, MyToken::Food))))
 );
 assert_eq!(
     Pizza::parse("pasta"),
@@ -94,23 +94,16 @@ assert_eq!(
 );
 assert_eq!(
     Pasta::parse("pasta"),
-    Ok(Some(Pasta(Token::new((0, 5), MyToken::Food))))
+    Ok(Some(Pasta(Token::new(0..5, MyToken::Food))))
 );
 # }
 ```
 In fact, the macro will error if you try to define a regex when all the terminals have a literal string (Don't-Repeat-Yourself)
 ```compile_fail
-# use teleparse::prelude::*;
-# #[derive_lexicon]
-# pub enum TokenType {
-#[teleparse(terminal(
-    OpAdd = "+", 
-    OpSub = "-", 
-    OpMul = "*", 
-    OpDiv = "/",
-), regex(r#"^[\+\-\*/]"#))] // error! the rule can already be inferred
-Operator,
-# }
+TXTPP#include ../../tests/ui/lex_redundant_regex.rs
+```
+```console
+TXTPP#include ../../tests/ui/lex_redundant_regex.stderr
 ```
 
 <br>
@@ -133,18 +126,18 @@ let source = "rust";
 // Word can be parsed
 assert_eq!(
     Word::parse(source),
-    Ok(Some(Word(Token::new((0, 4), MyToken::Word))))
+    Ok(Some(Word(Token::new(0..4, MyToken::Word))))
 );
 // so is Secret
 assert_eq!(
     Secret::parse(source),
-    Ok(Some(Secret(Token::new((0, 4), MyToken::Word))))
+    Ok(Some(Secret(Token::new(0..4, MyToken::Word))))
 );
 // but not with others
 let source = "javascript";
 assert_eq!(
     Word::parse(source),
-    Ok(Some(Word(Token::new((0, 10), MyToken::Word))))
+    Ok(Some(Word(Token::new(0..10, MyToken::Word))))
 );
 assert_eq!(
     Secret::parse(source),
@@ -160,16 +153,8 @@ if the terminal should be Word or Secret. That's the job of the parser.
 
 </div>
 
-Like `ignore`, the regular expressions are checked
-```compile_fail
-# use teleparse::prelude::*;
-# #[derive_lexicon]
-# pub enum MyToken {
-// fail! invalid regex
-#[teleparse(regex(r#"^\"#))]
-Invalid, 
-# }
-```
+Like `ignore`, the regular expressions are checked.
+You can find examples of the checks in [the test cases](https://github.com/Pistonite/teleparse/tree/main/tests/ui).
 ```compile_fail
 # use teleparse::prelude::*;
 # #[derive_lexicon]

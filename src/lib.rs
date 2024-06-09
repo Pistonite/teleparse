@@ -23,7 +23,7 @@ pub mod prelude {
     pub use crate::tp;
     // util
     pub use crate::{
-        Pos, Span, Token
+        Pos, Span, Token, tp::Node,
     };
 
     // pub use crate::{derive_root, assert_ll1};
@@ -75,4 +75,5 @@ impl GrammarError {
 #[doc(hidden)]
 pub mod __priv {
     pub use teleparse_macros::*;
+    pub use logos;
 }

@@ -14,7 +14,7 @@ use super::LitSet;
 /// The implementation should be fast to look up if a token (T, src) is in the set,
 /// which makes it suitable as the implementation for [FIRST](super::first) and
 /// [FOLLOW](super::follow) sets.
-#[derive(Derivative, Debug, Clone)]
+#[derive(Derivative, PartialEq, Clone)]
 #[derivative(Default(new="true", bound=""))]
 pub struct TerminalSet<L: Lexicon> {
     /// Maps token to the set of literals to form the terminal set
@@ -23,17 +23,45 @@ pub struct TerminalSet<L: Lexicon> {
     e: bool,
 }
 
-impl<L: Lexicon> PartialEq for TerminalSet<L> {
-    fn eq(&self, other: &Self) -> bool {
-        if self.e != other.e {
-            return false;
+impl<L: Lexicon> std::fmt::Debug for TerminalSet<L> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut s = f.debug_set();
+        if self.e {
+            s.entry(&Epsilon);
         }
-        for (a, b) in std::iter::zip(self.map.iter(), other.map.iter()) {
-            if a != b {
-                return false;
+        for (ty, set) in self.map.iter_zip() {
+            match set.iter()  {
+                None => {
+                    s.entry(&Term(ty, None));
+                }
+                Some(lits) => {
+                    for lit in lits {
+                        s.entry(&Term(ty, Some(lit)));
+                    }
+                }
             }
         }
-        true
+        s.finish()
+    }
+}
+
+// used in implementing debug
+#[doc(hidden)]
+struct Term<L: Lexicon>(L, Option<&'static str>);
+#[doc(hidden)]
+struct Epsilon;
+impl<L: Lexicon> std::fmt::Debug for Term<L> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.1 {
+            Some(lit) => write!(f, "{:?}:{:?}", self.0, lit),
+            None => write!(f, "{:?}:*", self.0),
+        }
+    }
+}
+
+impl std::fmt::Debug for Epsilon {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("<empty>").finish()
     }
 }
 
@@ -184,6 +212,26 @@ impl<L: Lexicon> TerminalSet<L> {
                     terminals.insert(format!("{:?}", ty));
                 }
             };
+        }
+        terminals
+    }
+
+    pub fn to_repr(&self) -> BTreeSet<String> {
+        let mut terminals = BTreeSet::new();
+        if self.e {
+            terminals.insert("".to_string());
+        }
+        for (ty, set) in self.map.iter_zip() {
+            match set.iter() {
+                Some(lits) => {
+                    for lit in lits {
+                        terminals.insert(format!("\"{}\"", lit));
+                    }
+                }
+                None => {
+                    terminals.insert(format!("{:?}", ty));
+                }
+            }
         }
         terminals
     }

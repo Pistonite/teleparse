@@ -4,6 +4,7 @@ mod error;
 pub use error::*;
 mod lexer;
 pub use lexer::*;
+mod lexer_logos;
 mod lexicon;
 pub use lexicon::*;
 mod map;

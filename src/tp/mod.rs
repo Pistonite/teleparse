@@ -14,7 +14,7 @@ pub use option::*;
 // pub use string::*;
 mod tuple;
 
-#[derive(Deref, DerefMut, ToSpan)]
+#[derive(Deref, DerefMut, ToSpan, Clone, PartialEq)]
 pub struct Node<T> {
     pub span: Span,
     #[deref]
@@ -23,16 +23,23 @@ pub struct Node<T> {
 pub use teleparse_macros::Node;
 
 impl<T> Node<T> {
-    pub fn new(span: Span, value: T) -> Self {
-        Self { span, value }
+    pub fn new<S: Into<Span>>(span: S, value: T) -> Self {
+        Self { span: span.into(), value }
+    }
+}
+
+impl<T: std::fmt::Debug> std::fmt::Debug for Node<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?} => ", self.span)?;
+        self.value.fmt(f)
     }
 }
 
 #[macro_export]
 #[doc(hidden)]
 macro_rules! ast_passthrough {
-    ($ast:tt) => {
-        type L=<$ast>::L;
+    ($ast:ty) => {
+        type L=<$ast as $crate::syntax::AbstractSyntaxTree>::L;
         fn type_id() -> ::core::any::TypeId {
             <$ast>::type_id()
         }
@@ -43,11 +50,12 @@ macro_rules! ast_passthrough {
             <$ast>::build_first(builder)
         }
         fn check_left_recursive(
+            seen: &mut ::std::collections::BTreeSet<std::any::TypeId>,
             stack: &mut ::std::vec::Vec<std::string::String>,
             set: &mut ::std::collections::BTreeSet<std::any::TypeId>,
             first: &$crate::syntax::first::First<Self::L>,
         ) -> ::core::result::Result<(), $crate::GrammarError> {
-            <$ast>::check_left_recursive(stack, set, first)
+            <$ast>::check_left_recursive(seen, stack, set, first)
         }
         fn check_first_conflict(
             seen: &mut ::std::collections::BTreeSet<std::any::TypeId>, 

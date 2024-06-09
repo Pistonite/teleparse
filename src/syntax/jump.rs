@@ -31,12 +31,12 @@ use derivative::Derivative;
 use crate::lex::{Map, TokenSrc};
 use crate::Lexicon;
 
-use super::FirstSet;
+use super::{FirstSet, TerminalSet};
 
 /// Implementation of the predictive parsing table
 ///
 /// See [module-level documentation](self) for more information.
-#[derive(Derivative)]
+#[derive(Derivative, Debug)]
 #[derivative(Default(new="true", bound=""))]
 pub struct Jump<L: Lexicon> {
     /// This maps (X) -> ((ty, lit) -> Yi)
@@ -44,19 +44,29 @@ pub struct Jump<L: Lexicon> {
 }
 
 impl<L: Lexicon> Jump<L> {
-    pub fn register(&mut self, t: TypeId, first: &FirstSet<L>, id: usize)->bool{
-        if self.map.contains_key(&t) {
-            return false;
-        }
-        let mut entry = JumpTable::default();
+    pub fn register(&mut self, t: TypeId, first: &FirstSet<L>, id: usize) {
+        let mut entry = self.map.entry(t).or_default();
         first.add_to_jump_table(&mut entry, id);
-        self.map.insert(t, entry);
-        true
     }
 
     #[inline]
     pub fn look_up<'s>(&self, t: &TypeId, token: Option<TokenSrc<'s, L>>) -> Option<usize> {
         self.map.get(t).and_then(|entry| entry.look_up(token))
+    }
+}
+
+#[doc(hidden)]
+pub struct DebugJump<'a, 'b, L: Lexicon>(pub &'a Jump<L>, pub &'b BTreeMap<TypeId, String>);
+impl<'a, 'b, L: Lexicon> std::fmt::Debug for DebugJump<'a, 'b, L> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut fmt = f.debug_struct("Jump");
+
+        for (ty, jump_table) in &self.0.map {
+            let name = self.1.get(ty).map(|x| x.as_str()).unwrap_or("<unknown>");
+            fmt.field(name, jump_table);
+        }
+
+        fmt.finish()
     }
 }
 
@@ -77,6 +87,25 @@ pub struct JumpTable<L: Lexicon> {
 }
 
 pub type LitJumpTable = (Option<usize>, BTreeMap<&'static str, usize>);
+
+impl<L: Lexicon> std::fmt::Debug for JumpTable<L> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // build jump_target => TermSet reverse map
+        let mut map = BTreeMap::<usize, TerminalSet<L>>::new();
+        if let Some(id) = self.epsilon {
+            map.entry(id).or_default().insert_e();
+        }
+        for (ty, (id, lit_map)) in self.map.iter_zip() {
+            if let Some(id) = id {
+                map.entry(*id).or_default().insert(ty, None);
+            }
+            for (lit, id) in lit_map {
+                map.entry(*id).or_default().insert(ty, Some(lit));
+            }
+        }
+        map.fmt(f)
+    }
+}
 
 impl<L: Lexicon> JumpTable<L> {
     /// Look up the parsing table entry for a token or epsilon

@@ -39,7 +39,7 @@ pub trait AbstractSyntaxTree: Sized + ToSpan + 'static {
     /// Check if the grammar at this AST node is left-recursive
     ///
     /// Left-recursion will lead to infinite recursion when parsing, so it is not allowed
-    fn check_left_recursive(stack: &mut Vec<String>, set: &mut BTreeSet<TypeId>, first: &First<Self::L>) -> Result<(), GrammarError>;
+    fn check_left_recursive(seen: &mut BTreeSet<TypeId>, stack: &mut Vec<String>, set: &mut BTreeSet<TypeId>, first: &First<Self::L>) -> Result<(), GrammarError>;
     
     /// Check for conflicts in the FIRST set of this AST node
     fn check_first_conflict(seen: &mut BTreeSet<TypeId>, first: &First<Self::L>) -> Result<(), GrammarError>;

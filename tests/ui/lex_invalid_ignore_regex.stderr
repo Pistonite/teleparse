@@ -1,0 +1,8 @@
+error: regex parse error:
+           ^\
+            ^
+       error: incomplete escape sequence, reached end of pattern prematurely
+ --> tests/ui/lex_invalid_ignore_regex.rs:4:20
+  |
+4 | #[teleparse(ignore(r#"^\"#))]
+  |                    ^^^^^^^

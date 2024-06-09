@@ -2,7 +2,7 @@
 
 use std::any::TypeId;
 use std::collections::BTreeMap;
-use crate::Lexicon;
+use crate::{Lexicon, ParseTree};
 
 mod builder;
 pub use builder::*;
@@ -39,13 +39,24 @@ impl<L: Lexicon> First<L> {
         self.map.get(ty).unwrap_or(&self.empty)
     }
 
-    // /// Check if FIRST(A) contains epsilon and FIRST(B) intersects with FIRST(A)
-    // #[must_use]
-    // pub fn has_collision(&self, a: &TypeId, b: &TypeId) -> bool {
-    //     let first_a = self.get(a);
-    //     if !first_a.contains_epsilon() {
-    //         return false;
-    //     }
-    //     first_a.intersects(self.get(b))
-    // }
+    pub fn get_pt<PT: ParseTree>(&self) -> &FirstSet<L> {
+        self.get(&PT::ast_id())
+    }
+}
+
+// used for implementing metadata debug
+#[doc(hidden)]
+pub struct DebugFirst<'a, 'b, L: Lexicon>(pub &'a First<L>, pub &'b BTreeMap<TypeId, String>);
+
+impl<'a, 'b, L: Lexicon> std::fmt::Debug for DebugFirst<'a, 'b, L> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut fmt = f.debug_struct("First");
+
+        for (ty, first_set) in &self.0.map {
+            let name = self.1.get(ty).map(|x| x.as_str()).unwrap_or("<unknown>");
+            fmt.field(name, first_set);
+        }
+
+        fmt.finish()
+    }
 }

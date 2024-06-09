@@ -44,13 +44,6 @@ impl ::core::hash::Hash for MyToken {
 #[automatically_derived]
 pub struct Pizza(pub teleparse::lex::Token<MyToken>);
 #[automatically_derived]
-impl ::core::fmt::Debug for Pizza {
-    #[inline]
-    fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-        ::core::fmt::Formatter::debug_tuple_field1_finish(f, "Pizza", &&self.0)
-    }
-}
-#[automatically_derived]
 impl ::core::clone::Clone for Pizza {
     #[inline]
     fn clone(&self) -> Pizza {
@@ -105,9 +98,14 @@ const _: () = {
     use ::std::any::TypeId;
     #[automatically_derived]
     impl ::core::convert::From<Token<MyToken>> for Pizza {
-        #[inline]
         fn from(token: Token<MyToken>) -> Self {
             Self(token)
+        }
+    }
+    #[automatically_derived]
+    impl ::core::fmt::Debug for Pizza {
+        fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+            self.0.fmt(f)
         }
     }
     #[automatically_derived]
@@ -120,13 +118,16 @@ const _: () = {
         #[inline]
         fn build_first(builder: &mut FirstBuilder<Self::L>) {
             let t = Self::type_id();
-            let expr = FirstRel::insert_token(t, MyToken::Food, Some("pizza"));
-            builder.add(expr);
+            if builder.visit(t, "Pizza") {
+                let expr = FirstRel::insert_token(t, MyToken::Food, Some("pizza"));
+                builder.add(expr);
+            }
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut Vec<String>,
             _seen: &mut BTreeSet<TypeId>,
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
             _first: &First<Self::L>,
         ) -> Result<(), GrammarError> {
             Ok(())
@@ -172,37 +173,47 @@ const _: () = {
             ast
         }
     }
-};
-const _: () = {
-    use ::std::vec::Vec;
-    use ::std::result::Result;
-    use ::std::collections::BTreeSet;
-    use ::std::sync::OnceLock;
-    use teleparse::syntax::{FirstBuilder, FollowBuilder, Jump, Metadata};
-    use teleparse::GrammarError;
     #[automatically_derived]
     impl teleparse::AbstractSyntaxRoot for Pizza {
-        fn metadata() -> &'static Result<Metadata<MyToken>, GrammarError> {
-            static METADATA: OnceLock<Result<Metadata<MyToken>, GrammarError>> = OnceLock::new();
+        fn metadata() -> &'static ::core::result::Result<
+            teleparse::syntax::Metadata<Self::L>,
+            teleparse::GrammarError,
+        > {
+            use teleparse::syntax::AbstractSyntaxTree;
+            static METADATA: ::std::sync::OnceLock<
+                ::core::result::Result<
+                    teleparse::syntax::Metadata<
+                        <Pizza as teleparse::syntax::AbstractSyntaxTree>::L,
+                    >,
+                    teleparse::GrammarError,
+                >,
+            > = ::std::sync::OnceLock::new();
             METADATA
                 .get_or_init(|| {
-                    let mut first = FirstBuilder::new();
+                    let _lexer = <Self::L as teleparse::lex::Lexicon>::lexer("")?;
+                    let mut first = teleparse::syntax::FirstBuilder::new();
                     Self::build_first(&mut first);
-                    let first = first.build();
-                    let mut stack = Vec::new();
-                    let mut seen = BTreeSet::new();
-                    Self::check_left_recursive(&mut stack, &mut seen, &first)?;
+                    let (names, first) = first.build();
+                    let mut stack = ::std::vec::Vec::new();
+                    let mut seen = ::std::collections::BTreeSet::new();
+                    let mut set = ::std::collections::BTreeSet::new();
+                    Self::check_left_recursive(&mut seen, &mut stack, &mut set, &first)?;
                     seen.clear();
                     Self::check_first_conflict(&mut seen, &first)?;
                     seen.clear();
-                    let mut follow = FollowBuilder::new(first);
+                    let mut follow = teleparse::syntax::FollowBuilder::new(first);
                     Self::build_follow(&mut follow);
                     let (first, follow) = follow.build(<Pizza>::type_id());
                     Self::check_first_follow_conflict(&mut seen, &first, &follow)?;
                     seen.clear();
-                    let mut jump = Jump::new();
+                    let mut jump = teleparse::syntax::Jump::new();
                     Self::build_jump(&mut seen, &first, &mut jump);
-                    Ok(Metadata { first, follow, jump })
+                    Ok(teleparse::syntax::Metadata {
+                        names,
+                        first,
+                        follow,
+                        jump,
+                    })
                 })
         }
     }
@@ -212,13 +223,6 @@ const _: () = {
 /// Terminal symbol derived from [`MyToken`] with `terminal(Pasta = "pasta")`
 #[automatically_derived]
 pub struct Pasta(pub teleparse::lex::Token<MyToken>);
-#[automatically_derived]
-impl ::core::fmt::Debug for Pasta {
-    #[inline]
-    fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-        ::core::fmt::Formatter::debug_tuple_field1_finish(f, "Pasta", &&self.0)
-    }
-}
 #[automatically_derived]
 impl ::core::clone::Clone for Pasta {
     #[inline]
@@ -274,9 +278,14 @@ const _: () = {
     use ::std::any::TypeId;
     #[automatically_derived]
     impl ::core::convert::From<Token<MyToken>> for Pasta {
-        #[inline]
         fn from(token: Token<MyToken>) -> Self {
             Self(token)
+        }
+    }
+    #[automatically_derived]
+    impl ::core::fmt::Debug for Pasta {
+        fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+            self.0.fmt(f)
         }
     }
     #[automatically_derived]
@@ -289,13 +298,16 @@ const _: () = {
         #[inline]
         fn build_first(builder: &mut FirstBuilder<Self::L>) {
             let t = Self::type_id();
-            let expr = FirstRel::insert_token(t, MyToken::Food, Some("pasta"));
-            builder.add(expr);
+            if builder.visit(t, "Pasta") {
+                let expr = FirstRel::insert_token(t, MyToken::Food, Some("pasta"));
+                builder.add(expr);
+            }
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut Vec<String>,
             _seen: &mut BTreeSet<TypeId>,
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
             _first: &First<Self::L>,
         ) -> Result<(), GrammarError> {
             Ok(())
@@ -341,37 +353,47 @@ const _: () = {
             ast
         }
     }
-};
-const _: () = {
-    use ::std::vec::Vec;
-    use ::std::result::Result;
-    use ::std::collections::BTreeSet;
-    use ::std::sync::OnceLock;
-    use teleparse::syntax::{FirstBuilder, FollowBuilder, Jump, Metadata};
-    use teleparse::GrammarError;
     #[automatically_derived]
     impl teleparse::AbstractSyntaxRoot for Pasta {
-        fn metadata() -> &'static Result<Metadata<MyToken>, GrammarError> {
-            static METADATA: OnceLock<Result<Metadata<MyToken>, GrammarError>> = OnceLock::new();
+        fn metadata() -> &'static ::core::result::Result<
+            teleparse::syntax::Metadata<Self::L>,
+            teleparse::GrammarError,
+        > {
+            use teleparse::syntax::AbstractSyntaxTree;
+            static METADATA: ::std::sync::OnceLock<
+                ::core::result::Result<
+                    teleparse::syntax::Metadata<
+                        <Pasta as teleparse::syntax::AbstractSyntaxTree>::L,
+                    >,
+                    teleparse::GrammarError,
+                >,
+            > = ::std::sync::OnceLock::new();
             METADATA
                 .get_or_init(|| {
-                    let mut first = FirstBuilder::new();
+                    let _lexer = <Self::L as teleparse::lex::Lexicon>::lexer("")?;
+                    let mut first = teleparse::syntax::FirstBuilder::new();
                     Self::build_first(&mut first);
-                    let first = first.build();
-                    let mut stack = Vec::new();
-                    let mut seen = BTreeSet::new();
-                    Self::check_left_recursive(&mut stack, &mut seen, &first)?;
+                    let (names, first) = first.build();
+                    let mut stack = ::std::vec::Vec::new();
+                    let mut seen = ::std::collections::BTreeSet::new();
+                    let mut set = ::std::collections::BTreeSet::new();
+                    Self::check_left_recursive(&mut seen, &mut stack, &mut set, &first)?;
                     seen.clear();
                     Self::check_first_conflict(&mut seen, &first)?;
                     seen.clear();
-                    let mut follow = FollowBuilder::new(first);
+                    let mut follow = teleparse::syntax::FollowBuilder::new(first);
                     Self::build_follow(&mut follow);
                     let (first, follow) = follow.build(<Pasta>::type_id());
                     Self::check_first_follow_conflict(&mut seen, &first, &follow)?;
                     seen.clear();
-                    let mut jump = Jump::new();
+                    let mut jump = teleparse::syntax::Jump::new();
                     Self::build_jump(&mut seen, &first, &mut jump);
-                    Ok(Metadata { first, follow, jump })
+                    Ok(teleparse::syntax::Metadata {
+                        names,
+                        first,
+                        follow,
+                        jump,
+                    })
                 })
         }
     }

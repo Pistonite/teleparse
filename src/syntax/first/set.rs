@@ -9,9 +9,15 @@ use crate::Lexicon;
 /// Implementation of the output of the FIRST function
 ///
 /// See [module-level documentation](super) for more information.
-#[derive(Derivative, Debug, Clone)]
+#[derive(Derivative, PartialEq, Clone)]
 #[derivative(Default(new="true", bound=""))]
 pub struct FirstSet<L: Lexicon>(TerminalSet<L>);
+
+impl<L: Lexicon> std::fmt::Debug for FirstSet<L> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
 
 impl<L: Lexicon> FirstSet<L> {
     /// Create a new FIRST set with the term `(ty, lit)` in it. None indicates any literal.
@@ -51,6 +57,14 @@ impl<L: Lexicon> FirstSet<L> {
     #[inline]
     pub fn contains<'s>(&self, token: Option<TokenSrc<'s, L>>) -> bool {
         self.0.contains(token)
+    }
+
+    /// Union with another FIRST set
+    ///
+    /// Returns if self is changed
+    #[inline]
+    pub fn union(&mut self, other: &Self) -> bool {
+        self.0.union(&other.0, true)
     }
 
     /// Union with another FIRST set without considering epsilon

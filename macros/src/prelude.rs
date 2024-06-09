@@ -2,7 +2,7 @@ use regex::Regex;
 
 pub(crate) use proc_macro::TokenStream;
 pub(crate) use proc_macro2::Span;
-pub(crate) use quote::quote;
+pub(crate) use quote::{quote, format_ident};
 pub(crate) use syn::{parse_macro_input, parse_quote};
 pub(crate) use syn::punctuated::Punctuated;
 pub(crate) use syn::spanned::Spanned;
@@ -168,9 +168,9 @@ pub(crate) fn ident_to_type(ident: &syn::Ident) -> syn::Type {
 
 pub(crate) fn checked_regex_rule(input: &syn::LitStr) -> syn::Result<Regex> {
     let regex = input.value();
-    if !regex.starts_with("^") {
-        syn_error!(input, "expected a regular expression starting with `^`, because it always needs to match the beginning of the remaining input");
-    }
+    // if !regex.starts_with("^") {
+    //     syn_error!(input, "expected a regular expression starting with `^`, because it always needs to match the beginning of the remaining input");
+    // }
     let regex = match Regex::new(&regex) {
         Err(e) => {
             syn_error!(input, e.to_string());

@@ -29,76 +29,14 @@ pub fn expand_ast_sequence<T: quote::ToTokens>(input: &T, types: &[syn::Type]) -
     })
 }
 
-// fn expand_tuple(input: syn::ExprTuple) -> syn::Result<TokenStream2> {
-//     let mut elem_iter = input.elems.iter();
-//     let first_ty = match elem_iter.next() {
-//         None => syn_error!(input, "Expected at least two types in tuple"),
-//         Some(elem) => {
-//             syn::parse2::<syn::Type>(quote! { #elem })?
-//         }
-//     };
-//     let mut all_types = vec![first_ty.clone()];
-//     let mut middle_types = Vec::new();
-//     for elem in elem_iter {
-//         let ty = syn::parse2::<syn::Type>(quote! { #elem })?;
-//         middle_types.push(ty.clone());
-//         all_types.push(ty);
-//     }
-//     let last_ty = match middle_types.pop() {
-//         None => syn_error!(input, "Expected at least two types in tuple"),
-//         Some(ty) => ty
-//     };
-//
-//     let teleparse = crate_ident();
-//
-//     let build_first_impl = expand_build_first_fn(quote! { Self }, &all_types);
-//     let check_left_recursive_impl = expand_check_left_recursive_fn(quote! { Self }, &first_ty, &middle_types, &last_ty);
-//     let check_first_conflict_impl = expand_check_first_conflict_fn(&first_ty, &middle_types, &last_ty);
-//     let build_follow_impl = expand_build_follow_fn(&all_types);
-//     let check_first_follow_conflict_impl = expand_check_first_follow_conflict_fn(&all_types);
-//     let build_jump_impl = expand_build_jump_fn(&all_types);
-//
-//     let parse_ast_check = expand_parse_ast_check();
-//     let parse_ast_core = all_types.iter().map(expand_parse_ast_step);
-//     let parse_ast_end = expand_parse_ast_end();
-//
-//     let output = quote! {
-//         use #teleparse::AbstractSyntaxTree;
-//         #[automatically_derived]
-//         impl<
-//             #first_ty: AbstractSyntaxTree, 
-//             #( #middle_types: AbstractSyntaxTree<L=<#first_ty>::L>, )*
-//             #last_ty: AbstractSyntaxTree<L=<#first_ty>::>
-//         > AbstractSyntaxTree for TODO {
-//             type L = <#first_ty>::L;
-//             #build_first_impl
-//             #check_left_recursive_impl
-//             #check_first_conflict_impl
-//             #build_follow_impl
-//             #check_first_follow_conflict_impl
-//             #build_jump_impl
-//
-//             fn parse_ast<'s>(
-//                 parser: &mut #teleparse::parser::Parser<'s, Self::L>,
-//                 meta: &#teleparse::syntax::Metadata<Self::L>,
-//             ) -> #teleparse::syntax::Result<Self, Self::L> {
-//                 #parse_ast_check
-//                 let result = ( #( #parse_ast_core ),* );
-//                 #parse_ast_end
-//             }
-//         }
-//     };
-//
-//     Ok(anon_const_block(output))
-// }
-
 pub fn expand_build_first_fn(types: &[syn::Type]) -> TokenStream2 {
     let teleparse = crate_ident();
     quote! {
 
         fn build_first(builder: &mut #teleparse::syntax::FirstBuilder<Self::L>) {
+            use #teleparse::syntax::AbstractSyntaxTree;
             let t = Self::type_id();
-            if !builder.visit(t) {
+            if !builder.visit(t, &Self::debug()) {
                 return;
             }
             #( <#types>::build_first(builder); )*
@@ -116,17 +54,22 @@ pub fn expand_check_left_recursive_fn(
     let teleparse = crate_ident();
     quote! {
         fn check_left_recursive(
+            seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>, 
             stack: &mut ::std::vec::Vec<::std::string::String>, 
             set: &mut ::std::collections::BTreeSet<::core::any::TypeId>, 
             first: &#teleparse::syntax::First<Self::L>
         ) -> ::core::result::Result<(), #teleparse::GrammarError> {
+            use #teleparse::syntax::AbstractSyntaxTree;
             let t = Self::type_id();
+            if !seen.insert(t) {
+                return Ok(());
+            }
             if !set.insert(t) {
                 return Err(#teleparse::GrammarError::left_recursion(&stack, &Self::debug()));
             }
             stack.push(Self::debug().into_owned());
 
-            if let Err(e) = <#ty_1>::check_left_recursive(stack, set, first) {
+            if let Err(e) = <#ty_1>::check_left_recursive(seen, stack, set, first) {
                 stack.pop();
                 set.remove(&t);
                 return Err(e);
@@ -143,7 +86,7 @@ pub fn expand_check_left_recursive_fn(
                 (&mut temp_stack, &mut temp_set, false)
             };
         #(
-            if let Err(e) = <#ty_mid>::check_left_recursive(cur_stack, cur_set, first) {
+            if let Err(e) = <#ty_mid>::check_left_recursive(seen, cur_stack, cur_set, first) {
                 if need_pop {
                     cur_stack.pop();
                     cur_set.remove(&t);
@@ -163,7 +106,7 @@ pub fn expand_check_left_recursive_fn(
             };
 
         )*
-            let check = <#ty_last>::check_left_recursive(cur_stack, cur_set, first);
+            let check = <#ty_last>::check_left_recursive(seen, cur_stack, cur_set, first);
             if need_pop {
                 cur_stack.pop();
                 cur_set.remove(&t);
@@ -191,6 +134,7 @@ pub fn expand_check_first_conflict_fn(
             seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>, 
             first: &#teleparse::syntax::First<Self::L>
         ) -> ::core::result::Result<(), #teleparse::GrammarError> {
+            use #teleparse::syntax::AbstractSyntaxTree;
             let t = Self::type_id();
             if !seen.insert(t) {
                 return Ok(());
@@ -256,6 +200,7 @@ pub fn expand_build_follow_fn(types: &[syn::Type]) -> TokenStream2 {
     quote! {
 
         fn build_follow(builder: &mut #teleparse::syntax::FollowBuilder<Self::L>) {
+            use #teleparse::syntax::AbstractSyntaxTree;
             let t = Self::type_id();
             if !builder.visit(t) {
                 return;
@@ -275,6 +220,7 @@ pub fn expand_check_first_follow_conflict_fn(types: &[syn::Type]) -> TokenStream
             first: &#teleparse::syntax::First<Self::L>, 
             follow: &#teleparse::syntax::Follow<Self::L>
         ) -> ::core::result::Result<(), #teleparse::GrammarError> {
+            use #teleparse::syntax::AbstractSyntaxTree;
             let t = Self::type_id();
             if !seen.insert(t) {
                 return Ok(());
@@ -297,6 +243,7 @@ pub fn expand_build_jump_fn(types: &[syn::Type]) -> TokenStream2 {
             first: &#teleparse::syntax::First<Self::L>, 
             jump: &mut #teleparse::syntax::Jump<Self::L>
         ) {
+            use #teleparse::syntax::AbstractSyntaxTree;
             let t = Self::type_id();
             if !seen.insert(t) {
                 return;
@@ -311,6 +258,7 @@ pub fn expand_build_jump_fn(types: &[syn::Type]) -> TokenStream2 {
 pub fn expand_parse_ast_check() -> TokenStream2 {
     let teleparse = crate_ident();
     quote! {
+        use #teleparse::syntax::AbstractSyntaxTree;
         let token = parser.peek_token_src();
         let t = Self::type_id();
         let first = meta.first.get(&t);

@@ -58,13 +58,6 @@ impl ::core::hash::Hash for TokenType {
 #[automatically_derived]
 pub struct Integer(pub teleparse::lex::Token<TokenType>);
 #[automatically_derived]
-impl ::core::fmt::Debug for Integer {
-    #[inline]
-    fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-        ::core::fmt::Formatter::debug_tuple_field1_finish(f, "Integer", &&self.0)
-    }
-}
-#[automatically_derived]
 impl ::core::clone::Clone for Integer {
     #[inline]
     fn clone(&self) -> Integer {
@@ -119,9 +112,14 @@ const _: () = {
     use ::std::any::TypeId;
     #[automatically_derived]
     impl ::core::convert::From<Token<TokenType>> for Integer {
-        #[inline]
         fn from(token: Token<TokenType>) -> Self {
             Self(token)
+        }
+    }
+    #[automatically_derived]
+    impl ::core::fmt::Debug for Integer {
+        fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+            self.0.fmt(f)
         }
     }
     #[automatically_derived]
@@ -134,13 +132,16 @@ const _: () = {
         #[inline]
         fn build_first(builder: &mut FirstBuilder<Self::L>) {
             let t = Self::type_id();
-            let expr = FirstRel::insert_token(t, TokenType::Integer, None);
-            builder.add(expr);
+            if builder.visit(t, "Integer") {
+                let expr = FirstRel::insert_token(t, TokenType::Integer, None);
+                builder.add(expr);
+            }
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut Vec<String>,
             _seen: &mut BTreeSet<TypeId>,
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
             _first: &First<Self::L>,
         ) -> Result<(), GrammarError> {
             Ok(())
@@ -189,13 +190,6 @@ const _: () = {
 /// Terminal symbol derived from [`TokenType`] with `terminal(OpAdd = "+")`
 #[automatically_derived]
 pub struct OpAdd(pub teleparse::lex::Token<TokenType>);
-#[automatically_derived]
-impl ::core::fmt::Debug for OpAdd {
-    #[inline]
-    fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-        ::core::fmt::Formatter::debug_tuple_field1_finish(f, "OpAdd", &&self.0)
-    }
-}
 #[automatically_derived]
 impl ::core::clone::Clone for OpAdd {
     #[inline]
@@ -251,9 +245,14 @@ const _: () = {
     use ::std::any::TypeId;
     #[automatically_derived]
     impl ::core::convert::From<Token<TokenType>> for OpAdd {
-        #[inline]
         fn from(token: Token<TokenType>) -> Self {
             Self(token)
+        }
+    }
+    #[automatically_derived]
+    impl ::core::fmt::Debug for OpAdd {
+        fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+            self.0.fmt(f)
         }
     }
     #[automatically_derived]
@@ -266,13 +265,16 @@ const _: () = {
         #[inline]
         fn build_first(builder: &mut FirstBuilder<Self::L>) {
             let t = Self::type_id();
-            let expr = FirstRel::insert_token(t, TokenType::Operator, Some("+"));
-            builder.add(expr);
+            if builder.visit(t, "OpAdd") {
+                let expr = FirstRel::insert_token(t, TokenType::Operator, Some("+"));
+                builder.add(expr);
+            }
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut Vec<String>,
             _seen: &mut BTreeSet<TypeId>,
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
             _first: &First<Self::L>,
         ) -> Result<(), GrammarError> {
             Ok(())
@@ -322,13 +324,6 @@ const _: () = {
 /// Terminal symbol derived from [`TokenType`] with `terminal(OpMul = "*")`
 #[automatically_derived]
 pub struct OpMul(pub teleparse::lex::Token<TokenType>);
-#[automatically_derived]
-impl ::core::fmt::Debug for OpMul {
-    #[inline]
-    fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-        ::core::fmt::Formatter::debug_tuple_field1_finish(f, "OpMul", &&self.0)
-    }
-}
 #[automatically_derived]
 impl ::core::clone::Clone for OpMul {
     #[inline]
@@ -384,9 +379,14 @@ const _: () = {
     use ::std::any::TypeId;
     #[automatically_derived]
     impl ::core::convert::From<Token<TokenType>> for OpMul {
-        #[inline]
         fn from(token: Token<TokenType>) -> Self {
             Self(token)
+        }
+    }
+    #[automatically_derived]
+    impl ::core::fmt::Debug for OpMul {
+        fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+            self.0.fmt(f)
         }
     }
     #[automatically_derived]
@@ -399,13 +399,16 @@ const _: () = {
         #[inline]
         fn build_first(builder: &mut FirstBuilder<Self::L>) {
             let t = Self::type_id();
-            let expr = FirstRel::insert_token(t, TokenType::Operator, Some("*"));
-            builder.add(expr);
+            if builder.visit(t, "OpMul") {
+                let expr = FirstRel::insert_token(t, TokenType::Operator, Some("*"));
+                builder.add(expr);
+            }
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut Vec<String>,
             _seen: &mut BTreeSet<TypeId>,
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
             _first: &First<Self::L>,
         ) -> Result<(), GrammarError> {
             Ok(())
@@ -455,13 +458,6 @@ const _: () = {
 /// Terminal symbol derived from [`TokenType`] with `terminal(ParamOpen = "(")`
 #[automatically_derived]
 pub struct ParamOpen(pub teleparse::lex::Token<TokenType>);
-#[automatically_derived]
-impl ::core::fmt::Debug for ParamOpen {
-    #[inline]
-    fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-        ::core::fmt::Formatter::debug_tuple_field1_finish(f, "ParamOpen", &&self.0)
-    }
-}
 #[automatically_derived]
 impl ::core::clone::Clone for ParamOpen {
     #[inline]
@@ -517,9 +513,14 @@ const _: () = {
     use ::std::any::TypeId;
     #[automatically_derived]
     impl ::core::convert::From<Token<TokenType>> for ParamOpen {
-        #[inline]
         fn from(token: Token<TokenType>) -> Self {
             Self(token)
+        }
+    }
+    #[automatically_derived]
+    impl ::core::fmt::Debug for ParamOpen {
+        fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+            self.0.fmt(f)
         }
     }
     #[automatically_derived]
@@ -532,13 +533,16 @@ const _: () = {
         #[inline]
         fn build_first(builder: &mut FirstBuilder<Self::L>) {
             let t = Self::type_id();
-            let expr = FirstRel::insert_token(t, TokenType::Param, Some("("));
-            builder.add(expr);
+            if builder.visit(t, "ParamOpen") {
+                let expr = FirstRel::insert_token(t, TokenType::Param, Some("("));
+                builder.add(expr);
+            }
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut Vec<String>,
             _seen: &mut BTreeSet<TypeId>,
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
             _first: &First<Self::L>,
         ) -> Result<(), GrammarError> {
             Ok(())
@@ -588,13 +592,6 @@ const _: () = {
 /// Terminal symbol derived from [`TokenType`] with `terminal(ParamClose = ")")`
 #[automatically_derived]
 pub struct ParamClose(pub teleparse::lex::Token<TokenType>);
-#[automatically_derived]
-impl ::core::fmt::Debug for ParamClose {
-    #[inline]
-    fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-        ::core::fmt::Formatter::debug_tuple_field1_finish(f, "ParamClose", &&self.0)
-    }
-}
 #[automatically_derived]
 impl ::core::clone::Clone for ParamClose {
     #[inline]
@@ -650,9 +647,14 @@ const _: () = {
     use ::std::any::TypeId;
     #[automatically_derived]
     impl ::core::convert::From<Token<TokenType>> for ParamClose {
-        #[inline]
         fn from(token: Token<TokenType>) -> Self {
             Self(token)
+        }
+    }
+    #[automatically_derived]
+    impl ::core::fmt::Debug for ParamClose {
+        fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+            self.0.fmt(f)
         }
     }
     #[automatically_derived]
@@ -665,13 +667,16 @@ const _: () = {
         #[inline]
         fn build_first(builder: &mut FirstBuilder<Self::L>) {
             let t = Self::type_id();
-            let expr = FirstRel::insert_token(t, TokenType::Param, Some(")"));
-            builder.add(expr);
+            if builder.visit(t, "ParamClose") {
+                let expr = FirstRel::insert_token(t, TokenType::Param, Some(")"));
+                builder.add(expr);
+            }
         }
         #[inline]
         fn check_left_recursive(
-            _stack: &mut Vec<String>,
             _seen: &mut BTreeSet<TypeId>,
+            _stack: &mut Vec<String>,
+            _set: &mut BTreeSet<TypeId>,
             _first: &First<Self::L>,
         ) -> Result<(), GrammarError> {
             Ok(())
