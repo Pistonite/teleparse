@@ -10,8 +10,8 @@ mod boxed;
 // pub mod iter;
 mod option;
 pub use option::*;
-// mod string;
-// pub use string::*;
+mod string;
+pub use string::*;
 mod tuple;
 
 #[derive(Deref, DerefMut, ToSpan, Clone, PartialEq)]

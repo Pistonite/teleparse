@@ -3,61 +3,131 @@ use std::marker::PhantomData;
 use std::str::FromStr;
 use std::string::String as StdString;
 
-use crate::prelude::*;
-use crate::parser::ParserState;
-use crate::{Parser, SyntaxTree};
+use crate::{ToSpan, Parser, ParseTree, AbstractSyntaxTree};
 
-use super::{ast_passthrough, Node};
+use super::Node;
 
 /// Node that stores stringified source code
-#[teleparse_derive(Node)]
-pub struct Quote<S: From<StdString>, ST: SyntaxTree>(Node<S>, PhantomData<ST>);
+#[derive(Node, ToSpan, Clone, PartialEq)]
+pub struct Quote<S, T: ParseTree>(Node<S>, PhantomData<T>);
 
-/// Alias for `Quote<String, ST>`
-pub type String<ST> = Quote<StdString, ST>;
-
-impl<S: From<StdString> + 'static, ST: SyntaxTree+ 'static> SyntaxTree for Quote<S, ST> {
-    ast_passthrough!();
-
-    #[inline]
-    fn into_parse_tree<'s>(ast: Self::AST, parser: &mut Parser<'s, Self::T>) -> Self {
-        let span = ast.span();
-        let src: S = parser.get_src_span(span).to_string().into();
-        ST::into_parse_tree(ast, parser);
-        Node::new(span, src).into()
+impl<S: std::fmt::Debug, T: ParseTree> std::fmt::Debug for Quote<S, T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
     }
 }
+
+impl<S, T: ParseTree> ParseTree for Quote<S, T> 
+    where S: for <'a> From<&'a str>
+{
+    type AST = T::AST;
+
+    fn from_ast<'s>(ast: Self::AST, parser: &mut Parser<'s, <Self::AST as AbstractSyntaxTree>::L>) -> Self {
+        let span = ast.span();
+        let _ = T::from_ast(ast, parser);
+        let src = parser.info().get_src(span);
+        Node::new(span, S::from(src)).into()
+    }
+}
+
+/// Alias for `Quote<String, T>`
+pub type String<T> = Quote<StdString, T>;
 
 /// Node that stores a parsed value from a string or the error if parse failed
-#[teleparse_derive(Node)]
-pub struct Parse<S: FromStr, ST: SyntaxTree>(Node<Result<S, S::Err>>, PhantomData<ST>);
-
-impl<S: FromStr + 'static, ST: SyntaxTree + 'static> SyntaxTree for Parse<S, ST> {
-    ast_passthrough!();
-
-    #[inline]
-    fn into_parse_tree<'s>(ast: Self::AST, parser: &mut Parser<'s, Self::T>) -> Self {
-        let span = ast.span();
-        ST::into_parse_tree(ast, parser);
-        let src = parser.get_src_span(span);
-        Node::new(span, src.parse()).into()
+#[derive(Node, ToSpan, Clone, PartialEq)]
+pub struct Parse<S: FromStr, T: ParseTree>(Node<Result<S, S::Err>>, PhantomData<T>);
+impl<S: FromStr + std::fmt::Debug, T: ParseTree> std::fmt::Debug for Parse<S, T> 
+    where S::Err: std::fmt::Debug
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
     }
 }
+impl<S: FromStr, T: ParseTree> ParseTree for Parse<S, T> 
+{
+    type AST = T::AST;
 
+    fn from_ast<'s>(ast: Self::AST, parser: &mut Parser<'s, <Self::AST as AbstractSyntaxTree>::L>) -> Self {
+        let span = ast.span();
+        let _ = T::from_ast(ast, parser);
+        let src = parser.info().get_src(span);
+        Node::new(span, S::from_str(src)).into()
+    }
+}
 /// Parse-or-default. Node that stores a parsed value from a string or the default value if parse failed
-#[teleparse_derive(Node)]
-pub struct ParseDefault<S: FromStr + Default, ST: SyntaxTree>(Node<S>, PhantomData<ST>);
-
-impl<S: FromStr + Default + 'static, ST: SyntaxTree + 'static> SyntaxTree for ParseDefault<S, ST> {
-    ast_passthrough!();
-
-    #[inline]
-    fn into_parse_tree<'s>(ast: Self::AST, parser: &mut Parser<'s, Self::T>) -> Self {
+#[derive(Node, ToSpan, Clone, PartialEq)]
+pub struct ParseDefault<S: FromStr + Default, T: ParseTree>(Node<S>, PhantomData<T>);
+impl<S: FromStr + std::fmt::Debug + Default, T: ParseTree> std::fmt::Debug for ParseDefault<S, T> 
+    where S::Err: std::fmt::Debug
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+impl<S: FromStr + Default, T: ParseTree> ParseTree for ParseDefault<S, T> {
+    type AST = T::AST;
+    fn from_ast<'s>(ast: Self::AST, parser: &mut Parser<'s, <Self::AST as AbstractSyntaxTree>::L>) -> Self {
         let span = ast.span();
-        ST::into_parse_tree(ast, parser);
-        let src = parser.get_src_span(span);
-        let s: S = src.parse().unwrap_or_default();
-        Node::new(span, s).into()
+        let _ = T::from_ast(ast, parser);
+        let src = parser.info().get_src(span);
+        Node::new(span, S::from_str(src).unwrap_or_default()).into()
     }
 }
 
+
+#[cfg(test)]
+mod tests {
+    use crate::prelude::*;
+    use crate::GrammarError;
+    use crate::ParseTree;
+    use crate::tp::Node;
+
+    use crate::lex::Token;
+    use crate::test::prelude::*;
+    use crate::test::MathTokenType as T;
+    use crate::test::{Ident, OpAdd, Integer};
+
+    #[derive_syntax]
+    #[teleparse(root)]
+    #[derive(Debug, PartialEq)]
+    struct Stringified(super::String<Ident>);
+
+    #[test]
+    fn test_stringify() {
+        let t = Stringified::parse("a").unwrap().unwrap();
+        let t_str = format!("{:?}", t.0);
+        assert_eq!(t_str, "0..1 => \"a\"");
+        assert_eq!(t, Stringified(Node::new(0..1, "a".to_string()).into()));
+    }
+
+    #[test]
+    fn test_deref_string() {
+        let t = Stringified::parse("a").unwrap().unwrap();
+        let x: &String = &t.0;
+        assert_eq!(x, "a");
+        assert_eq!(&*t.0, "a");
+    }
+
+    #[derive_syntax]
+    #[teleparse(root)]
+    #[derive(Debug, PartialEq)]
+    struct Parsed {
+        ident: super::Parse<u32, Ident>,
+        num: super::Parse<u32, Integer>,
+        float: super::Parse<f32, Integer>,
+        ident_default: super::ParseDefault<u32, Ident>,
+    }
+
+    #[test]
+    fn test_parse() {
+        let t = Parsed::parse("abc 456 314 def").unwrap().unwrap();
+        assert!(t.ident.is_err());
+        assert_eq!(t.num, Node::new(4..7, Ok(456)).into());
+        assert_eq!(t.float, Node::new(8..11, Ok(314.0)).into());
+        assert_eq!(t.ident_default, Node::new(12..15, 0).into());
+
+        assert_eq!(*t.num, Ok(456));
+        assert_eq!(*t.float, Ok(314.0));
+        assert_eq!(*t.ident_default, 0);
+    }
+}

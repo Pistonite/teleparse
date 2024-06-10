@@ -18,7 +18,7 @@ pub enum TestTokenType {
     ignore(r#"\s+"#), // ignore whitespaces, separate multiple with comma
 )]
 pub enum MathTokenType {
-    #[teleparse(regex(r#"\w+"#), terminal(Ident))]
+    #[teleparse(regex(r#"[a-zA-Z]+"#), terminal(Ident))]
     Ident,
     #[teleparse(terminal(
         OpAdd = "+",
@@ -31,6 +31,9 @@ pub enum MathTokenType {
         ParamClose = ")"
     ))]
     Param,
+
+    #[teleparse(regex(r"\d+"), terminal(Integer))]
+    Integer
 }
 
 pub mod prelude {

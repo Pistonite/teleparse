@@ -1,4 +1,4 @@
-use quote::quote_spanned;
+use quote::{quote_spanned, ToTokens};
 
 use crate::*;
 
@@ -53,10 +53,30 @@ fn expand_struct_unnamed(ident: syn::Ident, input: &mut syn::FieldsUnnamed, root
     if input.unnamed.is_empty() {
         syn_error!(input, "derive_syntax does not support struct with no fields");
     }
-    let pt_ty = input.unnamed.iter().map(|f| &f.ty).collect::<Vec<_>>();
     let teleparse = crate_ident();
+    let mut field_attrs = Vec::with_capacity(input.unnamed.len());
+    for field in &mut input.unnamed {
+        field_attrs.push(strip_take_attrs(&mut field.attrs));
+    }
+    let mut apply_semantic_impl = TokenStream2::new();
+    for ((i, field), attrs) in std::iter::zip(input.unnamed.iter().enumerate(), field_attrs.into_iter()) {
+        let field_ident = format_ident!("field_{}", i);
+        let field_attr = parse_field_attributes(field, attrs)?;
+        if let Some(semantic) = field_attr.semantic {
+            apply_semantic_impl.extend(quote! {
+                parser.apply_semantic(
+                    &#field_ident,
+                    #teleparse::token_set!(<Self::AST as #teleparse::syntax::AbstractSyntaxTree>::L{
+                        #( #semantic )|*
+                    })
+                );
+            });
+        }
+    }
+    let pt_ty = input.unnamed.iter().map(|f| &f.ty).collect::<Vec<_>>();
+    let pt_ident = (0..pt_ty.len()).map(|i| format_ident!("field_{}", i)).collect::<Vec<_>>();
     let last = syn::Index::from(pt_ty.len()-1);
-    let indices = (0..pt_ty.len()).map(syn::Index::from);
+    let indices = (0..pt_ty.len()).map(syn::Index::from).collect::<Vec<_>>();
     let root_derive = if root_attr.root {
         Some(root::expand(quote! { DerivedAST }, &ident))
     } else {
@@ -84,7 +104,9 @@ fn expand_struct_unnamed(ident: syn::Ident, input: &mut syn::FieldsUnnamed, root
                 ast: Self::AST, 
                 parser: &mut #teleparse::parser::Parser<'s, <Self::AST as #teleparse::syntax::AbstractSyntaxTree>::L>
             ) -> Self {
-                Self( #( <#pt_ty>::from_ast(ast.#indices, parser)),*)
+                let (#(#pt_ident),*) = ( #( <#pt_ty>::from_ast(ast.#indices, parser)),* );
+                #apply_semantic_impl
+                Self(#( #pt_ident),* )
             }
         }
         #root_derive
@@ -97,13 +119,36 @@ fn expand_struct_named(ident: syn::Ident, input: &mut syn::FieldsNamed, root_att
     if input.named.is_empty() {
         syn_error!(input, "derive_syntax does not support struct with no fields");
     }
+    let teleparse = crate_ident();
+
+    let mut field_attrs = Vec::with_capacity(input.named.len());
+    for field in &mut input.named {
+        field_attrs.push(strip_take_attrs(&mut field.attrs));
+    }
+    let mut apply_semantic_impl = TokenStream2::new();
+    for (field, attrs) in std::iter::zip(input.named.iter(), field_attrs.into_iter()) {
+        let field_ident = field.ident.as_ref().unwrap();
+        let field_attr = parse_field_attributes(field, attrs)?;
+        if let Some(semantic) = field_attr.semantic {
+            apply_semantic_impl.extend(quote! {
+                parser.apply_semantic(
+                    &#field_ident, 
+                    #teleparse::token_set!(<Self::AST as #teleparse::syntax::AbstractSyntaxTree>::L{
+                        #( #semantic )|*
+                    })
+                );
+            });
+        }
+    }
+
     let pt_ty = input.named.iter().map(|f| &f.ty).collect::<Vec<_>>();
     let pt_ident = input.named.iter().map(|f| &f.ident).collect::<Vec<_>>();
     let first_ident = pt_ident.first().unwrap();
     let last_ident = pt_ident.last().unwrap();
-    let teleparse = crate_ident();
     let last = syn::Index::from(pt_ty.len()-1);
     let indices = (0..pt_ty.len()).map(syn::Index::from);
+
+
     let root_derive = if root_attr.root {
         Some(root::expand(quote! { DerivedAST }, &ident))
     } else {
@@ -132,6 +177,7 @@ fn expand_struct_named(ident: syn::Ident, input: &mut syn::FieldsNamed, root_att
                 parser: &mut #teleparse::parser::Parser<'s, <Self::AST as #teleparse::syntax::AbstractSyntaxTree>::L>
             ) -> Self {
                 let ( #(#pt_ident),* ) = ( #( <#pt_ty>::from_ast(ast.#indices, parser)),*);
+                #apply_semantic_impl
                 Self { #(#pt_ident),* }
             }
         }
@@ -143,10 +189,12 @@ fn expand_struct_named(ident: syn::Ident, input: &mut syn::FieldsNamed, root_att
 fn expand_enum(ident: syn::Ident, input: &mut syn::DataEnum, root_attr: &RootAttr) -> syn::Result<TokenStream2> {
     let mut pt_ident = Vec::with_capacity(input.variants.len());
     let mut pt_ty: Vec<syn::Type> = Vec::with_capacity(input.variants.len());
+    let mut variant_attrs = Vec::with_capacity(input.variants.len());
     for variant in &mut input.variants {
         if variant.discriminant.is_some() {
             syn_error!(variant, "derive_syntax does not support enums with discriminants");
         }
+        variant_attrs.push(strip_take_attrs(&mut variant.attrs));
         pt_ident.push(variant.ident.clone());
         match &mut variant.fields {
             syn::Fields::Named(fields) => {
@@ -178,6 +226,23 @@ fn expand_enum(ident: syn::Ident, input: &mut syn::DataEnum, root_attr: &RootAtt
 
     let teleparse = crate_ident();
 
+    let mut apply_semantic_impl = Vec::with_capacity(input.variants.len());
+    for (variant, attrs) in std::iter::zip(input.variants.iter(), variant_attrs.into_iter()) {
+        let variant_attr = parse_field_attributes(variant, attrs)?;
+        if let Some(semantic) = variant_attr.semantic {
+            apply_semantic_impl.push(quote! {
+                parser.apply_semantic(
+                    &ast, 
+                    #teleparse::token_set!(<Self::AST as #teleparse::syntax::AbstractSyntaxTree>::L{
+                        #( #semantic )|*
+                    })
+                );
+            });
+        } else {
+            apply_semantic_impl.push(quote! {});
+        }
+    }
+
     let root_derive = if root_attr.root {
         Some(root::expand(quote! { DeriveAST }, &ident))
     } else {
@@ -201,7 +266,11 @@ fn expand_enum(ident: syn::Ident, input: &mut syn::DataEnum, root_attr: &RootAtt
             ) -> Self {
                 match ast {
                     #(
-                        DerivedAST::#pt_ident(ast) => Self::#pt_ident(<#pt_ty>::from_ast(ast, parser)),
+                        DerivedAST::#pt_ident(ast) => {
+                            let ast = <#pt_ty>::from_ast(ast, parser);
+                            #apply_semantic_impl
+                            Self::#pt_ident(ast)
+                        }
                     )*
                 }
             }
@@ -210,116 +279,6 @@ fn expand_enum(ident: syn::Ident, input: &mut syn::DataEnum, root_attr: &RootAtt
     };
 
     Ok(anon_const_block(output))
-}
-
-fn parse_meta<'a>(field: &'a syn::Field, metas: Vec<syn::Meta>) -> syn::Result<Vec<ParseMeta>> {
-    // let attrs = strip_take_attrs(&mut field.attrs);
-    // if attrs.is_empty() {
-    //     // should not be empty as at least one should be inferred
-    //     panic!("todo");
-    // }
-    let mut out = Vec::with_capacity(metas.len());
-    for (i, meta) in metas.into_iter().enumerate() {
-        let path = meta.path();
-        if path.is_ident("blanket") {
-            if i != 0 {
-                syn_error!(field, "`blanket` must be first (innermost) in the parser chain");
-            }
-            if let syn::Meta::List(meta) = meta {
-                let ty = meta.parse_args::<syn::Type>()?;
-                out.push(ParseMeta::Blanket(ty));
-                continue;
-            }
-            syn_error!(meta, "Usage: `blanket(Type)`");
-        } else if path.is_ident("token") {
-            if i != 0 {
-                syn_error!(field, "`token` must be first (innermost) in the parser chain");
-            }
-            if let syn::Meta::List(meta) = meta {
-                if let Ok(meta) = meta.parse_args::<syn::MetaNameValue>() {
-                        let ident = match meta.path.get_ident() {
-                            Some(ident) => ident.clone(),
-                            None => syn_error!(meta, "Usage: `token(Ident = \"match\")`"),
-                        };
-                        let lit = match meta.value {
-                            syn::Expr::Lit(syn::ExprLit { lit: syn::Lit::Str(lit_str), .. }) => lit_str,
-                            _ => syn_error!(meta, "Expected the match expression to be a literal string. Usage: `token(Ident = \"match\")`"),
-                        };
-                        out.push(ParseMeta::Token(ident.clone(), Some(lit)));
-                    continue;
-                }
-                let ident = meta.parse_args::<syn::Ident>()?;
-                out.push(ParseMeta::Token(ident, None));
-                continue;
-            }
-            syn_error!(meta, "Usage: `token(Ident)` or `token(Ident = \"match\")`");
-        }
-    }
-    Ok(out)
-    // // assume the field is a SyntaxTree, and use blanket
-    // return Ok(vec![ParseAttr::Blanket(&field.ty)]);
-}
-
-enum ParseMeta {
-    /// blanket(Type)
-    Blanket(syn::Type),
-    /// token(Ident) | token(Ident = "match")
-    Token(syn::Ident, Option<syn::LitStr>),
-}
-
-struct StructDeriveState<'a> {
-    token_ty: &'a syn::Path,
-    parse_body: TokenStream2,
-}
-
-impl<'a> StructDeriveState<'a> {
-    /// Derive for one field
-    fn derive_field(&mut self, field: &syn::Field, attrs: &[ParseMeta]) -> syn::Result<()> {
-        // expression used to construct the parser
-        let mut parser = TokenStream2::new();
-        let llnparse = crate_ident();
-        for (i, attr) in attrs.iter().enumerate() {
-            match attr {
-                ParseMeta::Blanket(ty) => {
-                    parser = quote! {
-                        #llnparse::imp::blanket::BlanketParser::<#ty>::new()
-                    };
-                }
-                ParseMeta::Token(ident, match_lit) => {
-                    let token_ty = &self.token_ty;
-                    match match_lit {
-                        Some(lit) => {
-                            parser = quote! {
-                                #llnparse::imp::token::TokenParser::with_match_lit(#token_ty::#ident, #lit)
-                            };
-                        }
-                        None => {
-                            parser = quote! {
-                                #llnparse::imp::token::TokenParser::new(#token_ty::#ident)
-                            };
-                        }
-                    }
-                }
-            }
-        }
-        match &field.ident {
-            Some(ident) => {
-                // named field
-                self.parse_body.extend(quote! {
-                    #ident: #parser.try_parse(parser).unwrap_or_extend_errors(&mut errors)?,
-                });
-
-            }
-            None => {
-                self.parse_body.extend(quote! {
-                    #parser.try_parse(parser).unwrap_or_extend_errors(&mut errors)?,
-                });
-
-            }
-        }
-
-        Ok(())
-    }
 }
 
 struct RootAttr {
@@ -354,3 +313,43 @@ fn parse_root_attributes(input: &mut syn::DeriveInput) -> syn::Result<RootAttr> 
     }
     Ok(RootAttr { root, no_test })
 }
+
+struct FieldAttr {
+    semantic: Option<Vec<syn::Ident>>,
+    hook: Option<syn::Ident>,
+}
+
+fn parse_field_attributes<T: ToTokens>(field: &T, attrs: Vec<syn::Attribute>) -> syn::Result<FieldAttr> {
+    let mut semantic = None;
+    let mut hook = None;
+    let attr = match ensure_one(attrs) {
+        EnsureOne::None => return Ok(FieldAttr { semantic, hook }),
+        EnsureOne::More => syn_error!(field, "Multiple {} attributes found! You might want to merge them.", CRATE),
+        EnsureOne::One(attr) => attr,
+    };
+    for meta in parse_crate_attr_meta(&attr)? {
+        match meta {
+            syn::Meta::List(meta) => {
+                if meta.path.is_ident("semantic") {
+                    if semantic.is_some() {
+                        syn_error!(meta, "Duplicated `semantic` attribute. You might want to merge them.");
+                    }
+                    semantic = Some(meta.parse_args_with(Punctuated::<syn::Ident, syn::Token![,]>::parse_terminated)?
+                    .into_iter().collect::<Vec<_>>());
+                    continue;
+                }
+                if meta.path.is_ident("hook") {
+                    if hook.is_some() {
+                        syn_error!(meta, "Duplicated `hook` attribute. There can only be one hook per field. You can wrap the hooks in one function.");
+                    }
+                    hook = Some(meta.parse_args::<syn::Ident>()?);
+                    continue;
+                }
+            }
+            _ => syn_error!(meta, "Invalid attribute format. Expected <attr>(<args>)"),
+        }
+    }
+
+    Ok(FieldAttr { semantic, hook })
+}
+

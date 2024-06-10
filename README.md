@@ -21,19 +21,29 @@ Progress:
 - [x] Parser
   - [x] LL(1) stuff
   - [x] Macros
+  - [x] Semantic Tokens (token type applied later by the parser)
+    - [ ] Tests
+    - [ ] Documentation
   - [ ] Tests
-  - [ ] Semantic Tokens (token type applied later by the parser)
   - [ ] Documentation
   - [ ] Hooks
 - [ ] Utils `tp`
   - [x] Tuples
   - [x] boxed
   - [x] option-based `tp::Option<T>` and `tp::Exists<T>`
-  - [ ] string-based `tp::Quote<X: From<String>, T>` `tp::Parse<X: FromStr>` (alias `tp::String`)
+  - [x] string-based `tp::Quote<X: From<String>, T>` `tp::Parse<X: FromStr>` (alias `tp::String`)
+    - [ ] Documentation
   - [ ] iter-based `tp::Star<V: FromIterator<T>, T>` `tp::Plus<V: FromIterator<T>, T>` (alias `tp::Vec`, `tp::Nev`, `tp::VecDeque`, `tp::NevDeque`)
-  - [ ] delimited `tp::Sep<T, P>`, `tp::Pun<T, P>` (pun has optional trailing and sep forbids trailing)
+  - [ ] delimited `tp::Split<T, P>`, `tp::Pun<T, P>` (pun has optional trailing and split forbids trailing)
   - [ ] conversion `tp::Into<X, T: Into<X>>`
   - [ ] Documentation
+- [ ] mdBook
+  - [ ] derive_lexicon
+  - [ ] derive_syntax
+    - [ ] semantic tokens
+  - [ ] using `tp`
+  - [ ] hooks
+  - [ ] using parser data
 
 Here is the "textbook grammar" implemented in a few minutes (full version at `tests/first_follow.rs`)
 ```

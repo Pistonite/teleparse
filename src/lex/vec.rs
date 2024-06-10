@@ -6,8 +6,6 @@ use derivative::Derivative;
 
 use super::{Lexicon, Set, Token, Span, Pos};
 
-
-
 /// Stores token and semantic information during parsing
 #[derive(Derivative, Debug, Clone, PartialEq)]
 #[derivative(Default(bound = "", new = "true"))]
@@ -42,6 +40,8 @@ impl<L: Lexicon> DerefMut for TokenVec<L> {
 
 impl<L: Lexicon> TokenVec<L> {
     /// Add the token to the end of the storage.
+    ///
+    /// The caller must ensure that the token is after the last token in the vector
     pub fn push_unchecked(&mut self, token: Token<L>) {
         self.tokens.push(token.into());
     }

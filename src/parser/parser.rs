@@ -1,9 +1,9 @@
 
 use std::marker::PhantomData;
 
-use crate::lex::{Token, TokenSrc, Lexer};
+use crate::lex::{Lexer, Set, Token, TokenSrc};
 use crate::syntax::{Error, ErrorKind, FirstSet, FollowSet, Metadata, Result as SynResult};
-use crate::{AbstractSyntaxRoot, AbstractSyntaxTree, GrammarError, Lexicon, Span};
+use crate::{AbstractSyntaxRoot, AbstractSyntaxTree, GrammarError, Lexicon, Span, ToSpan};
 
 use super::{Info, ParseRoot, ParseTree};
 
@@ -212,7 +212,7 @@ impl<'s, L: Lexicon> Parser<'s, L> {
         }
         match self.peeked.take() {
             Some(token) => {
-                self.info.tokens.push(token);
+                self.info.tokens.push_unchecked(token);
                 return Some(token);
             }
             None => {
@@ -260,6 +260,10 @@ impl<'s, L: Lexicon> Parser<'s, L> {
     pub fn current_span_empty(&mut self) -> Span {
         let span = self.current_span();
         Span::new(span.lo, span.lo)
+    }
+
+    pub fn apply_semantic<S: ToSpan>(&mut self, span: &S, semantic: Set<L>) {
+        self.info.tokens.inside_mut(span.span()).apply_semantic(semantic);
     }
 
 
