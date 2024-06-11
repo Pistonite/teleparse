@@ -1,7 +1,6 @@
 //! string-based syntax tree nodes ([`Quote`], [`Parse`], [`ParseDefault`])
 use std::marker::PhantomData;
 use std::str::FromStr;
-use std::string::String as StdString;
 
 use crate::{ToSpan, Parser, ParseTree, AbstractSyntaxTree};
 
@@ -29,9 +28,6 @@ impl<S, T: ParseTree> ParseTree for Quote<S, T>
         Node::new(span, S::from(src)).into()
     }
 }
-
-/// Alias for `Quote<String, T>`
-pub type String<T> = Quote<StdString, T>;
 
 /// Node that stores a parsed value from a string or the error if parse failed
 #[derive(Node, ToSpan, Clone, PartialEq)]
@@ -78,19 +74,12 @@ impl<S: FromStr + Default, T: ParseTree> ParseTree for ParseDefault<S, T> {
 #[cfg(test)]
 mod tests {
     use crate::prelude::*;
-    use crate::GrammarError;
-    use crate::ParseTree;
-    use crate::tp::Node;
-
-    use crate::lex::Token;
-    use crate::test::prelude::*;
-    use crate::test::MathTokenType as T;
-    use crate::test::{Ident, OpAdd, Integer};
+    use crate::test::{Ident, Integer};
 
     #[derive_syntax]
     #[teleparse(root)]
     #[derive(Debug, PartialEq)]
-    struct Stringified(super::String<Ident>);
+    struct Stringified(tp::String<Ident>);
 
     #[test]
     fn test_stringify() {
@@ -112,10 +101,10 @@ mod tests {
     #[teleparse(root)]
     #[derive(Debug, PartialEq)]
     struct Parsed {
-        ident: super::Parse<u32, Ident>,
-        num: super::Parse<u32, Integer>,
-        float: super::Parse<f32, Integer>,
-        ident_default: super::ParseDefault<u32, Ident>,
+        ident: tp::Parse<u32, Ident>,
+        num: tp::Parse<u32, Integer>,
+        float: tp::Parse<f32, Integer>,
+        ident_default: tp::ParseDefault<u32, Ident>,
     }
 
     #[test]

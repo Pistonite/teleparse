@@ -42,7 +42,16 @@ pub mod parser;
 #[doc(inline)]
 pub use parser::{Parser, ParseTree, ParseRoot};
 
-pub mod tp;
+mod tp_impl;
+
+pub mod tp {
+    pub use crate::tp_impl::Node;
+    pub use crate::tp_impl::option::Optional as Option;
+    pub use crate::tp_impl::option::Exists;
+    pub use crate::tp_impl::string::{Quote, Parse, ParseDefault};
+
+    pub type String<T> = Quote<std::string::String, T>;
+}
 
 
 

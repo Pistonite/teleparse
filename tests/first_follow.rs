@@ -94,7 +94,7 @@ impl T {
 
 #[derive_syntax]
 #[derive(Debug, PartialEq)]
-struct Tprime(tp::Option<Tstar>);
+struct Tprime(tp::Optional<Tstar>);
 impl Tprime {
     fn to_string(&self, input: &str) -> String {
         match &*self.0 {
