@@ -419,6 +419,11 @@ fn derive_terminal(
         #[doc = #doc]
         #[derive(Clone, Copy, PartialEq, Eq, Hash, #teleparse::ToSpan)]
         #vis struct #terminal_ident(pub #teleparse::Token<#enum_ident>);
+        impl #terminal_ident {
+            pub fn from_span<S: ::core::convert::Into<#teleparse::Span>>(span: S) -> Self {
+                Self::from(#teleparse::Token::new(span, #enum_ident::#variant_ident))
+            }
+        }
         const _: () = {
             #[automatically_derived]
             impl ::core::convert::From<#teleparse::Token<#enum_ident>> for #terminal_ident {

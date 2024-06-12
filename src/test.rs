@@ -39,7 +39,7 @@ pub enum MathTokenType {
 pub mod prelude {
     macro_rules! assert_not_ll1 {
         ($pt:ty, $err:expr) => {
-            use $crate::{AbstractSyntaxRoot, ParseRoot};
+            use $crate::{AbstractSyntaxRoot, ParseTree, ParseRoot};
             let err = if let Err(e) = <$pt as ParseTree>::AST::metadata() {
                 e.clone()
             } else {

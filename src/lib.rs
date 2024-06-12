@@ -49,8 +49,9 @@ pub mod tp {
     pub use crate::tp_impl::option::Optional as Option;
     pub use crate::tp_impl::option::Exists;
     pub use crate::tp_impl::string::{Quote, Parse, ParseDefault};
-
     pub type String<T> = Quote<std::string::String, T>;
+    pub use crate::tp_impl::iter::Plus;
+    pub type Nev<T> = Plus<std::vec::Vec<T>, T>;
 }
 
 

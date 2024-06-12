@@ -2,7 +2,7 @@
 use std::marker::PhantomData;
 
 use crate::lex::{Lexer, Set, Token, TokenSrc};
-use crate::syntax::{Error, ErrorKind, FirstSet, FollowSet, Metadata, Result as SynResult};
+use crate::syntax::{self, Error, ErrorKind, FirstSet, FollowSet, Metadata, Result as SynResult};
 use crate::{AbstractSyntaxRoot, AbstractSyntaxTree, GrammarError, Lexicon, Span, ToSpan};
 
 use super::{Info, ParseRoot, ParseTree};
@@ -84,6 +84,7 @@ impl<'s, L: Lexicon> Parser<'s, L> {
             return None;
         }
         loop {
+            let start = self.current_span();
             match AST::parse_ast(self, meta) {
                 SynResult::Success(tree) => {
                     return Some(tree);
@@ -96,33 +97,47 @@ impl<'s, L: Lexicon> Parser<'s, L> {
                     self.info.errors.extend(errors);
                 }
             }
-            // cannot parse a tree, skip until a token in the FIRST set is found
-            let first = meta.first.get(&AST::type_id());
+            // panic recover
+            // if the parser did not advance, then we need to manually
+            // advance so we don't get stuck in the same position
+            if start.lo == self.current_span().lo {
+                self.consume_token();
+            }
+
+            // since the parser only looks ahead 1 token,
+            // it will not generate errors for further tokens
+            // which means it's valid to generate errors for skipped tokens here
+
+            let mut skipped_token = false;
             let mut span = self.current_span();
 
-            // skip at least one
-            self.consume_token();
+            let first = meta.first.get(&AST::type_id());
             loop {
                 match self.peek_token() {
                     None => {
                         // no more tokens
-                        span.hi = self.info.source.len();
-                        self.info.errors.push(
-                            Error::new(
-                                span, 
-                                ErrorKind::UnexpectedTokens));
+                        if skipped_token {
+                            span.hi = self.info.source.len();
+                            self.info.errors.push(
+                                Error::new(
+                                    span, 
+                                    ErrorKind::UnexpectedTokens));
+                        }
                         return None;
                     }
                     Some(token) => {
                         let token_src = self.info.to_src(&token);
                         if first.contains(Some(token_src)) {
-                            span.hi = token.span.hi;
-                            self.info.errors.push(
-                                Error::new(
-                                    span, 
-                                    ErrorKind::UnexpectedTokens));
+                            if skipped_token {
+                                span.hi = token.span.hi;
+                                self.info.errors.push(
+                                    Error::new(
+                                        span, 
+                                        ErrorKind::UnexpectedTokens));
+                            }
                             break;
                         }
+                        skipped_token = true;
                         self.consume_token();
                     }
                 };
@@ -146,7 +161,8 @@ impl<'s, L: Lexicon> Parser<'s, L> {
         };
         if token.ty != ty {
             let expected = FirstSet::one(ty, None);
-            return SynResult::Panic(vec![self.expecting(expected)]);
+            let error = syntax::Error::new(token.span, ErrorKind::Expecting(expected));
+            return SynResult::Panic(vec![error]);
         }
         SynResult::Success(token)
     }
@@ -185,7 +201,7 @@ impl<'s, L: Lexicon> Parser<'s, L> {
         let expecting = FirstSet::one(ty, Some(match_lit));
         if follow.contains(Some(token_src)) {
             // do not consume the next token
-            let token = Token::new(self.current_span(), ty);
+            let token = Token::new(self.current_span_empty(), ty);
             return SynResult::Recovered(token, vec![self.expecting(expecting)]);
         }
 
@@ -253,10 +269,12 @@ impl<'s, L: Lexicon> Parser<'s, L> {
         }
     }
 
+    /// Get the span of the lookahead token, or the EOF span if there is no more tokens
     pub fn current_span(&mut self) -> Span {
         self.peek_token().map(|t| t.span).unwrap_or_else(|| self.info.eof())
     }
 
+    /// Get start of the lookahead token as a 0-length span
     pub fn current_span_empty(&mut self) -> Span {
         let span = self.current_span();
         Span::new(span.lo, span.lo)

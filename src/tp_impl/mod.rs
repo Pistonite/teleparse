@@ -192,10 +192,11 @@ impl<AST: AbstractSyntaxTree> AbstractSyntaxTree for OptionAST<AST> {
             SynResult::Success(ast) => {
                 SynResult::Success(Self::Some(ast))
             },
-            SynResult::Recovered(ast, error) =>
-                SynResult::Recovered(Self::Some(ast), error),
-            SynResult::Panic(error) =>
-                SynResult::Recovered(Self::None(parser.current_span_empty()), error),
+            SynResult::Recovered(ast, error) =>{
+                SynResult::Recovered(Self::Some(ast), error)}
+            SynResult::Panic(error) => {
+                SynResult::Recovered(Self::None(parser.current_span_empty()), error)
+            }
         }
     }
 }

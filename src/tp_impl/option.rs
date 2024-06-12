@@ -74,8 +74,6 @@ impl<T: ParseTree> ParseTree for Exists<T> {
 mod tests {
     use crate::prelude::*;
     use crate::GrammarError;
-    use crate::ParseTree;
-    use crate::tp::Node;
 
     use crate::lex::Token;
     use crate::test::prelude::*;
@@ -85,7 +83,7 @@ mod tests {
     #[derive_syntax]
     #[teleparse(root)]
     #[derive(Debug, PartialEq)]
-    struct OptIdent(super::Optional<Ident>);
+    struct OptIdent(tp::Option<Ident>);
 
     #[test]
     fn test_none() {
@@ -113,7 +111,7 @@ mod tests {
 
     #[derive_syntax]
     #[teleparse(root, no_test)]
-    struct Seq(super::Optional<OpAdd>, OpAdd);
+    struct Seq(tp::Option<OpAdd>, OpAdd);
 
     #[test]
     fn test_seq_not_ll1() {
@@ -141,7 +139,7 @@ mod tests {
     #[derive_syntax]
     #[teleparse(root)]
     #[derive(Debug, PartialEq)]
-    struct ExistIdent(super::Exists<Ident>);
+    struct ExistIdent(tp::Exists<Ident>);
 
     #[test]
     fn parse_exist() {
