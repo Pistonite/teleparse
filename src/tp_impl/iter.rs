@@ -65,7 +65,7 @@ mod tests {
 
     #[derive_syntax]
     #[teleparse(root)]
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Clone)]
     struct IdentList(tp::Plus<Vec<Ident>, Ident>);
 
     #[test]
@@ -136,7 +136,7 @@ mod tests {
 
     #[derive_syntax]
     #[teleparse(root)]
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Clone)]
     struct ListPlusList(tp::Plus<Vec<Ident>, Ident>, OpAdd, tp::Plus<Vec<Ident>, Ident>);
 
     #[test]
@@ -172,7 +172,7 @@ mod tests {
 
     #[derive_syntax]
     #[teleparse(root, no_test)]
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Clone)]
     struct ListOfOption(tp::Plus<Vec<tp::Option<Ident>>, tp::Option<Ident>>);
 
     #[test]
@@ -187,7 +187,7 @@ mod tests {
 
     #[derive_syntax]
     #[teleparse(root, no_test)]
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Clone)]
     struct SameList(tp::Nev<OpAdd>, tp::Nev<OpAdd>);
 
     #[test]
@@ -200,7 +200,7 @@ mod tests {
 
     #[derive_syntax]
     #[teleparse(root)]
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Clone)]
     struct SeparatedList(Ident, tp::Nev<(OpAdd, Ident)>);
 
     #[test]

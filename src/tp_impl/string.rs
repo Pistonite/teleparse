@@ -78,7 +78,7 @@ mod tests {
 
     #[derive_syntax]
     #[teleparse(root)]
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Clone)]
     struct Stringified(tp::String<Ident>);
 
     #[test]
@@ -99,7 +99,7 @@ mod tests {
 
     #[derive_syntax]
     #[teleparse(root)]
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Clone)]
     struct Parsed {
         ident: tp::Parse<u32, Ident>,
         num: tp::Parse<u32, Integer>,

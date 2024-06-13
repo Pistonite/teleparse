@@ -82,7 +82,7 @@ mod tests {
 
     #[derive_syntax]
     #[teleparse(root)]
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Clone)]
     struct OptIdent(tp::Option<Ident>);
 
     #[test]
@@ -138,7 +138,7 @@ mod tests {
 
     #[derive_syntax]
     #[teleparse(root)]
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Clone)]
     struct ExistIdent(tp::Exists<Ident>);
 
     #[test]

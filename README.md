@@ -32,10 +32,14 @@ Progress:
   - [x] boxed
   - [x] option-based `tp::Option<T>` and `tp::Exists<T>`
   - [x] string-based `tp::Quote<X: From<String>, T>` `tp::Parse<X: FromStr>` (alias `tp::String`)
+    - [x] Test
     - [ ] Documentation
-  - [ ] iter-based `tp::Star<V: FromIterator<T>, T>` `tp::Plus<V: FromIterator<T>, T>` (alias `tp::Vec`, `tp::Nev`, `tp::VecDeque`, `tp::NevDeque`)
+  - [x] iter-based `tp::Star<V: FromIterator<T>, T>` `tp::Plus<V: FromIterator<T>, T>` (alias `tp::Vec`, `tp::Nev`, `tp::VecDeque`, `tp::NevDeque`)
+    - [ ] Test
+    - [ ] Documentation
+  - [ ] Loop `tp::Loop<T>` (loop until the end of input)
   - [ ] delimited `tp::Split<T, P>`, `tp::Pun<T, P>` (pun has optional trailing and split forbids trailing)
-  - [ ] conversion `tp::Into<X, T: Into<X>>`
+  - [ ] conversion `tp::Into<X: From<T>, T>`
   - [ ] Documentation
 - [ ] mdBook
   - [ ] derive_lexicon
