@@ -60,3 +60,10 @@ impl<'a, 'b, L: Lexicon> std::fmt::Debug for DebugFirst<'a, 'b, L> {
         fmt.finish()
     }
 }
+
+#[macro_export]
+macro_rules! first_set {
+    ($($x:tt)*) => {
+        $crate::syntax::FirstSet::from($crate::terminal_set!($($x)*))
+    };
+}

@@ -19,6 +19,12 @@ impl<L: Lexicon> std::fmt::Debug for FirstSet<L> {
     }
 }
 
+impl<L: Lexicon> From<TerminalSet<L>> for FirstSet<L> {
+    fn from(set: TerminalSet<L>) -> Self {
+        Self(set)
+    }
+}
+
 impl<L: Lexicon> FirstSet<L> {
     /// Create a new FIRST set with the term `(ty, lit)` in it. None indicates any literal.
     #[inline]

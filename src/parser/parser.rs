@@ -40,111 +40,102 @@ impl<'s, L: Lexicon> Parser<'s, L> {
     // High-level API
     ///////////////////////////////////////////////////////////
     
-    /// Attempt to parse the syntax tree root once.
-    ///
-    /// Note that if you are parsing the same root multiple times, 
-    /// it's more efficient to use [`Parser::iter`]
+    // /Attempt to parse the syntax tree root once.
+    // ///
+    // /Note that if you are parsing the same root multiple times, 
+    // /it's more efficient to use [`Parser::iter`]
     #[inline]
-    pub fn parse_one<R: ParseRoot>(&mut self) -> Result<Option<R>, GrammarError>
+    pub fn parse<R: ParseRoot>(&mut self) -> Result<Option<R>, GrammarError>
     where R::AST : AbstractSyntaxRoot<L=L>
     {
-        Ok(self.iter()?.next())
+        let meta = match R::metadata() {
+            Ok(meta) => meta,
+            Err(err) => return Err(err.clone()),
+        };
+        Ok(self.parse_with_meta::<R>(&meta))
     }
 
-    /// Create an iterator that can be used to parse all syntax tree roots in the source
-    pub fn iter<'p, R: ParseRoot>(&'p mut self) -> Result<ParserIter<'s, 'p, L, R>, GrammarError>
-    where R::AST : AbstractSyntaxRoot<L=L>
-    {
-        ParserIter::<'s, 'p, L, R>::new(self)
-    }
-    
-    /// Parses all roots in the source until the end, returning the results in a Vec.
-    /// This is equivalent to calling `Parser::iter` and collecting the results.
-    #[inline]
-    pub fn parse_all<R: ParseRoot>(&mut self) -> Result<Vec<R> , GrammarError>
-    where R::AST : AbstractSyntaxRoot<L=L> {
-        Ok(self.iter()?.collect())
-    }
+    // /// Create an iterator that can be used to parse all syntax tree roots in the source
+    // pub fn iter<'p, R: ParseRoot>(&'p mut self) -> Result<ParserIter<'s, 'p, L, R>, GrammarError>
+    // where R::AST : AbstractSyntaxRoot<L=L>
+    // {
+    //     ParserIter::<'s, 'p, L, R>::new(self)
+    // }
+    //
+    // /// Parses all roots in the source until the end, returning the results in a Vec.
+    // /// This is equivalent to calling `Parser::iter` and collecting the results.
+    // #[inline]
+    // pub fn parse_all<R: ParseRoot>(&mut self) -> Result<Vec<R> , GrammarError>
+    // where R::AST : AbstractSyntaxRoot<L=L> {
+    //     Ok(self.iter()?.collect())
+    // }
 
-    fn next_root<R: ParseTree>(&mut self, meta: &Metadata<L>) -> Option<R> 
+    fn parse_with_meta<R: ParseTree>(&mut self, meta: &Metadata<L>) -> Option<R> 
     where R::AST : AbstractSyntaxTree<L=L>
     {
-        let ast = self.next_ast(meta)?;
+        let ast = match R::AST::parse_ast(self, meta) {
+            SynResult::Success(tree) => {
+                tree
+            }
+            SynResult::Recovered(tree, errors) => {
+                self.info.errors.extend(errors);
+                tree
+            }
+            SynResult::Panic(errors) => {
+                self.info.errors.extend(errors);
+                return None;
+            }
+        };
         Some(R::from_ast(ast, self))
     }
 
-    /// Attempt to parse one syntax tree into the state, may skip invalid tokens and characters
-    /// to form a valid syntax tree
-    ///
-    /// Return None if a valid syntax tree could not be formed
-    /// when the end of the source is reached
-    fn next_ast<AST: AbstractSyntaxTree<L=L>>(&mut self, meta: &Metadata<L>) -> Option<AST> {
-        // if there are no more tokens then we don't need to even try
-        if self.peek_token().is_none() {
-            return None;
-        }
-        loop {
-            let start = self.current_span();
-            match AST::parse_ast(self, meta) {
-                SynResult::Success(tree) => {
-                    return Some(tree);
-                }
-                SynResult::Recovered(tree, errors) => {
-                    self.info.errors.extend(errors);
-                    return Some(tree);
-                }
-                SynResult::Panic(errors) => {
-                    self.info.errors.extend(errors);
-                }
-            }
-            // panic recover
-            // if the parser did not advance, then we need to manually
-            // advance so we don't get stuck in the same position
-            if start.lo == self.current_span().lo {
-                self.consume_token();
-            }
-
-            // since the parser only looks ahead 1 token,
-            // it will not generate errors for further tokens
-            // which means it's valid to generate errors for skipped tokens here
-
-            let mut skipped_token = false;
-            let mut span = self.current_span();
-
-            let first = meta.first.get(&AST::type_id());
-            loop {
-                match self.peek_token() {
-                    None => {
-                        // no more tokens
-                        if skipped_token {
-                            span.hi = self.info.source.len();
-                            self.info.errors.push(
-                                Error::new(
-                                    span, 
-                                    ErrorKind::UnexpectedTokens));
-                        }
-                        return None;
-                    }
-                    Some(token) => {
-                        let token_src = self.info.to_src(&token);
-                        if first.contains(Some(token_src)) {
-                            if skipped_token {
-                                span.hi = token.span.hi;
-                                self.info.errors.push(
-                                    Error::new(
-                                        span, 
-                                        ErrorKind::UnexpectedTokens));
-                            }
-                            break;
-                        }
-                        skipped_token = true;
-                        self.consume_token();
-                    }
-                };
-            }
-            // try again
-        }
-    }
+    // /// Attempt to parse one syntax tree into the state, may skip invalid tokens and characters
+    // /// to form a valid syntax tree
+    // ///
+    // /// Return None if a valid syntax tree could not be formed
+    // /// when the end of the source is reached
+    // fn parse_ast_with_meta<AST: AbstractSyntaxTree<L=L>>(&mut self, meta: &Metadata<L>) -> Option<AST> {
+    //     // assume the input will have 0 or more invalid tokens at front and in the end
+    //     let first = meta.first.get(&AST::type_id());
+    //     let mut peek_token = self.peek_token_src();
+    //
+    //     while !first.contains(peek_token) && peek_token.is_some() {
+    //         if let Some(t) = self.consume_token() {
+    //             self.info.invalid_tokens.push(t);
+    //         }
+    //         peek_token = self.peek_token_src();
+    //     }
+    //
+    //     let lo = self.current_span().lo;
+    //
+    //     if lo != 0 {
+    //         self.info.errors.push(Error::new(
+    //             Span::new(0, lo), 
+    //             ErrorKind::UnexpectedTokens));
+    //     }
+    //
+    //         let ast = match AST::parse_ast(self, meta) {
+    //             SynResult::Success(tree) => {
+    //                 Some(tree)
+    //             }
+    //             SynResult::Recovered(tree, errors) => {
+    //                 self.info.errors.extend(errors);
+    //                 Some(tree)
+    //             }
+    //             SynResult::Panic(errors) => {
+    //                 self.info.errors.extend(errors);
+    //             None
+    //             }
+    //         };
+    //
+    //     if let Some(t) = self.peek_token() {
+    //         self.info.errors.push(Error::new(
+    //             Span::new(t.span.hi, self.info.source.len()),
+    //             ErrorKind::UnexpectedTokens));
+    //     }
+    //
+    //     ast
+    // }
 
     ///////////////////////////////////////////////////////////
     // Stream API
@@ -152,10 +143,17 @@ impl<'s, L: Lexicon> Parser<'s, L> {
     
     /// Parse a token of a specific type
     ///
+    /// ## Consumption
+    /// The parser only consumes the next token if it matches the expected type
+    ///
     /// ## Recovery
-    /// None. If the token is not of the expected type, the token is consumed and the parser panics
+    /// None
+    ///
+    /// ## Panic
+    /// If the token is not of the expected type, the parser panics, and will not consume the
+    /// token.
     pub fn parse_token( &mut self, ty: L) -> SynResult<Token<L>, L> {
-        let token = match self.consume_token() {
+        let token = match self.peek_token() {
             Some(token) => token,
             None => return SynResult::Panic(vec![self.unexpected_eof()]),
         };
@@ -164,17 +162,23 @@ impl<'s, L: Lexicon> Parser<'s, L> {
             let error = syntax::Error::new(token.span, ErrorKind::Expecting(expected));
             return SynResult::Panic(vec![error]);
         }
+        self.consume_token();
         SynResult::Success(token)
     }
 
     /// Parse a token of a specific type, matching a specific literal
     ///
+    /// ## Consumption
+    /// The parser only consumes the next token if it matches the expected type and literal.
+    ///
     /// ## Recovery
-    /// The parser peeks the next token. If it matches, the token is then consumed and returned.
-    /// Otherwise:
-    /// - If the next token is EOF and EOF is in FOLLOW, the missing token will be inserted.
-    /// - If the next token is in FOLLOW, the missing token will be inserted
-    /// - Otherwise, the parser panics without consuming the token
+    /// If the next token does not match, but is in the follow set passed in,
+    /// the parser will insert the expected token with a 0-length span and continue.
+    /// This also applies to the EOF token.
+    ///
+    /// ## Panic
+    /// The parser panics if the next token does not match and is not in the follow set.
+    /// The next token is not consumed.
     /// 
     pub fn parse_token_lit( &mut self, ty: L, match_lit: &'static str
         , follow: &FollowSet<L>
@@ -222,7 +226,7 @@ impl<'s, L: Lexicon> Parser<'s, L> {
     }
 
     /// Consume the next token
-    fn consume_token(&mut self) -> Option<Token<L>> {
+    pub fn consume_token(&mut self) -> Option<Token<L>> {
         if self.peeked.is_none() {
             self.try_read_next_token();
         }
@@ -269,6 +273,11 @@ impl<'s, L: Lexicon> Parser<'s, L> {
         }
     }
 
+    pub fn remaining(&mut self) -> &'s str {
+        let lo = self.current_span().lo;
+        &self.info.source[lo..]
+    }
+
     /// Get the span of the lookahead token, or the EOF span if there is no more tokens
     pub fn current_span(&mut self) -> Span {
         self.peek_token().map(|t| t.span).unwrap_or_else(|| self.info.eof())
@@ -290,72 +299,72 @@ impl<'s, L: Lexicon> Parser<'s, L> {
 }
 
 
-
-pub struct ParserIter<'s, 'p, L: Lexicon, R>
-    {
-    parser: &'p mut Parser<'s, L>,
-    metadata: &'static Metadata<L>,
-        _marker: PhantomData<R>,
-}
-
-impl<'s, 'p, L: Lexicon, R: ParseRoot>  ParserIter<'s, 'p, L, R>
-    where R::AST : AbstractSyntaxRoot<L=L>
-{
-    pub fn new(parser: &'p mut Parser<'s, L>) -> Result<Self, GrammarError> {
-        let metadata = match R::AST::metadata() {
-            Ok(meta) => meta,
-            Err(err) => return Err(err.clone()),
-        };
-        Ok(Self {
-            parser,
-            metadata,
-            _marker: PhantomData,
-        })
-    }
-}
-
-impl<'s, 'p, L: Lexicon, R: ParseTree> Iterator for ParserIter<'s, 'p, L, R>
-    where R::AST : AbstractSyntaxTree<L=L>
-{
-    type Item = R;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.parser.next_root(&self.metadata)
-    }
-}
-
-
-pub struct ParseRootIter<'s, L: Lexicon, R>
-    {
-    parser: Parser<'s, L>,
-    metadata: &'static Metadata<L>,
-        _marker: PhantomData<R>,
-}
-
-impl<'s, L: Lexicon, R: ParseRoot>  ParseRootIter<'s, L, R>
-    where R::AST : AbstractSyntaxRoot<L=L>
-{
-    pub fn new(parser: Parser<'s, L>) -> Result<Self, GrammarError> {
-        let metadata = match R::AST::metadata() {
-            Ok(meta) => meta,
-            Err(err) => return Err(err.clone()),
-        };
-        Ok(Self {
-            parser,
-            metadata,
-            _marker: PhantomData,
-        })
-    }
-}
-
-impl<'s, L: Lexicon, R: ParseTree> Iterator for ParseRootIter<'s, L, R>
-    where R::AST : AbstractSyntaxTree<L=L>
-{
-    type Item = R;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.parser.next_root(&self.metadata)
-    }
-}
-
+//
+// pub struct ParserIter<'s, 'p, L: Lexicon, R>
+//     {
+//     parser: &'p mut Parser<'s, L>,
+//     metadata: &'static Metadata<L>,
+//         _marker: PhantomData<R>,
+// }
+//
+// impl<'s, 'p, L: Lexicon, R: ParseRoot>  ParserIter<'s, 'p, L, R>
+//     where R::AST : AbstractSyntaxRoot<L=L>
+// {
+//     pub fn new(parser: &'p mut Parser<'s, L>) -> Result<Self, GrammarError> {
+//         let metadata = match R::AST::metadata() {
+//             Ok(meta) => meta,
+//             Err(err) => return Err(err.clone()),
+//         };
+//         Ok(Self {
+//             parser,
+//             metadata,
+//             _marker: PhantomData,
+//         })
+//     }
+// }
+//
+// impl<'s, 'p, L: Lexicon, R: ParseTree> Iterator for ParserIter<'s, 'p, L, R>
+//     where R::AST : AbstractSyntaxTree<L=L>
+// {
+//     type Item = R;
+//
+//     fn next(&mut self) -> Option<Self::Item> {
+//         self.parser.next_root(&self.metadata)
+//     }
+// }
+//
+//
+// pub struct ParseRootIter<'s, L: Lexicon, R>
+//     {
+//     parser: Parser<'s, L>,
+//     metadata: &'static Metadata<L>,
+//         _marker: PhantomData<R>,
+// }
+//
+// impl<'s, L: Lexicon, R: ParseRoot>  ParseRootIter<'s, L, R>
+//     where R::AST : AbstractSyntaxRoot<L=L>
+// {
+//     pub fn new(parser: Parser<'s, L>) -> Result<Self, GrammarError> {
+//         let metadata = match R::AST::metadata() {
+//             Ok(meta) => meta,
+//             Err(err) => return Err(err.clone()),
+//         };
+//         Ok(Self {
+//             parser,
+//             metadata,
+//             _marker: PhantomData,
+//         })
+//     }
+// }
+//
+// impl<'s, L: Lexicon, R: ParseTree> Iterator for ParseRootIter<'s, L, R>
+//     where R::AST : AbstractSyntaxTree<L=L>
+// {
+//     type Item = R;
+//
+//     fn next(&mut self) -> Option<Self::Item> {
+//         self.parser.next_root(&self.metadata)
+//     }
+// }
+//
 

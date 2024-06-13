@@ -19,6 +19,12 @@ impl<L: Lexicon> std::fmt::Debug for FollowSet<L> {
     }
 }
 
+impl<L: Lexicon> From<TerminalSet<L>> for FollowSet<L> {
+    fn from(set: TerminalSet<L>) -> Self {
+        Self(set)
+    }
+}
+
 impl<L: Lexicon> FollowSet<L> {
     /// Insert EOF into the set. 
     ///

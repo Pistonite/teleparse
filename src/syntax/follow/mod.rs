@@ -59,3 +59,10 @@ impl<'a, 'b, L: Lexicon> std::fmt::Debug for DebugFollow<'a, 'b, L> {
         fmt.finish()
     }
 }
+
+#[macro_export]
+macro_rules! follow_set {
+    ($($x:tt)*) => {
+        $crate::syntax::FollowSet::from($crate::terminal_set!($($x)*));
+    };
+}

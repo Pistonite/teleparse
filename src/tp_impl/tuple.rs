@@ -64,18 +64,6 @@ mod tests {
             Ident(Token::new((0, 1), T::Ident)),
             Ident(Token::new((2, 3), T::Ident)),
         ));
-
-        let t = Tuple2::parse_all("a b c d").unwrap();
-        assert_eq!(t, vec![
-            Tuple2(
-                Ident(Token::new((0, 1), T::Ident)),
-                Ident(Token::new((2, 3), T::Ident)),
-            ),
-            Tuple2(
-                Ident(Token::new((4, 5), T::Ident)),
-                Ident(Token::new((6, 7), T::Ident)),
-            )
-        ]);
     }
 
     #[derive_syntax]

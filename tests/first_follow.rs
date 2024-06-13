@@ -141,17 +141,9 @@ impl F {
 fn first_table() {
     // reference: https://www.geeksforgeeks.org/first-set-in-syntax-analysis/?ref=lbp
 
-    let mut first_e_t_f = FirstSet::new();
-    first_e_t_f.insert(TokenType::Ident, None);
-    first_e_t_f.insert(TokenType::Paren, Some("("));
-
-    let mut first_e_prime = FirstSet::new();
-    first_e_prime.insert(TokenType::Op, Some("+"));
-    first_e_prime.insert_epsilon();
-
-    let mut first_t_prime = FirstSet::new();
-    first_t_prime.insert(TokenType::Op, Some("*"));
-    first_t_prime.insert_epsilon();
+    let first_e_t_f = first_set!( TokenType { Ident:*, Paren:"(" });
+    let first_e_prime = first_set!( TokenType { e , Op:"+" });
+    let first_t_prime = first_set!( TokenType { e , Op:"*" });
 
     let meta = E::metadata().as_ref().unwrap();
     assert_eq!(meta.first.get_pt::<E>() , &first_e_t_f);
@@ -166,17 +158,9 @@ fn first_table() {
 fn follow_table() {
     // reference: https://www.geeksforgeeks.org/follow-set-in-syntax-analysis/?ref=lbp
 
-    let mut follow_e_eprime = FollowSet::new();
-    follow_e_eprime.insert(TokenType::Paren, Some(")"));
-    follow_e_eprime.insert_eof();
-
-    let mut follow_t_tprime = FollowSet::new();
-    follow_t_tprime.insert(TokenType::Op, Some("+"));
-    follow_t_tprime.insert(TokenType::Paren, Some(")"));
-    follow_t_tprime.insert_eof();
-
-    let mut follow_f = follow_t_tprime.clone();
-    follow_f.insert(TokenType::Op, Some("*"));
+    let follow_e_eprime = follow_set!(TokenType { e, Paren:")" });
+    let follow_t_tprime = follow_set!(TokenType { e, Op:"+", Paren:")"});
+    let follow_f = follow_set!(TokenType { e, Op:"*", Op:"+", Paren:")" });
 
     let meta = E::metadata().as_ref().unwrap();
     assert_eq!(meta.follow.get_pt::<E>() , &follow_e_eprime);
@@ -245,11 +229,9 @@ fn parse_paren() {
 fn parse_with_error() -> Result<(), GrammarError> {
     let source = "a+(b*)+c";
     let mut parser = Parser::new(source)?;
-    let t = parser.iter::<E>()?.next().unwrap();
+    let t = parser.parse::<E>()?.unwrap();
 
-    let mut expecting = FirstSet::new();
-    expecting.insert(TokenType::Ident, None);
-    expecting.insert(TokenType::Paren, Some("("));
+    let expecting = first_set!(TokenType { Ident:*, Paren:"(" });
     assert_eq!(parser.info().errors, vec![
         Error::new(5..6, ErrorKind::Expecting(expecting))
     ]);

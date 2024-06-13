@@ -3,8 +3,6 @@ use std::any::TypeId;
 
 use crate::{syntax::Metadata, AbstractSyntaxRoot, AbstractSyntaxTree, GrammarError, Lexicon, ToSpan};
 
-use super::ParseRootIter;
-
 type Parser<'s, AST> = super::Parser<'s, <AST as AbstractSyntaxTree>::L>;
 
 pub trait ParseTree: Sized + ToSpan {
@@ -23,16 +21,16 @@ pub trait ParseRoot: ParseTree
 where Self::AST : AbstractSyntaxRoot
 {
     fn parse(source: &str) -> Result<Option<Self>, GrammarError> {
-        super::Parser::new(source)?.parse_one()
+        super::Parser::new(source)?.parse()
     }
 
-    fn iter(source: &str) -> Result<ParseRootIter<'_, <Self::AST as AbstractSyntaxTree>::L, Self>, GrammarError> {
-        ParseRootIter::new(super::Parser::new(source)?)
-    }
-
-    fn parse_all(source: &str) -> Result<Vec<Self>, GrammarError> {
-        super::Parser::new(source)?.parse_all()
-    }
+    // fn iter(source: &str) -> Result<ParseRootIter<'_, <Self::AST as AbstractSyntaxTree>::L, Self>, GrammarError> {
+    //     ParseRootIter::new(super::Parser::new(source)?)
+    // }
+    //
+    // fn parse_all(source: &str) -> Result<Vec<Self>, GrammarError> {
+    //     super::Parser::new(source)?.parse_all()
+    // }
 
     fn metadata() -> &'static Result<Metadata<<Self::AST as AbstractSyntaxTree>::L>, GrammarError> {
         Self::AST::metadata()

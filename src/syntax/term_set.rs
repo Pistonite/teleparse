@@ -237,6 +237,53 @@ impl<L: Lexicon> TerminalSet<L> {
     }
 }
 
+#[macro_export]
+macro_rules! terminal_set {
+    () => {
+        $crate::syntax::TerminalSet::default()
+    };
+    ($L:ty) => {
+        $crate::syntax::TerminalSet::<$L>::default()
+    };
+    ($L:ty { $($ty:ident:$term:tt),* }) => {
+        {
+            let mut set = $crate::syntax::TerminalSet::<$L>::default();
+            $(
+                $crate::insert_terminal!(set, <$L>::$ty, $term);
+            )*
+            set
+        }
+    };
+    ($L:ty { e }) => {
+        {
+            let mut set = $crate::syntax::TerminalSet::<$L>::default();
+            set.insert_e();
+            set
+        }
+    };
+    ($L:ty { e , $($ty:ident:$term:tt),* }) => {
+        {
+            let mut set = $crate::syntax::TerminalSet::<$L>::default();
+            $(
+                $crate::insert_terminal!(set, <$L>::$ty, $term);
+            )*
+            set.insert_e();
+            set
+        }
+    };
+}
+
+#[macro_export]
+#[doc(hidden)]
+macro_rules! insert_terminal {
+    ($set:ident, $ty:expr, $lit:literal) => {
+        $set.insert($ty, Some($lit))
+    };
+    ($set:ident, $ty:expr, *) => {
+        $set.insert($ty, None)
+    };
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

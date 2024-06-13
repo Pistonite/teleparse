@@ -120,3 +120,19 @@ enum F {
 let source = "(a+b)*(c+d)";
 let t = E::parse(source).unwrap().unwrap();
 ```
+
+WIP - with the utils provided it can be simplified to
+```rust
+use teleparse::prelude::*;
+
+#[derive_lexicon]
+struct E(tp::Split<T, OpAdd>); // E -> T ( + T )*
+#[derive_lexicon]
+struct T(tp::Split<F, OpMul>); // T -> F ( * F )*
+#[derive_lexicon]
+enum F {
+    Paren((ParenOpen, Box<E>, ParenClose)),
+    Ident
+}
+
+```

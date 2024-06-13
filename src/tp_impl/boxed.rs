@@ -3,7 +3,7 @@ use crate::parser::ParseTree;
 use crate::syntax::{Result as SynResult, Metadata};
 use crate::{AbstractSyntaxTree, ToSpan, Parser};
 
-use super::ast_passthrough;
+use crate::ast_passthrough;
 
 impl<AST: AbstractSyntaxTree> AbstractSyntaxTree for Box<AST> {
     ast_passthrough!(AST);

@@ -26,6 +26,8 @@ pub mod prelude {
         Pos, Span, Token, tp::Node,
     };
 
+    // macros
+    pub use crate::{token_set, terminal_set, first_set, follow_set};
     // pub use crate::{derive_root, assert_ll1};
 
 }
@@ -52,6 +54,10 @@ pub mod tp {
     pub type String<T> = Quote<std::string::String, T>;
     pub use crate::tp_impl::iter::Plus;
     pub type Nev<T> = Plus<std::vec::Vec<T>, T>;
+    pub type NevDeque<T> = Plus<std::collections::VecDeque<T>, T>;
+    pub use crate::tp_impl::iter::Star;
+    pub type Vec<T> = Star<std::vec::Vec<T>, T>;
+    pub type VecDeque<T> = Star<std::collections::VecDeque<T>, T>;
 }
 
 
