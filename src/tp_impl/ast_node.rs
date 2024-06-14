@@ -14,6 +14,10 @@ impl<T> Node<T> {
     pub fn new<S: Into<Span>>(span: S, value: T) -> Self {
         Self { span: span.into(), value }
     }
+
+    pub fn into_inner(self) -> T {
+        self.value
+    }
 }
 
 impl<T: std::fmt::Debug> std::fmt::Debug for Node<T> {
@@ -22,3 +26,4 @@ impl<T: std::fmt::Debug> std::fmt::Debug for Node<T> {
         self.value.fmt(f)
     }
 }
+

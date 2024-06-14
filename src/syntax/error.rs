@@ -31,6 +31,7 @@ impl<L: Lexicon> Error<L> {
                 format!("Expecting one of {}", set)
             },
             ErrorKind::UnexpectedEof => "Unexpected end of file".to_string(),
+            ErrorKind::UnexpectedNoAdvanceInLoop => "Unexpected: Parser did not advance in a loop. The grammar is probably not LL(1), and this is a bug since the parser should catch that before parsing.".to_string(),
         }
     }
 }
@@ -42,6 +43,7 @@ pub enum ErrorKind<L: Lexicon> {
     UnexpectedTokens,
     Expecting(FirstSet<L>),
     UnexpectedEof,
+    UnexpectedNoAdvanceInLoop
 }
 
 /// Result of parsing an AST node

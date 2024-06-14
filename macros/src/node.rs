@@ -15,8 +15,7 @@ pub fn expand(input: &syn::DeriveInput) -> syn::Result<TokenStream2> {
     };
 
     let mut from_body = TokenStream2::new();
-    let mut deref_body = TokenStream2::new();
-    let mut derefmut_body = TokenStream2::new();
+    let mut field_expr = TokenStream2::new();
     let mut target_ty = TokenStream2::new();
 
     match &data.fields {
@@ -29,8 +28,7 @@ pub fn expand(input: &syn::DeriveInput) -> syn::Result<TokenStream2> {
             };
             let ty = parse_node_type(ty)?;
             from_body = quote! { Self { #ident, ::core::default::Default::default() } };
-            deref_body = quote! { &self.#ident.value };
-            derefmut_body = quote! { &mut self.#ident.value };
+            field_expr = quote! { self.#ident };
             target_ty = quote! { #ty };
         }
         syn::Fields::Unnamed(fields) => {
@@ -47,8 +45,7 @@ pub fn expand(input: &syn::DeriveInput) -> syn::Result<TokenStream2> {
                 from_body.extend(quote! { , ::core::default::Default::default() });
             }
             from_body = quote! { Self(#from_body) };
-            deref_body = quote! { &self.0.value };
-            derefmut_body = quote! { &mut self.0.value };
+            field_expr = quote! { self.0 };
             target_ty = quote! { #ty };
         }
         syn::Fields::Unit => {
@@ -57,6 +54,12 @@ pub fn expand(input: &syn::DeriveInput) -> syn::Result<TokenStream2> {
     }
 
     let out = quote! {
+        #[automatically_derived]
+        impl #impl_generics #ident #ty_generics #where_clause {
+            pub fn into_inner(self) -> #target_ty {
+                #field_expr.value
+            }
+        }
         #[automatically_derived]
         impl #impl_generics ::core::convert::From<#teleparse::tp::Node<#target_ty>> for #ident #ty_generics #where_clause {
             #[inline]
@@ -69,14 +72,14 @@ pub fn expand(input: &syn::DeriveInput) -> syn::Result<TokenStream2> {
             type Target = #target_ty;
             #[inline]
             fn deref(&self) -> &Self::Target {
-                #deref_body
+                &#field_expr.value
             }
         }
         #[automatically_derived]
         impl #impl_generics ::core::ops::DerefMut for #ident #ty_generics #where_clause {
             #[inline]
             fn deref_mut(&mut self) -> &mut Self::Target {
-                #derefmut_body
+                &mut #field_expr.value
             }
         }
     };

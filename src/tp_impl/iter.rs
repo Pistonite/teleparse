@@ -7,7 +7,7 @@ use std::marker::PhantomData;
 use crate::syntax::{First, FirstBuilder, FirstRel, Follow, FollowBuilder, FollowRel, Jump, Metadata, Result as SynResult};
 use crate::{AbstractSyntaxTree, GrammarError, ParseTree, Parser, Span, ToSpan};
 
-use super::{Node, OneOrMore, OptionAST};
+use super::{LoopAST, Node, OneOrMore, OptionAST};
 
 
 #[derive(Node, ToSpan, Clone, PartialEq)]
@@ -53,10 +53,29 @@ impl<V: FromIterator<T> + Default, T: ParseTree> ParseTree for Star<V, T> {
     }
 }
 
+#[derive(Node, ToSpan, Clone, PartialEq)]
+pub struct Loop<T: ParseTree>(Node<Vec<T>>);
+
+impl<T: ParseTree + std::fmt::Debug> std::fmt::Debug for Loop<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl<T: ParseTree> ParseTree for Loop<T> {
+    type AST = LoopAST<T::AST>;
+
+    fn from_ast<'s>(ast: Self::AST, parser: &mut Parser<'s, <Self::AST as AbstractSyntaxTree>::L>) -> Self {
+        let span = ast.span();
+        let v: Vec<T> = ast.0.into_iter().map(|t| T::from_ast(t, parser)).collect();
+        Node::new(span, v).into()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::prelude::*;
-    use crate::syntax::{ErrorKind, FirstSet};
+    use crate::syntax::ErrorKind;
     use crate::{syntax, Parser, GrammarError};
 
     use crate::test::prelude::*;
@@ -264,6 +283,90 @@ mod tests {
         Ok(())
     }
 
-    // TODO - star tests
+    #[derive_syntax]
+    #[teleparse(root)]
+    #[derive(Debug, PartialEq, Clone)]
+    struct IdentListStar(tp::Star<Vec<Ident>, Ident>);
+
+    #[test]
+    fn parse_star() {
+        let t = IdentListStar::parse("").unwrap().unwrap();
+        assert_eq!(t, IdentListStar(Node::new(0..0, vec![]).into()));
+
+        let t = IdentListStar::parse("a b c").unwrap().unwrap();
+        assert_eq!(t, IdentListStar(Node::new(0..5, vec![
+            Ident::from_span(0..1),
+            Ident::from_span(2..3),
+            Ident::from_span(4..5),
+        ]).into()));
+    }
+
+    #[derive_syntax]
+    #[teleparse(root, no_test)]
+    #[derive(Debug, PartialEq, Clone)]
+    struct ConsecutiveStar(tp::Star<Vec<Ident>, Ident>, tp::Vec<Ident>);
+
+    #[test]
+    fn consecutive_star_not_ll1() {
+        assert_not_ll1!(ConsecutiveStar, GrammarError::FirstFollowSeqConflict(
+            "ConsecutiveStar".to_string(),
+            "Option<OneOrMore<Ident>>".to_string(),
+            "Option<OneOrMore<Ident>>".to_string(),
+            "Ident".to_string()
+        ));
+    }
+
+    #[derive_syntax]
+    #[teleparse(root)]
+    #[derive(Debug, PartialEq, Clone)]
+    struct LoopRoot(tp::Loop<Ident>);
+
+    #[test]
+    fn parse_loop_empty() {
+        let t = LoopRoot::parse("").unwrap().unwrap();
+        assert_eq!(t, LoopRoot(Node::new(0..0, vec![]).into()));
+    }
+
+    #[test]
+    fn parse_loop() {
+        let t = LoopRoot::parse("a b c").unwrap().unwrap();
+        assert_eq!(t, LoopRoot(Node::new(0..5, vec![
+            Ident::from_span(0..1),
+            Ident::from_span(2..3),
+            Ident::from_span(4..5),
+        ]).into()));
+    }
+
+    #[test]
+    fn parse_loop_recover() -> Result<(), GrammarError> {
+        let mut parser = Parser::<T>::new("+a+ b++ c")?;
+        let t = parser.parse::<LoopRoot>()?.unwrap();
+        assert_eq!(t, LoopRoot(Node::new(1..9, vec![
+            Ident::from_span(1..2),
+            Ident::from_span(4..5),
+            Ident::from_span(8..9),
+        ]).into()));
+        assert_eq!(parser.info().errors, vec![
+            syntax::Error::new(0..1, ErrorKind::UnexpectedTokens),
+            syntax::Error::new(2..3, ErrorKind::UnexpectedTokens),
+            syntax::Error::new(5..7, ErrorKind::UnexpectedTokens),
+        ]);
+
+        Ok(())
+    }
+
+    #[derive_syntax]
+    #[teleparse(root, no_test)]
+    #[derive(Debug, PartialEq, Clone)]
+    struct LoopOption(tp::Loop<tp::Option<Ident>>);
+
+    #[test]
+    fn loop_option_not_ll1() {
+        assert_not_ll1!(LoopOption, GrammarError::FirstFirstConflict(
+            "Loop<Option<Ident>>".to_string(),
+            "Option<Ident>".to_string(),
+            "<epsilon>".to_string()
+        ));
+    }
 
 }

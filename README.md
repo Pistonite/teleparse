@@ -35,11 +35,17 @@ Progress:
     - [x] Test
     - [ ] Documentation
   - [x] iter-based `tp::Star<V: FromIterator<T>, T>` `tp::Plus<V: FromIterator<T>, T>` (alias `tp::Vec`, `tp::Nev`, `tp::VecDeque`, `tp::NevDeque`)
+    - [x] Test
+    - [ ] Documentation
+  - [x] Loop `tp::Loop<T>` (loop until the end of input)
+    - [x] Test
+    - [ ] Documentation
+  - [ ] delimited `tp::Split<T, P>`, `tp::Pun<T, P>` (pun has optional trailing and split forbids trailing)
     - [ ] Test
     - [ ] Documentation
-  - [ ] Loop `tp::Loop<T>` (loop until the end of input)
-  - [ ] delimited `tp::Split<T, P>`, `tp::Pun<T, P>` (pun has optional trailing and split forbids trailing)
   - [ ] conversion `tp::Into<X: From<T>, T>`
+    - [ ] Test
+    - [ ] Documentation
   - [ ] Documentation
 - [ ] mdBook
   - [ ] derive_lexicon

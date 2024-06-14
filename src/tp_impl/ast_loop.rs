@@ -1,40 +1,39 @@
 use std::any::TypeId;
 use std::borrow::Cow;
 use std::collections::BTreeSet;
-use std::marker::PhantomData;
 
-use crate::syntax::{First, FirstBuilder, FirstRel, Follow, FollowBuilder, FollowRel, Jump, Metadata, Result as SynResult};
+use itertools::Itertools;
+
+use crate::syntax::{self, ErrorKind, First, FirstBuilder, FirstRel, Follow, FollowBuilder, FollowRel, Jump, Metadata, Result as SynResult};
 use crate::{AbstractSyntaxTree, GrammarError, ParseTree, Parser, Span, ToSpan};
 
 use super::{Node, OptionAST};
-
 #[doc(hidden)]
 #[derive(Debug, Clone, PartialEq)]
-pub struct OneOrMore<T: AbstractSyntaxTree>(pub Vec<T>);
+pub struct LoopAST<T: AbstractSyntaxTree>(pub Vec<T>);
 
-impl<T: AbstractSyntaxTree> ToSpan for OneOrMore<T> {
+impl<T: AbstractSyntaxTree> ToSpan for LoopAST<T> {
     fn span(&self) -> Span {
         let lo = self.0.first().map(|t| t.span().lo).unwrap_or_default();
         let hi = self.0.last().map(|t| t.span().hi).unwrap_or_default();
         Span::new(lo, hi)
     }
 }
-
-impl<T: AbstractSyntaxTree> AbstractSyntaxTree for OneOrMore<T> {
+impl<T: AbstractSyntaxTree> AbstractSyntaxTree for LoopAST<T> {
     type L=T::L;
     fn debug() -> Cow<'static, str> {
-        Cow::Owned(format!("OneOrMore<{}>", T::debug()))
+        Cow::Owned(format!("Loop<{}>", T::debug()))
     }
     fn build_first(builder: &mut FirstBuilder<Self::L>) {
-        // OneOrMore<T> => T Option<OneOrMore<T>>
+        // Loop<T> => T Loop<T>
+        // Loop<T> => e
         let t = Self::type_id();
         if builder.visit(t, &Self::debug()) {
             // recursive build
             T::build_first(builder);
-            // OptionAST::<T>::build_first(builder);
-            OptionAST::<OneOrMore<T>>::build_first(builder);
             let inner = T::type_id();
-            builder.build_sequence(t, &[inner, OptionAST::<OneOrMore<T>>::type_id()]);
+            builder.build_sequence(t, &[inner, t]);
+            builder.add(FirstRel::insert_epsilon(t));
         }
     }
     fn check_left_recursive(
@@ -64,29 +63,25 @@ impl<T: AbstractSyntaxTree> AbstractSyntaxTree for OneOrMore<T> {
         if !seen.insert(t) {
             return Ok(());
         }
-        let first_set = first.get(&t);
+        let inner = T::type_id();
+        let first_set = first.get(&inner);
         if first_set.contains_epsilon() {
-            return Err(GrammarError::FirstFollowSeqConflict(
+            return Err(GrammarError::FirstFirstConflict(
                 Self::debug().into_owned(),
                 T::debug().into_owned(),
-                OptionAST::<OneOrMore<T>>::debug().into_owned(),
                 "<epsilon>".to_string(),
             ))
         }
 
-        T::check_first_conflict(seen, first)?;
-
-        Ok(())
+        T::check_first_conflict(seen, first)
     }
     fn build_follow( builder: &mut FollowBuilder<Self::L>) {
         let t = Self::type_id();
         if builder.visit(t) {
             // recursive build
             T::build_follow(builder);
-            // OptionAST::<T>::build_follow(builder);
-            OptionAST::<OneOrMore<T>>::build_follow(builder);
             let inner = T::type_id();
-            builder.build_sequence(t, &[inner, OptionAST::<OneOrMore<T>>::type_id()]);
+            builder.build_sequence(t, &[inner, t]);
         }
     }
     fn check_first_follow_conflict(
@@ -98,8 +93,7 @@ impl<T: AbstractSyntaxTree> AbstractSyntaxTree for OneOrMore<T> {
             return Ok(());
         }
         Self::check_self_first_follow_conflict(first, follow)?;
-        T::check_first_follow_conflict(seen, first, follow)?;
-        OptionAST::<OneOrMore<T>>::check_first_follow_conflict(seen, first, follow)
+        T::check_first_follow_conflict(seen, first, follow)
     }
     fn build_jump(
         seen: &mut BTreeSet<TypeId>,
@@ -110,32 +104,42 @@ impl<T: AbstractSyntaxTree> AbstractSyntaxTree for OneOrMore<T> {
             T::build_jump(seen, first, jump);
         }
     }
+
     fn parse_ast<'s>(
         parser: &mut Parser<'s, Self::L>,
         meta: &Metadata<Self::L>,
     ) -> SynResult<Self, Self::L> {
-        let (mut output, mut errors) = match T::parse_ast(parser, meta) {
-            SynResult::Success(t) => {
-                (vec![t], Vec::new())
+        let mut errors: Vec<syntax::Error<Self::L>> = Vec::new();
+        let mut output = Vec::new();
+        let first = meta.first.get(&Self::type_id());
+
+        loop {
+            let mut token = parser.peek_token_src();
+            if token.is_none() {
+                break;
             }
-            SynResult::Recovered(t, e) => {
-                (vec![t], e)
+            if !first.contains(token) {
+                let skip_lo = parser.current_span().lo;
+                // we need to keep track of hi instead of using the lo
+                // of a valid token, because there could be skipped characters between.
+                let mut skip_hi = parser.current_span().hi;
+                parser.consume_token();
+                token = parser.peek_token_src();
+                while token.is_some() && !first.contains(token) {
+                    skip_hi = parser.current_span().hi;
+                    parser.consume_token();
+                    token = parser.peek_token_src();
+                }
+                errors.push(syntax::Error::new(
+                    skip_lo..skip_hi,
+                    ErrorKind::UnexpectedTokens,
+                ));
+                if token.is_none() {
+                    break;
+                }
             }
-            SynResult::Panic(e) => {
-                return SynResult::Panic(e);
-            }
-        };
-    let t_type = T::type_id();
-    let first = meta.first.get(&t_type);
-    loop {
-        let token = parser.peek_token_src();
-        if token.is_none() {
-            break;
-        }
-        if !first.contains(token) {
-            break;
-        }
-        match T::parse_ast(parser, meta) {
+            let lo_before = parser.current_span().lo;
+            match T::parse_ast(parser, meta) {
                 SynResult::Success(t) => {
                     output.push(t);
                 }
@@ -145,14 +149,20 @@ impl<T: AbstractSyntaxTree> AbstractSyntaxTree for OneOrMore<T> {
                 }
                 SynResult::Panic(e) => {
                     errors.extend(e);
-                    break;
                 }
+            }
+            if lo_before == parser.current_span().lo {
+                errors.push(syntax::Error::new(
+                    parser.current_span(),
+                    ErrorKind::UnexpectedNoAdvanceInLoop,
+                ));
+                break;
+            }
         }
-    }
-    if errors.is_empty() {
-        SynResult::Success(Self(output))
-    } else {
-        SynResult::Recovered(Self(output), errors)
-    }
+        if errors.is_empty() {
+            SynResult::Success(Self(output))
+        } else {
+            SynResult::Recovered(Self(output), errors)
+        }
     }
 }

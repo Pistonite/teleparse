@@ -1,13 +1,9 @@
 //! optional syntax tree nodes ([`Option`], [`Exists`])
-use std::any::TypeId;
-use std::borrow::Cow;
-use std::collections::BTreeSet;
 use std::marker::PhantomData;
 
 
 use crate::parser::ParseTree;
-use crate::syntax::{First, FirstBuilder, FirstRel, Follow, FollowBuilder, FollowRel, Jump, Metadata, Result as SynResult};
-use crate::{AbstractSyntaxTree, GrammarError, Parser, Span, ToSpan};
+use crate::{AbstractSyntaxTree, Parser, ToSpan};
 
 use super::{Node, OptionAST};
 

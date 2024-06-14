@@ -58,6 +58,7 @@ pub mod tp {
     pub use crate::tp_impl::iter::Star;
     pub type Vec<T> = Star<std::vec::Vec<T>, T>;
     pub type VecDeque<T> = Star<std::collections::VecDeque<T>, T>;
+    pub use crate::tp_impl::iter::Loop;
 }
 
 
