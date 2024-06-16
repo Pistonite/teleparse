@@ -25,6 +25,7 @@ Progress:
     - [ ] Tests
     - [ ] Documentation
   - [ ] Tests
+    - [ ] Trybuild tests
   - [ ] Documentation
   - [ ] Hooks
 - [ ] Utils `tp`
@@ -43,6 +44,7 @@ Progress:
   - [ ] delimited `tp::Split<T, P>`, `tp::Pun<T, P>` (pun has optional trailing and split forbids trailing)
     - [ ] Test
     - [ ] Documentation
+  - [ ] recovery `tp::Recover<A, B>`
   - [ ] conversion `tp::Into<X: From<T>, T>`
     - [ ] Test
     - [ ] Documentation
@@ -123,8 +125,8 @@ struct Tstar {
 
 #[derive_syntax]
 enum F {
+    Ident(Ident),
     Paren((ParenOpen, Box<E>, ParenClose)),
-    Ident
 }
 
 let source = "(a+b)*(c+d)";

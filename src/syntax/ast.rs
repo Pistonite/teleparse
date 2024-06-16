@@ -8,23 +8,7 @@ use crate::{GrammarError, Lexicon, Pos, Span, ToSpan};
 
 use super::{First, FirstBuilder, Follow, FollowBuilder, MetadataBuilder, Jump};
 
-pub struct Epsilon<L: Lexicon + 'static>(Pos, PhantomData<L>);
-
-impl<L: Lexicon + 'static> Epsilon<L> {
-    pub fn new(pos: Pos) -> Self {
-        Self(pos, PhantomData)
-    }
-}
-
-impl<L: Lexicon + 'static> ToSpan for Epsilon<L> {
-    fn lo(&self) -> Pos {
-        self.0
-    }
-
-    fn hi(&self) -> Pos {
-        self.0
-    }
-}
+pub struct Epsilon<L: Lexicon + 'static>(PhantomData<L>);
 
 impl<L: Lexicon + 'static> Production for Epsilon<L> {
     type L = L;
@@ -42,7 +26,7 @@ impl<L: Lexicon + 'static> Production for Epsilon<L> {
 /// An AST node
 ///
 /// See [module-level documentation](super) for more information.
-pub trait Production: ToSpan + 'static {
+pub trait Production: 'static {
     /// The token type of the AST node
     type L: Lexicon + 'static;
 
@@ -127,3 +111,27 @@ macro_rules! production_passthrough {
     };
 }
 
+
+#[macro_export]
+#[doc(hidden)]
+macro_rules! register_sequence {
+    ($meta:ident, $($T:ty),*) => {{
+        let t = Self::id();
+        if $meta.visit(t, ||Self::debug().into_owned()) {
+            $meta.add_sequence(t, &[ $(<$T>::id()),* ]);
+            $(<$T>::register($meta);)*
+        }
+    }};
+}
+
+#[macro_export]
+#[doc(hidden)]
+macro_rules! register_union {
+    ($meta:ident, $($T:ty),*) => {{
+        let t = Self::id();
+        if $meta.visit(t, ||Self::debug().into_owned()) {
+            $meta.add_union(t, &[ $(<$T>::id()),* ]);
+            $(<$T>::register($meta);)*
+        }
+    }};
+}

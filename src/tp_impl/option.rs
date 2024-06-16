@@ -1,55 +1,38 @@
 //! optional syntax tree nodes ([`Option`], [`Exists`])
-use std::{borrow::Cow, marker::PhantomData};
+use std::borrow::Cow;
+use std::marker::PhantomData;
 
+use crate::syntax::{Epsilon, Metadata, MetadataBuilder, Result as SynResult};
+use crate::{Lexicon, Parser, Produce, Production, ToSpan};
 
-use teleparse_macros::derive_production;
-
-use crate::{syntax::{Epsilon, Metadata, MetadataBuilder, Result as SynResult}, Lexicon, Parser, Pos, Produce, Production, ToSpan};
-
-use super::{Node};
+use super::Node;
 
 // Option<T> => T | epsilon
 #[doc(hidden)]
-pub enum OptionProd<T: Production> {
-    Some(T),
-    None(Epsilon<T::L>),
-}
-
+pub struct OptionProd<T: Production>(PhantomData<T>);
+    
 impl<T: Production> Production for OptionProd<T> {
     type L = T::L;
     #[inline]
     fn debug() -> Cow<'static, str> {
-        Cow::Owned(format!("Option<{}>", T::debug()))
+        let inner = T::debug();
+        if let Some(rest) = inner.strip_prefix('(') {
+            if let Some(inner) = rest.strip_suffix(")+") {
+                return Cow::Owned(format!("({})*", inner))
+            }
+        }
+        Cow::Owned(format!("({})?", T::debug()))
     }
 
     fn register(meta: &mut MetadataBuilder<Self::L>) {
-        let t = Self::id();
-        if meta.visit(t, ||Self::debug().into_owned()) {
-            meta.add_union(t, &[T::id(), Epsilon::<T::L>::id()]);
-            T::register(meta);
-            Epsilon::<T::L>::register(meta);
-        }
+        crate::register_union!(meta, T, Epsilon<T::L>)
     }
 }
 
-impl<T: Production> ToSpan for OptionProd<T> {
-    fn lo(&self) -> Pos {
-        match self {
-            OptionProd::Some(t) => t.lo(),
-            OptionProd::None(e) => e.lo(),
-        }
-    }
-    fn hi(&self) -> Pos {
-        match self {
-            OptionProd::Some(t) => t.hi(),
-            OptionProd::None(e) => e.hi(),
-        }
-    }
-}
-
-/// Node that stores an optional subtree `Option<T> => T | epsilon`
+/// Node that stores an optional subtree
 #[derive(Node, ToSpan, Clone, PartialEq)]
-pub struct Optional<T: Produce>(Node<Option<T>>);
+#[doc(alias = "Option")]
+pub struct Optional<T: Produce>(pub Node<Option<T>>);
 
 impl<T: std::fmt::Debug + Produce> std::fmt::Debug for Optional<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -63,15 +46,6 @@ impl<T: std::fmt::Debug + Produce> std::fmt::Debug for Optional<T> {
         }
     }
 }
-
-// impl<T: Produce> From<OptionProd<T::Prod>> for Optional<T> {
-//     fn from(prod: OptionProd<T::Prod>) -> Self {
-//         match prod {
-//             OptionProd::Some(t) => Node::new(t.span(), Some(t)).into(),
-//             OptionProd::None(e) => Node::new(e.span(), None).into(),
-//         }
-//     }
-// }
 
 impl<T: Produce> Produce for Optional<T> {
     type Prod = OptionProd<T::Prod>;
@@ -194,8 +168,8 @@ mod tests {
     fn test_seq_not_ll1() {
         assert_not_ll1!(Seq, GrammarError::FirstFollowSeqConflict(
             "Seq".to_string(),
-            "Option<OpAdd>".to_string(),
-            "OpAdd".to_string(),
+            "(+)?".to_string(),
+            "+".to_string(),
             "\"+\"".to_string()
         ));
     }
@@ -207,7 +181,7 @@ mod tests {
     #[test]
     fn test_nested_not_ll1() {
         assert_not_ll1!(Nested, GrammarError::FirstFirstConflict(
-            "Option<Option<Ident>>".to_string(),
+            "((Ident)?)?".to_string(),
             "epsilon".to_string(),
             "<empty>".to_string(),
         ));

@@ -3,7 +3,7 @@ use crate::*;
 pub fn expand(input: &syn::DeriveInput) -> syn::Result<TokenStream2> {
     let teleparse = crate_ident();
     let ident = &input.ident;
-    let (mut impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
+    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
     
     let data = match &input.data {
         syn::Data::Struct(data) => {

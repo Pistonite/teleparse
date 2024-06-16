@@ -5,7 +5,7 @@ use crate::{Lexicon, Span};
 
 use super::FirstSet;
 
-/// Error encountered during syntax analysis
+/// Error encountered during parsing
 #[derive(Debug, Clone, ToSpan, PartialEq)]
 pub struct Error<L: Lexicon> {
     pub span: Span,
@@ -58,7 +58,19 @@ pub enum Result<T, L: Lexicon> {
     Panic(Vec<Error<L>>),
 }
 
+impl<T, L: Lexicon> From<(T, Vec<Error<L>>)> for Result<T, L> {
+    #[inline]
+    fn from((value, errors): (T, Vec<Error<L>>)) -> Self {
+        if errors.is_empty() {
+            Result::Success(value)
+        } else {
+            Result::Recovered(value, errors)
+        }
+    }
+}
+
 impl<T, L: Lexicon> Result<T, L> {
+
     #[inline]
     pub fn map<T2, F: FnOnce(T) -> T2>(self, f: F) -> Result<T2, L> {
         match self {
@@ -67,5 +79,25 @@ impl<T, L: Lexicon> Result<T, L> {
             Self::Panic(errors) => Result::Panic(errors),
         }
     }
+
     
+}
+
+#[macro_export]
+#[doc(hidden)]
+macro_rules! handle_result {
+    ($errors:ident, $parse:expr) => {{
+        let result = $parse;
+        match result {
+            $crate::syntax::Result::Success(x) => x,
+            $crate::syntax::Result::Recovered(x, e) => {
+                $errors.extend(e);
+                x
+            },
+            $crate::syntax::Result::Panic(e) => {
+                $errors.extend(e);
+                return $crate::syntax::Result::Panic($errors);
+            }
+        }
+    }}
 }

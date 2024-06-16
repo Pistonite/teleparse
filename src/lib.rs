@@ -49,15 +49,15 @@ pub mod tp {
     pub use crate::tp_impl::Node;
     pub use crate::tp_impl::option::Optional as Option;
     pub use crate::tp_impl::option::Exists;
-    // pub use crate::tp_impl::string::{Quote, Parse, ParseDefault};
-    // pub type String<T> = Quote<std::string::String, T>;
-    // pub use crate::tp_impl::iter::Plus;
-    // pub type Nev<T> = Plus<std::vec::Vec<T>, T>;
-    // pub type NevDeque<T> = Plus<std::collections::VecDeque<T>, T>;
-    // pub use crate::tp_impl::iter::Star;
-    // pub type Vec<T> = Star<std::vec::Vec<T>, T>;
-    // pub type VecDeque<T> = Star<std::collections::VecDeque<T>, T>;
-    // pub use crate::tp_impl::iter::Loop;
+    pub use crate::tp_impl::string::{Quote, Parse};
+    pub type String<T> = Quote<std::string::String, T>;
+    pub use crate::tp_impl::iter::Plus;
+    pub type Nev<T> = Plus<std::vec::Vec<T>, T>;
+    pub type NevDeque<T> = Plus<std::collections::VecDeque<T>, T>;
+    pub use crate::tp_impl::iter::Star;
+    pub type Vec<T> = Star<std::vec::Vec<T>, T>;
+    pub type VecDeque<T> = Star<std::collections::VecDeque<T>, T>;
+    pub use crate::tp_impl::iter::Loop;
 }
 
 
@@ -72,7 +72,7 @@ pub enum GrammarError {
     LeftRecursion(String),
     #[error("The non-terminal `{0}` has a FIRST/FIRST conflict producing `{1}`. The conflicting terminals are: {2}")]
     FirstFirstConflict(String, String, String),
-    #[error("The non-terminal `{0}` has a FIRST/FOLLOW conflict producing `{1}` followed by `{2}`. The conflicting terminals are: {3}")]
+    #[error("The non-terminal `{0}` has a FIRST/FOLLOW conflict producing `{1}` followed by `{2}`. `{1}` can be empty and both can start with: {3}")]
     FirstFollowSeqConflict(String, String, String, String),
     #[error("The non-terminal `{0}` has conflict in its FIRST and FOLLOW sets. The conflicting terminals are: {1}")]
     FirstFollowConflict(String, String),

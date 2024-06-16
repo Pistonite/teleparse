@@ -120,20 +120,25 @@ impl Tstar {
 #[derive_syntax]
 #[derive(Debug, PartialEq)]
 enum F {
-    Paren((ParenOpen, Box<E>, ParenClose)),
-    Ident
+    Paren(Paren),
+    Ident(Ident),
 }
+
+#[derive_syntax]
+#[derive(Debug, PartialEq)]
+struct Paren(ParenOpen, Box<E>, ParenClose);
+
 
 impl F {
     fn to_string(&self, input: &str) -> String {
-        // todo!()
-        match self {
-            F::Paren((open, e, close)) => {
-                format!("{}{}{}",
-                open.0.src(input), e.to_string(input), close.0.src(input))
-            },
-            F::Ident(id) => id.0.src(input).to_string()
-        }
+        todo!()
+        // match self {
+        //     F::Paren((open, e, close)) => {
+        //         format!("{}{}{}",
+        //         open.0.src(input), e.to_string(input), close.0.src(input))
+        //     },
+        //     F::Ident(id) => id.0.src(input).to_string()
+        // }
     
     }
 }

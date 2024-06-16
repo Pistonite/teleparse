@@ -5,7 +5,6 @@ pub(crate) use proc_macro2::Span;
 pub(crate) use quote::{quote, format_ident};
 pub(crate) use syn::{parse_macro_input, parse_quote};
 pub(crate) use syn::punctuated::Punctuated;
-pub(crate) use syn::spanned::Spanned;
 
 /// Type to distinct with proc_macro::TokenStream
 pub(crate) type TokenStream2 = proc_macro2::TokenStream;
@@ -113,15 +112,6 @@ pub(crate) fn parse_strip_root_meta_optional(input: &mut syn::DeriveInput) -> sy
         EnsureOne::One(attr) => attr,
     };
     Ok(Some(parse_crate_attr_meta(&root_attr)?))
-}
-
-pub(crate) fn parse_strip_root_meta(input: &mut syn::DeriveInput) -> syn::Result<Punctuated<syn::Meta, syn::Token![,]>> {
-    match parse_strip_root_meta_optional(input)? {
-        Some(metas) => Ok(metas),
-        None => {
-            syn_error!(&input.ident, "This requires a {} attribute to define additional properties.", CRATE)
-        }
-    }
 }
 
 #[must_use]

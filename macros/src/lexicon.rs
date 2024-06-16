@@ -40,7 +40,7 @@ pub fn expand(input: &mut syn::DeriveInput) -> syn::Result<TokenStream2> {
         checked_regex_rule(ignore)?;
     }
 
-    check_enum_precondition(enum_data, &variant_attrs)?;
+    check_enum_precondition(enum_data)?;
 
     let repr_ty = match enum_data.variants.len() {
         0 => syn_error!(
@@ -375,8 +375,8 @@ fn parse_root_attributes(input: &mut syn::DeriveInput) -> syn::Result<RootAttr> 
     Ok(RootAttr { ignore, terminal_parse })
 }
 
-fn check_enum_precondition(enum_data: &syn::DataEnum, variant_attrs: &[Vec<syn::Attribute>]) -> syn::Result<()> {
-    for (variant, attrs) in std::iter::zip(enum_data.variants.iter(), variant_attrs.iter()) {
+fn check_enum_precondition(enum_data: &syn::DataEnum) -> syn::Result<()> {
+    for variant in enum_data.variants.iter() {
         if !matches!(variant.fields, syn::Fields::Unit) {
             syn_error!(variant, "derive_lexicon must be used with enums with only unit variants. The integer values will be generated");
         }
@@ -396,7 +396,10 @@ fn derive_terminal(
     match_lit: Option<&syn::LitStr>,
 ) -> TokenStream2 {
     let teleparse = crate_ident();
-    let terminal_ident_str = terminal_ident.to_string();
+    let debug_str = match match_lit {
+        Some(lit) => lit.value(),
+        None =>terminal_ident.to_string()
+    };
     let match_option_impl = match match_lit {
         Some(match_lit) => quote! {Some(#match_lit) },
         None => quote! {None },
@@ -410,11 +413,11 @@ fn derive_terminal(
             parser.parse_token(#enum_ident::#variant_ident).map(Self::from)
         }
     };
-    // let terminal_parse_impl = if terminal_parse {
-    //     Some(root::expand(&terminal_ident))
-    // } else {
-    //     None
-    // };
+    let terminal_parse_impl = if terminal_parse {
+        Some(root::expand(&terminal_ident))
+    } else {
+        None
+    };
     quote! {
         #[doc = #doc]
         #[derive(Clone, Copy, PartialEq, Eq, Hash, #teleparse::ToSpan)]
@@ -441,53 +444,15 @@ fn derive_terminal(
             #[automatically_derived]
             impl #teleparse::syntax::Production for #terminal_ident {
                 type L = #enum_ident;
-                fn debug() -> ::std::borrow::Cow<'static, str> { ::std::borrow::Cow::Borrowed(#terminal_ident_str) }
+                fn debug() -> ::std::borrow::Cow<'static, str> { 
+                    ::std::borrow::Cow::Borrowed(#debug_str) 
+                }
                 fn register(meta: &mut #teleparse::syntax::MetadataBuilder<Self::L>) {
                     let t = <Self as #teleparse::syntax::Production>::id();
-                    if meta.visit(t, ||#terminal_ident_str.to_string()) {
+                    if meta.visit(t, ||Self::debug().into_owned()) {
                         meta.add_terminal(t, #enum_ident::#variant_ident, #match_option_impl);
-                        // let expr = #teleparse::syntax::FirstRel::insert_token(
-                        //     t, 
-                        //     #enum_ident::#variant_ident,
-                        //     #match_option_impl
-                        // );
-                        // builder.add(expr);
                     }
                 }
-                // fn check_left_recursive(
-                //     _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-                //     _stack: &mut ::std::vec::Vec<::std::string::String>, 
-                //     _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-                //     _first: &#teleparse::syntax::First<Self::L>
-                // ) -> ::core::result::Result<(), #teleparse::GrammarError> {
-                //     // a terminal has no recursive rules
-                //     Ok(())
-                // }
-                // fn check_first_conflict(
-                //     _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>, 
-                //     _first: &#teleparse::syntax::First<Self::L>
-                // ) -> ::core::result::Result<(), #teleparse::GrammarError> {
-                //     // a terminal has no recursive rules and therefore no conflicts
-                //     Ok(())
-                // }
-                // fn build_follow(_builder: &mut #teleparse::syntax::FollowBuilder<Self::L>) {
-                //     // no FOLLOW rules are produced from a terminal
-                // }
-                // fn check_first_follow_conflict(
-                //     _seen: &mut std::collections::BTreeSet<::core::any::TypeId>, 
-                //     _first: &#teleparse::syntax::First<Self::L>, 
-                //     _follow: &#teleparse::syntax::Follow<Self::L>
-                // ) -> ::core::result::Result<(), #teleparse::GrammarError> {
-                //     // terminals don't produce epsilon and therefore has no FIRST/FOLLOW conflict
-                //     Ok(())
-                // }
-                // fn build_jump(
-                //     _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>, 
-                //     _first: &#teleparse::syntax::First<Self::L>,
-                //     _jump: &mut #teleparse::syntax::Jump<Self::L>
-                // ) {
-                //     // no parse table needed
-                // }
             }
             #[automatically_derived]
             impl #teleparse::parser::Produce for #terminal_ident {
@@ -499,7 +464,7 @@ fn derive_terminal(
                     #match_parse_impl
                 }
             }
-            // #terminal_parse_impl
+            #terminal_parse_impl
         };
     }
 }

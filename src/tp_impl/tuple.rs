@@ -1,35 +1,65 @@
 
 
-// #[doc(hidden)]
-// macro_rules! derive_tuple_pt {
-//     (($($e:tt),*)) => {
-// const _: () = {
-//     #[automatically_derived]
-//     impl<L: $crate::lex::Lexicon, 
-//         $($e: $crate::parser::ParseTree,)*
-//     > $crate::parser::ParseTree for ($($e,)*)
-//     where
-//         $(<$e as $crate::parser::ParseTree>::AST: $crate::syntax::AbstractSyntaxTree<L=L>,)*
-//     {
-//         type AST = ($(<$e>::AST,)*);
-//
-//         fn from_ast<'s>(ast: Self::AST, parser: &mut $crate::parser::Parser<'s, L>) -> Self {
-//             #[allow(non_snake_case)]
-//             let ($($e,)*) = ast;
-//             ($(<$e>::from_ast($e, parser),)*)
-//         }
-//     }
-// };
-//
-//     }
-// }
+#[doc(hidden)]
+macro_rules! derive_tuple_production {
+    ($e1:tt, $($e:tt),*) => {
+const _: () = {
+    use $crate::syntax::Production;
+    #[automatically_derived]
+    impl<
+        $e1: Production,
+        $($e: Production<L=<$e1 as $crate::syntax::Production>::L>,)*
+    > Production for ($e1, $($e),*)
+    {
+        type L = <$e1 as Production>::L;
+        fn debug() -> ::std::borrow::Cow<'static, str> {
+            let mut s = ::std::string::String::from("(");
+            s.push_str(&<$e1>::debug()); 
+        $( 
+            s.push(' ');
+            s.push_str(&<$e>::debug()); 
+        )*
+            s.push(')');
 
-use teleparse_macros::derive_tuple_production;
+            ::std::borrow::Cow::Owned(s)
+        }
+        fn register(meta: &mut $crate::syntax::MetadataBuilder<Self::L>) {
+            $crate::register_sequence!(meta, $e1, $( $e ),*);
+        }
+    }
+    impl<L: $crate::lex::Lexicon, 
+        $e1: $crate::parser::Produce,
+        $($e: $crate::parser::Produce,)*
+    > $crate::parser::Produce for ($e1, $($e,)*)
+    where
+        <$e1 as $crate::parser::Produce>::Prod: Production<L=L>,
+        $(<$e as $crate::parser::Produce>::Prod: Production<L=L>,)*
+    {
+        type Prod = (<$e1>::Prod, $(<$e>::Prod,)*);
 
-derive_tuple_production!{(A, B)}
-derive_tuple_production!{(A, B, C)}
-derive_tuple_production!{(A, B, C, D)}
-derive_tuple_production!{(A, B, C, D, E)}
+        fn produce<'s>(
+            parser: &mut $crate::parser::Parser<'s, <Self::Prod as Production>::L>, 
+            meta: &$crate::syntax::Metadata<<Self::Prod as Production>::L>,
+        ) -> $crate::syntax::Result<Self, <Self::Prod as Production>::L> {
+            let mut errors = ::std::vec::Vec::new();
+            let result = (
+            $crate::handle_result!(errors, <$e1>::produce(parser, meta)),
+        $(
+            $crate::handle_result!(errors, <$e>::produce(parser, meta))
+        ),*
+            );
+            (result, errors).into()
+        }
+    }
+};
+
+    }
+}
+
+derive_tuple_production!(A, B);
+derive_tuple_production!(A, B, C);
+derive_tuple_production!(A, B, C, D);
+derive_tuple_production!(A, B, C, D, E);
 
 #[cfg(test)]
 mod tests {
