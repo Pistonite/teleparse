@@ -1,17 +1,57 @@
 //! optional syntax tree nodes ([`Option`], [`Exists`])
-use std::marker::PhantomData;
+use std::{borrow::Cow, marker::PhantomData};
 
 
-use crate::parser::ParseTree;
-use crate::{AbstractSyntaxTree, Parser, ToSpan};
+use teleparse_macros::derive_production;
 
-use super::{Node, OptionAST};
+use crate::{syntax::{Epsilon, Metadata, MetadataBuilder, Result as SynResult}, Lexicon, Parser, Pos, Produce, Production, ToSpan};
+
+use super::{Node};
+
+// Option<T> => T | epsilon
+#[doc(hidden)]
+pub enum OptionProd<T: Production> {
+    Some(T),
+    None(Epsilon<T::L>),
+}
+
+impl<T: Production> Production for OptionProd<T> {
+    type L = T::L;
+    #[inline]
+    fn debug() -> Cow<'static, str> {
+        Cow::Owned(format!("Option<{}>", T::debug()))
+    }
+
+    fn register(meta: &mut MetadataBuilder<Self::L>) {
+        let t = Self::id();
+        if meta.visit(t, ||Self::debug().into_owned()) {
+            meta.add_union(t, &[T::id(), Epsilon::<T::L>::id()]);
+            T::register(meta);
+            Epsilon::<T::L>::register(meta);
+        }
+    }
+}
+
+impl<T: Production> ToSpan for OptionProd<T> {
+    fn lo(&self) -> Pos {
+        match self {
+            OptionProd::Some(t) => t.lo(),
+            OptionProd::None(e) => e.lo(),
+        }
+    }
+    fn hi(&self) -> Pos {
+        match self {
+            OptionProd::Some(t) => t.hi(),
+            OptionProd::None(e) => e.hi(),
+        }
+    }
+}
 
 /// Node that stores an optional subtree `Option<T> => T | epsilon`
 #[derive(Node, ToSpan, Clone, PartialEq)]
-pub struct Optional<T: ParseTree>(Node<Option<T>>);
+pub struct Optional<T: Produce>(Node<Option<T>>);
 
-impl<T: std::fmt::Debug + ParseTree> std::fmt::Debug for Optional<T> {
+impl<T: std::fmt::Debug + Produce> std::fmt::Debug for Optional<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self.0.value {
             Some(node) => {
@@ -24,47 +64,84 @@ impl<T: std::fmt::Debug + ParseTree> std::fmt::Debug for Optional<T> {
     }
 }
 
-impl<T: ParseTree> ParseTree for Optional<T> {
-    type AST = OptionAST<T::AST>;
+// impl<T: Produce> From<OptionProd<T::Prod>> for Optional<T> {
+//     fn from(prod: OptionProd<T::Prod>) -> Self {
+//         match prod {
+//             OptionProd::Some(t) => Node::new(t.span(), Some(t)).into(),
+//             OptionProd::None(e) => Node::new(e.span(), None).into(),
+//         }
+//     }
+// }
 
-    fn from_ast<'s>(ast: Self::AST, parser: &mut Parser<'s, <Self::AST as AbstractSyntaxTree>::L>) -> Self {
-        match ast {
-            OptionAST::Some(ast) => {
-                let t = T::from_ast(ast, parser);
-                Node::new(t.span(), Some(t)).into()
-            }
-            OptionAST::None(span) => {
-                Node::new(span, None).into()
-            }
-        }
+impl<T: Produce> Produce for Optional<T> {
+    type Prod = OptionProd<T::Prod>;
+    fn produce<'s>(
+        parser: &mut Parser<'s, <Self::Prod as Production>::L>,
+        meta: &Metadata<<Self::Prod as Production>::L>,
+    ) -> SynResult<Self, <Self::Prod as Production>::L> {
+        produce_option(parser,meta,|x|x).map(Self::from)
     }
+
 }
 
 /// Node that stores if an optional subtree is produced
 #[derive(Node, ToSpan, Clone, PartialEq)]
-pub struct Exists<T: ParseTree>(Node<bool>, PhantomData<T>);
+pub struct Exists<T: Produce>(Node<bool>, PhantomData<T>);
 
-impl<T: ParseTree> std::fmt::Debug for Exists<T> {
+impl<T: Produce> std::fmt::Debug for Exists<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.0.fmt(f)
     }
 }
 
-impl<T: ParseTree> ParseTree for Exists<T> {
-    type AST = OptionAST<T::AST>;
+impl<T: Produce> Produce for Exists<T> {
+    type Prod = OptionProd<T::Prod>;
+    fn produce<'s>(
+        parser: &mut Parser<'s, <Self::Prod as Production>::L>,
+        meta: &Metadata<<Self::Prod as Production>::L>,
+    ) -> SynResult<Self, <Self::Prod as Production>::L> {
+        produce_option(parser,meta,|x: Option<T>|x.is_some()).map(Self::from)
+    }
 
-    fn from_ast<'s>(ast: Self::AST, parser: &mut Parser<'s, <Self::AST as AbstractSyntaxTree>::L>) -> Self {
-        match ast {
-            OptionAST::Some(ast) => {
-                let t = T::from_ast(ast, parser);
-                Node::new(t.span(), true).into()
+}
+    fn produce_option<'s, T , O, F: FnOnce(Option<T>) -> O, L: Lexicon>(
+        parser: &mut Parser<'s, L>,
+        meta: &Metadata<L>,
+f: F
+    ) -> SynResult<Node<O>, L>
+where T: Produce + ToSpan,
+T::Prod: Production<L = L>,
+{
+        let token = parser.peek_token_src();
+        if token.is_none() {
+            // produces epsilon
+            return SynResult::Success(
+                Node::new(parser.current_span_empty(), f(None))
+            );
+        }
+        let first = meta.first.get(&T::prod_id());
+        if !first.contains(token) {
+            // produces epsilon
+            return SynResult::Success(
+                Node::new(parser.current_span_empty(), f(None))
+            );
+        }
+        // if parse fails, delay to parent to panic
+        match T::produce(parser, meta) {
+            SynResult::Success(t) => {
+                SynResult::Success(Node::new(t.span(), f(Some(t))))
+            },
+            SynResult::Recovered(t, error) =>{
+                SynResult::Recovered(Node::new(t.span(), f(Some(t))), error)
             }
-            OptionAST::None(span) => {
-                Node::new(span, false).into()
+            SynResult::Panic(error) => {
+                SynResult::Recovered(
+                        Node::new(parser.current_span_empty(), f(None))
+                        , error
+                    )
             }
         }
     }
-}
 
 #[cfg(test)]
 mod tests {
@@ -82,11 +159,13 @@ mod tests {
     struct OptIdent(tp::Option<Ident>);
 
     #[test]
-    fn test_none() {
-        let t = OptIdent::parse("+").unwrap().unwrap();
+    fn test_none() -> Result<(), GrammarError> {
+        let t = OptIdent::parse("+")?.unwrap();
         let t_str = format!("{:?}", t.0);
         assert_eq!(t_str, "None(0)");
         assert_eq!(t, OptIdent(Node::new(0..0, None).into()));
+
+        Ok(())
     }
 
     #[test]
@@ -100,9 +179,11 @@ mod tests {
     }
 
     #[test]
-    fn test_use_as_option() {
-        let t = OptIdent::parse("+").unwrap().unwrap();
-        assert!(t.0.is_none());
+    fn test_use_as_option() -> Result<(), GrammarError> {
+        let t = OptIdent::parse("a")?.unwrap();
+        assert!(t.0.is_some());
+
+        Ok(())
     }
 
     #[derive_syntax]
@@ -127,8 +208,8 @@ mod tests {
     fn test_nested_not_ll1() {
         assert_not_ll1!(Nested, GrammarError::FirstFirstConflict(
             "Option<Option<Ident>>".to_string(),
-            "Option<Ident>".to_string(),
-            "<epsilon>".to_string(),
+            "epsilon".to_string(),
+            "<empty>".to_string(),
         ));
     }
 

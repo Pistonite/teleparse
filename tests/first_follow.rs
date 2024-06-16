@@ -126,6 +126,7 @@ enum F {
 
 impl F {
     fn to_string(&self, input: &str) -> String {
+        // todo!()
         match self {
             F::Paren((open, e, close)) => {
                 format!("{}{}{}",
@@ -146,12 +147,12 @@ fn first_table() {
     let first_t_prime = first_set!( TokenType { e , Op:"*" });
 
     let meta = E::metadata().as_ref().unwrap();
-    assert_eq!(meta.first.get_pt::<E>() , &first_e_t_f);
-    assert_eq!(meta.first.get_pt::<T>() , &first_e_t_f);
-    assert_eq!(meta.first.get_pt::<F>() , &first_e_t_f);
+    assert_eq!(meta.first.get(&E::prod_id()) , &first_e_t_f);
+    assert_eq!(meta.first.get(&T::prod_id()) , &first_e_t_f);
+    assert_eq!(meta.first.get(&F::prod_id()) , &first_e_t_f);
 
-    assert_eq!(meta.first.get_pt::<Eprime>() , &first_e_prime);
-    assert_eq!(meta.first.get_pt::<Tprime>() , &first_t_prime);
+    assert_eq!(meta.first.get(&Eprime::prod_id()) , &first_e_prime);
+    assert_eq!(meta.first.get(&Eprime::prod_id()) , &first_t_prime);
 }
 
 #[test]
@@ -163,11 +164,11 @@ fn follow_table() {
     let follow_f = follow_set!(TokenType { e, Op:"*", Op:"+", Paren:")" });
 
     let meta = E::metadata().as_ref().unwrap();
-    assert_eq!(meta.follow.get_pt::<E>() , &follow_e_eprime);
-    assert_eq!(meta.follow.get_pt::<Eprime>() , &follow_e_eprime);
-    assert_eq!(meta.follow.get_pt::<T>() , &follow_t_tprime);
-    assert_eq!(meta.follow.get_pt::<Tprime>() , &follow_t_tprime);
-    assert_eq!(meta.follow.get_pt::<F>() , &follow_f);
+    assert_eq!(meta.follow.get(&E::prod_id()) , &follow_e_eprime);
+    assert_eq!(meta.follow.get(&Eprime::prod_id()) , &follow_e_eprime);
+    assert_eq!(meta.follow.get(&T::prod_id()) , &follow_t_tprime);
+    assert_eq!(meta.follow.get(&Tprime::prod_id()) , &follow_t_tprime);
+    assert_eq!(meta.follow.get(&F::prod_id()) , &follow_f);
 
 }
 

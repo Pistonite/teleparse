@@ -15,10 +15,9 @@ pub mod prelude {
     pub use crate::ToSpan as _;
     pub use crate::Lexicon as _;
     pub use crate::Lexer as _;
-    pub use crate::AbstractSyntaxTree as _;
-    pub use crate::AbstractSyntaxRoot as _;
-    pub use crate::ParseTree as _;
-    pub use crate::ParseRoot as _;
+    pub use crate::Production as _;
+    pub use crate::Produce as _;
+    pub use crate::Root as _;
 
     pub use crate::tp;
     // util
@@ -38,11 +37,11 @@ pub use lex::{ToSpan, Lexer, Lexicon, Pos, Span, Token};
 
 pub mod syntax;
 #[doc(inline)]
-pub use syntax::{AbstractSyntaxTree, AbstractSyntaxRoot};
+pub use syntax::Production;
 
 pub mod parser;
 #[doc(inline)]
-pub use parser::{Parser, ParseTree, ParseRoot};
+pub use parser::{Parser, Produce, Root};
 
 mod tp_impl;
 
@@ -50,15 +49,15 @@ pub mod tp {
     pub use crate::tp_impl::Node;
     pub use crate::tp_impl::option::Optional as Option;
     pub use crate::tp_impl::option::Exists;
-    pub use crate::tp_impl::string::{Quote, Parse, ParseDefault};
-    pub type String<T> = Quote<std::string::String, T>;
-    pub use crate::tp_impl::iter::Plus;
-    pub type Nev<T> = Plus<std::vec::Vec<T>, T>;
-    pub type NevDeque<T> = Plus<std::collections::VecDeque<T>, T>;
-    pub use crate::tp_impl::iter::Star;
-    pub type Vec<T> = Star<std::vec::Vec<T>, T>;
-    pub type VecDeque<T> = Star<std::collections::VecDeque<T>, T>;
-    pub use crate::tp_impl::iter::Loop;
+    // pub use crate::tp_impl::string::{Quote, Parse, ParseDefault};
+    // pub type String<T> = Quote<std::string::String, T>;
+    // pub use crate::tp_impl::iter::Plus;
+    // pub type Nev<T> = Plus<std::vec::Vec<T>, T>;
+    // pub type NevDeque<T> = Plus<std::collections::VecDeque<T>, T>;
+    // pub use crate::tp_impl::iter::Star;
+    // pub type Vec<T> = Star<std::vec::Vec<T>, T>;
+    // pub type VecDeque<T> = Star<std::collections::VecDeque<T>, T>;
+    // pub use crate::tp_impl::iter::Loop;
 }
 
 
@@ -80,7 +79,7 @@ pub enum GrammarError {
 }
 
 impl GrammarError {
-    pub fn left_recursion(stack: &[String], current: &str) -> Self {
+    pub fn left_recursion(stack: &[&str], current: &str) -> Self {
         let message = format!("{} -> {}", stack.join(" -> "), current);
         Self::LeftRecursion(message)
     }

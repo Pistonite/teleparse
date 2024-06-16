@@ -5,23 +5,26 @@ pub fn expand(input: &syn::DeriveInput) -> syn::Result<TokenStream2> {
     let ident = &input.ident;
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
 
-    let body = match &input.data {
+    let (lo_body, hi_body) = match &input.data {
         syn::Data::Union(_) => {
             syn_error!(input, "Union is not supported for ToSpan");
         }
         syn::Data::Enum(data) => {
-            expand_enum(data)?
+            (expand_enum(data, quote! { lo() })?, expand_enum(data, quote! { hi() })?)
         }
         syn::Data::Struct(data) => {
-            expand_struct(data)?
+            (expand_struct(data, quote! { lo() })?, expand_struct(data, quote! { hi() })?)
         }
     };
 
     let out = quote! {
         #[automatically_derived]
         impl #impl_generics #teleparse::ToSpan for #ident #ty_generics #where_clause {
-            fn span(&self) -> #teleparse::Span {
-                #body
+            fn lo(&self) -> #teleparse::Pos {
+                #lo_body
+            }
+            fn hi(&self) -> #teleparse::Pos {
+                #hi_body
             }
         }
     };
@@ -29,7 +32,7 @@ pub fn expand(input: &syn::DeriveInput) -> syn::Result<TokenStream2> {
     Ok(out)
 }
 
-fn expand_struct(input: &syn::DataStruct) -> syn::Result<TokenStream2> {
+fn expand_struct(input: &syn::DataStruct, expr: TokenStream2) -> syn::Result<TokenStream2> {
     match &input.fields {
         syn::Fields::Named(fields) => {
             let ident = match fields.named.first() {
@@ -39,12 +42,12 @@ fn expand_struct(input: &syn::DataStruct) -> syn::Result<TokenStream2> {
                 }
             };
             Ok(quote! {
-                self.#ident.span()
+                self.#ident.#expr
             })
         }
         syn::Fields::Unnamed(_) => {
             Ok(quote! {
-                self.0.span()
+                self.0.#expr
             })
         }
         syn::Fields::Unit => {
@@ -53,7 +56,7 @@ fn expand_struct(input: &syn::DataStruct) -> syn::Result<TokenStream2> {
     }
 }
 
-fn expand_enum(input: &syn::DataEnum) -> syn::Result<TokenStream2> {
+fn expand_enum(input: &syn::DataEnum, expr: TokenStream2) -> syn::Result<TokenStream2> {
     let mut arms = TokenStream2::new();
     for variant in &input.variants {
         let ident = &variant.ident;
@@ -66,12 +69,12 @@ fn expand_enum(input: &syn::DataEnum) -> syn::Result<TokenStream2> {
                     }
                 };
                 arms.extend(quote! {
-                    Self::#ident { #field, .. } => #field.span(),
+                    Self::#ident { #field, .. } => #field.#expr,
                 });
             }
             syn::Fields::Unnamed(_) => {
                 arms.extend(quote! {
-                    Self::#ident(x, ..) => x.span(),
+                    Self::#ident(x, ..) => x.#expr,
                 });
             }
             syn::Fields::Unit => {

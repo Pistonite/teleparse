@@ -13,24 +13,24 @@ use super::{First, FirstSet};
 #[derive(Derivative, Debug)]
 #[derivative(Default(new="true", bound=""))]
 pub struct FirstBuilder<L: Lexicon> {
-    /// Which AST types are already processed
-    seen: BTreeMap<TypeId, String>,
+    // /// Which AST types are already processed
+    // seen: BTreeMap<TypeId, String>,
     /// Relations to build the FIRST function
     rels: Vec<FirstRel<L>>,
 }
 
 impl<L: Lexicon> FirstBuilder<L> {
-    /// Visit an AST node type and return true if it has not been visited
-    /// and rules should be constructed
-    #[must_use]
-    #[inline]
-    pub fn visit(&mut self, ast: TypeId, name: &str) -> bool {
-        if self.seen.contains_key(&ast) {
-            return false;
-        }
-        self.seen.insert(ast, name.to_string());
-        true
-    }
+    // /// Visit an AST node type and return true if it has not been visited
+    // /// and rules should be constructed
+    // #[must_use]
+    // #[inline]
+    // pub fn visit(&mut self, ast: TypeId, name: &str) -> bool {
+    //     if self.seen.contains_key(&ast) {
+    //         return false;
+    //     }
+    //     self.seen.insert(ast, name.to_string());
+    //     true
+    // }
 
     /// Add a [FIRST relation](FirstRel) to the builder
     #[inline]
@@ -40,7 +40,7 @@ impl<L: Lexicon> FirstBuilder<L> {
 
     /// Build for X -> Y1 | Y2 | ... | Yn
     #[inline]
-    pub fn build_enum(&mut self, x: TypeId, variants: &[TypeId]) {
+    pub fn build_union(&mut self, x: TypeId, variants: &[TypeId]) {
         for y in variants {
             self.add(FirstRel::union_minus_epsilon(x, *y));
             self.add(FirstRel::if_epsilon_in_all_iter([y], FirstRel::insert_epsilon(x)));
@@ -61,7 +61,7 @@ impl<L: Lexicon> FirstBuilder<L> {
     }
 
     /// Build the FIRST table into a [First] instance
-    pub fn build(self) -> (BTreeMap<TypeId, String>, First<L>) {
+    pub fn build(self) -> First<L> {
         let mut first = BTreeMap::<TypeId, FirstSet<L>>::new();
         let mut rels = self.rels;
         let mut changed = true;
@@ -70,7 +70,7 @@ impl<L: Lexicon> FirstBuilder<L> {
             changed = Self::process_rels(&mut first, &mut rels);
         }
 
-        (self.seen, First::new(first))
+        First::new(first)
     }
 
     /// Process the relations once and return if anything changed

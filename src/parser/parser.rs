@@ -3,9 +3,9 @@ use std::marker::PhantomData;
 
 use crate::lex::{Lexer, Set, Token, TokenSrc};
 use crate::syntax::{self, Error, ErrorKind, FirstSet, FollowSet, Metadata, Result as SynResult};
-use crate::{AbstractSyntaxRoot, AbstractSyntaxTree, GrammarError, Lexicon, Span, ToSpan};
+use crate::{GrammarError, Lexicon, Production, Span, ToSpan};
 
-use super::{Info, ParseRoot, ParseTree};
+use super::{Info, Root, Produce};
 
 pub struct Parser<'s, L: Lexicon> {
     /// The core state of the parser
@@ -45,14 +45,14 @@ impl<'s, L: Lexicon> Parser<'s, L> {
     // /Note that if you are parsing the same root multiple times, 
     // /it's more efficient to use [`Parser::iter`]
     #[inline]
-    pub fn parse<R: ParseRoot>(&mut self) -> Result<Option<R>, GrammarError>
-    where R::AST : AbstractSyntaxRoot<L=L>
+    pub fn parse<T: Root>(&mut self) -> Result<Option<T>, GrammarError> 
+    where T::Prod : Production<L=L>
     {
-        let meta = match R::metadata() {
+        let meta = match T::metadata() {
             Ok(meta) => meta,
             Err(err) => return Err(err.clone()),
         };
-        Ok(self.parse_with_meta::<R>(&meta))
+        Ok(self.parse_with_meta::<T>(&meta))
     }
 
     // /// Create an iterator that can be used to parse all syntax tree roots in the source
@@ -70,23 +70,22 @@ impl<'s, L: Lexicon> Parser<'s, L> {
     //     Ok(self.iter()?.collect())
     // }
 
-    fn parse_with_meta<R: ParseTree>(&mut self, meta: &Metadata<L>) -> Option<R> 
-    where R::AST : AbstractSyntaxTree<L=L>
+    fn parse_with_meta<T: Root>(&mut self, meta: &Metadata<L>) -> Option<T> 
+    where T::Prod : Production<L=L>
     {
-        let ast = match R::AST::parse_ast(self, meta) {
+        match T::produce(self, meta) {
             SynResult::Success(tree) => {
-                tree
+                Some(tree)
             }
             SynResult::Recovered(tree, errors) => {
                 self.info.errors.extend(errors);
-                tree
+                Some(tree)
             }
             SynResult::Panic(errors) => {
                 self.info.errors.extend(errors);
-                return None;
+                None
             }
-        };
-        Some(R::from_ast(ast, self))
+        }
     }
 
     // /// Attempt to parse one syntax tree into the state, may skip invalid tokens and characters

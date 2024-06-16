@@ -194,7 +194,7 @@ impl<L: Lexicon> TerminalSet<L> {
         let mut terminals = BTreeSet::new();
         if include_e {
             if self.e && other.e {
-                terminals.insert("".to_string());
+                terminals.insert("<empty>".to_string());
             }
         }
         for ((ty, set), other_set) in self.map.iter_zip().zip(other.map.iter()) {
@@ -219,7 +219,7 @@ impl<L: Lexicon> TerminalSet<L> {
     pub fn to_repr(&self) -> BTreeSet<String> {
         let mut terminals = BTreeSet::new();
         if self.e {
-            terminals.insert("".to_string());
+            terminals.insert("<empty>".to_string());
         }
         for (ty, set) in self.map.iter_zip() {
             match set.iter() {
@@ -302,7 +302,7 @@ mod tests {
         assert!(set.contains_e());
         assert!(set.contains(None));
     }
-
+    
     #[test]
     fn insert() {
         let mut set = TerminalSet::new();
@@ -317,7 +317,7 @@ mod tests {
         assert!(set.contains(Some((T::B, "a").into())));
         assert!(!set.contains(Some((T::B, "b").into())));
     }
-
+    
     #[test]
     fn union_empty() {
         let mut set_a = TerminalSet::<T>::new();
@@ -328,55 +328,55 @@ mod tests {
         assert_eq!(set_a, set_b);
         assert_eq!(set_a, set_a);
     }
-
+    
     #[test]
     fn union_disjoint_token() {
         let mut set_a = TerminalSet::new();
         assert!(set_a.insert(T::A, Some("a")));
         assert!(set_a.insert(T::A, Some("b")));
-
+    
         let mut set_b = TerminalSet::new();
         assert!(set_b.insert(T::B, None));
-
+    
         let mut expected = TerminalSet::new();
         assert!(expected.insert(T::A, Some("a")));
         assert!(expected.insert(T::A, Some("b")));
         assert!(expected.insert(T::B, None));
-
+    
         assert!(set_a.union(&set_b, true));
         assert_eq!(set_a, expected);
         assert!(set_b.union(&set_a, true));
         assert_eq!(set_b, expected);
     }
-
+    
     #[test]
     fn union_exclude_e() {
         let mut set_a = TerminalSet::new();
         assert!(set_a.insert(T::A, Some("a")));
         assert!(set_a.insert(T::B, Some("b")));
-
+    
         let mut set_b = set_a.clone();
         assert!(set_b.insert_e());
-
+    
         assert_ne!(set_a, set_b);
         assert!(!set_a.union(&set_b, false));
         assert!(set_a.union(&set_b, true));
     }
-
+    
     #[test]
     fn union_to_any() {
         let mut set_a = TerminalSet::new();
         assert!(set_a.insert(T::A, Some("a")));
         assert!(set_a.insert(T::B, None));
-
+    
         let mut set_b = TerminalSet::new();
         assert!(set_b.insert(T::A, None));
         assert!(set_b.insert(T::B, Some("b")));
-
+    
         let mut expected = TerminalSet::new();
         assert!(expected.insert(T::A, None));
         assert!(expected.insert(T::B, None));
-
+    
         assert!(set_a.union(&set_b, true));
         assert_eq!(set_a, expected);
     }

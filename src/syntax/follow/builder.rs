@@ -11,32 +11,32 @@ use super::{Follow, FollowSet};
 ///
 /// See [module-level documentation](self) for more information.
 #[derive(Debug)]
-pub struct FollowBuilder<L: Lexicon> {
+pub struct FollowBuilder<'a, L: Lexicon> {
     /// The built FIRST table, needed to build the FOLLOW table
-    first: First<L>,
-    /// Which AST types are already processed
-    seen: BTreeSet<TypeId>,
+    first: &'a First<L>,
+    // /// Which AST types are already processed
+    // seen: BTreeSet<TypeId>,
     /// Relations to build the FOLLOW function
     rels: Vec<FollowRel>,
 }
 
-impl<L: Lexicon> FollowBuilder<L> {
+impl<'a, L: Lexicon> FollowBuilder<'a, L> {
     /// Create a new builder with the FIRST table
-    pub fn new(first: First<L>) -> Self {
+    pub fn new(first: &'a First<L>) -> Self {
         Self {
             first,
-            seen: Default::default(),
+            // seen: Default::default(),
             rels: Default::default(),
         }
     }
 
-    /// Visit an AST node type and return true if it has not been visited
-    /// and rules should be constructed
-    #[must_use]
-    #[inline]
-    pub fn visit(&mut self, ast: TypeId) -> bool {
-        self.seen.insert(ast)
-    }
+    // /// Visit an AST node type and return true if it has not been visited
+    // /// and rules should be constructed
+    // #[must_use]
+    // #[inline]
+    // pub fn visit(&mut self, ast: TypeId) -> bool {
+    //     self.seen.insert(ast)
+    // }
 
     /// Add a [FOLLOW relation](FollowRel) to the builder
     #[inline]
@@ -46,7 +46,7 @@ impl<L: Lexicon> FollowBuilder<L> {
 
     /// Build follow table for X -> Y1 | Y2 | ... | Yn
     #[inline]
-    pub fn build_enum(&mut self, x: TypeId, variants: &[TypeId]) {
+    pub fn build_union(&mut self, x: TypeId, variants: &[TypeId]) {
         for y in variants {
             // for X -> Yi
             // FOLLOW(Yi) = FOLLOW(Yi) U FOLLOW(X)
@@ -70,7 +70,7 @@ impl<L: Lexicon> FollowBuilder<L> {
     }
 
     /// Build the FOLLOW table into a [Follow] instance
-    pub fn build(mut self, root: TypeId) -> (First<L>, Follow<L>) {
+    pub fn build(mut self, root: TypeId) -> Follow<L> {
         // insert EOF for root
         let mut map = {
             let mut map = BTreeMap::new();
@@ -95,7 +95,7 @@ impl<L: Lexicon> FollowBuilder<L> {
             empty: FollowSet::new(),
         };
 
-        (self.first, follow)
+        follow
     }
 }
 

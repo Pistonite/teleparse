@@ -39,8 +39,8 @@ pub enum MathTokenType {
 pub mod prelude {
     macro_rules! assert_not_ll1 {
         ($pt:ty, $err:expr) => {
-            use $crate::{AbstractSyntaxRoot, ParseTree, ParseRoot};
-            let err = if let Err(e) = <$pt as ParseTree>::AST::metadata() {
+            use $crate::Root;
+            let err = if let Err(e) = <$pt as Root>::metadata() {
                 e.clone()
             } else {
                 panic!("Expected {} to be not LL(1), but it is", stringify!($pt));

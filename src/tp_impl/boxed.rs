@@ -1,31 +1,31 @@
 
-use crate::parser::ParseTree;
 use crate::syntax::{Result as SynResult, Metadata};
-use crate::{AbstractSyntaxTree, ToSpan, Parser};
+use crate::{Produce, Production, ToSpan, Parser, Span, Pos};
 
-use crate::ast_passthrough;
+use crate::production_passthrough;
 
-impl<AST: AbstractSyntaxTree> AbstractSyntaxTree for Box<AST> {
-    ast_passthrough!(AST);
-
-    fn parse_ast<'s>(
-        parser: &mut Parser<'s, Self::L>, 
-        meta: &Metadata<Self::L>,
-    ) -> SynResult<Self, Self::L> {
-        AST::parse_ast(parser, meta).map(|ast| Box::new(ast))
-    }
+impl<T: Production> Production for Box<T> {
+    production_passthrough!(T);
 }
-
-impl<AST: ToSpan> ToSpan for Box<AST> {
-    fn span(&self) -> crate::Span {
+impl<T: ToSpan> ToSpan for Box<T> {
+    fn lo(&self) -> Pos {
+        self.as_ref().lo()
+    }
+    fn hi(&self) -> Pos {
+        self.as_ref().hi()
+    }
+    fn span(&self) -> Span {
         self.as_ref().span()
     }
 }
 
-impl<PT: ParseTree> ParseTree for Box<PT> {
-    type AST = Box<PT::AST>;
+impl<T: Produce> Produce for Box<T> {
+    type Prod = Box<T::Prod>;
 
-    fn from_ast<'s>(ast: Self::AST, parser: &mut Parser<'s, <Self::AST as AbstractSyntaxTree>::L>) -> Self {
-        Box::new(PT::from_ast(*ast, parser))
+    fn produce<'s>(
+        parser: &mut Parser<'s, <Self::Prod as Production>::L>, 
+        meta: &Metadata<<Self::Prod as Production>::L>,
+    ) -> SynResult<Self, <Self::Prod as Production>::L> {
+        T::produce(parser, meta).map(Box::new)
     }
 }

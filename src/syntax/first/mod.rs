@@ -2,7 +2,7 @@
 
 use std::any::TypeId;
 use std::collections::BTreeMap;
-use crate::{Lexicon, ParseTree};
+use crate::Lexicon;
 
 mod builder;
 pub use builder::*;
@@ -37,10 +37,6 @@ impl<L: Lexicon> First<L> {
     #[inline]
     pub fn get(&self, ty: &TypeId) -> &FirstSet<L> {
         self.map.get(ty).unwrap_or(&self.empty)
-    }
-
-    pub fn get_pt<PT: ParseTree>(&self) -> &FirstSet<L> {
-        self.get(&PT::ast_id())
     }
 }
 

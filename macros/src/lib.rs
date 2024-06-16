@@ -45,18 +45,17 @@ pub fn derive_to_span(input: TokenStream) -> TokenStream {
 }
 mod to_span;
 
-/// Derive AbstractSyntaxTree from a struct with unnamed fields or an enum.
-/// This is not a derive macro because it's internal
+/// Derive Production from a struct with unnamed fields or an enum. (internal use only)
 #[proc_macro_attribute]
-pub fn derive_ast(attr: TokenStream, input: TokenStream) -> TokenStream {
+pub fn derive_production(attr: TokenStream, input: TokenStream) -> TokenStream {
     let name = parse_macro_input!(attr as syn::Ident);
-    expand_with_args(input, name, ast::expand)
+    expand_with_args(input, name, production::expand)
 }
-mod ast;
+mod production;
 
 /// Derive AST for a tuple
 #[proc_macro]
-pub fn derive_tuple_ast(input: TokenStream) -> TokenStream {
+pub fn derive_tuple_production(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as syn::ExprTuple);
     match tuple::expand(&input) {
         Ok(ts) => ts.into(),
@@ -67,5 +66,5 @@ mod tuple;
 
 // internal helpers
 
-mod sequence;
+// mod sequence;
 mod root;

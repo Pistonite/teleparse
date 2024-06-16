@@ -62,10 +62,11 @@ fn expand_struct_unnamed(ident: syn::Ident, input: &mut syn::FieldsUnnamed, root
     for ((i, field), attrs) in std::iter::zip(input.unnamed.iter().enumerate(), field_attrs.into_iter()) {
         let field_ident = format_ident!("field_{}", i);
         let field_attr = parse_field_attributes(field, attrs)?;
+        let idx = syn::Index::from(i);
         if let Some(semantic) = field_attr.semantic {
             apply_semantic_impl.extend(quote! {
                 parser.apply_semantic(
-                    &#field_ident,
+                    &result.#idx,
                     #teleparse::token_set!(<Self::AST as #teleparse::syntax::AbstractSyntaxTree>::L{
                         #( #semantic )|*
                     })
@@ -74,39 +75,64 @@ fn expand_struct_unnamed(ident: syn::Ident, input: &mut syn::FieldsUnnamed, root
         }
     }
     let pt_ty = input.unnamed.iter().map(|f| &f.ty).collect::<Vec<_>>();
-    let pt_ident = (0..pt_ty.len()).map(|i| format_ident!("field_{}", i)).collect::<Vec<_>>();
+    // let pt_ident = (0..pt_ty.len()).map(|i| format_ident!("field_{}", i)).collect::<Vec<_>>();
     let last = syn::Index::from(pt_ty.len()-1);
-    let indices = (0..pt_ty.len()).map(syn::Index::from).collect::<Vec<_>>();
+    // let indices = (0..pt_ty.len()).map(syn::Index::from).collect::<Vec<_>>();
     let root_derive = if root_attr.root {
-        Some(root::expand(quote! { DerivedAST }, &ident))
+        Some(root::expand(&ident))
     } else {
         None
     };
     let output = quote! {
-        #[#teleparse::__priv::derive_ast(#ident)]
-        struct DerivedAST(#( #teleparse::parser::AstOf< #pt_ty > ),*);
-        #[automatically_derived]
-        impl #teleparse::ToSpan for DerivedAST {
-            fn span(&self) -> #teleparse::Span {
-                #teleparse::Span::new(self.0.span().lo, self.#last.span().hi)
-            }
-        }
+        #[#teleparse::__priv::derive_production(#ident)]
+        struct DerivedProd(#( <#pt_ty as #teleparse::parser::Produce>::Prod ),*);
         #[automatically_derived]
         impl #teleparse::ToSpan for #ident {
-            fn span(&self) -> #teleparse::Span {
-                #teleparse::Span::new(self.0.span().lo, self.#last.span().hi)
+            fn lo(&self) -> #teleparse::Pos {
+                self.0.lo()
+            }
+            fn hi(&self) -> #teleparse::Pos {
+                self.#last.hi()
             }
         }
         #[automatically_derived]
-        impl #teleparse::parser::ParseTree for #ident {
-            type AST = DerivedAST;
-            fn from_ast<'s>(
-                ast: Self::AST, 
-                parser: &mut #teleparse::parser::Parser<'s, <Self::AST as #teleparse::syntax::AbstractSyntaxTree>::L>
-            ) -> Self {
-                let (#(#pt_ident),*) = ( #( <#pt_ty>::from_ast(ast.#indices, parser)),* );
+        impl #teleparse::parser::Produce for #ident {
+            type Prod = DerivedProd;
+            fn produce<'s>(
+                parser: &mut #teleparse::parser::Parser<'s, <Self::Prod as #teleparse::syntax::Production>::L>,
+                meta: &#teleparse::syntax::Metadata<<Self::Prod as #teleparse::syntax::Production>::L>,
+            ) -> #teleparse::syntax::Result<Self, <Self::Prod as #teleparse::syntax::Production>::L> {
+                use #teleparse::syntax::Production;
+                // let token = parser.peek_token_src();
+                // let t = Self::prod_id();
+                // let first = meta.first.get(&t);
+                // if !first.contains(token) {
+                //     return #teleparse::syntax::Result::Panic(::std::vec![
+                //         parser.expecting(first.clone())
+                //     ]);
+                // }
+                let mut errors = ::std::vec::Vec::new();
+                let result = Self(
+            #(
+                match <#pt_ty as #teleparse::parser::Produce>::produce(parser, meta) {
+                    #teleparse::syntax::Result::Success(x) => x,
+                    #teleparse::syntax::Result::Recovered(x, e) => {
+                        errors.extend(e);
+                        x
+                    }
+                    #teleparse::syntax::Result::Panic(e) => {
+                        errors.extend(e);
+                        return #teleparse::syntax::Result::Panic(errors);
+                    }
+                }
+            ),*
+                );
                 #apply_semantic_impl
-                Self(#( #pt_ident),* )
+                if errors.is_empty() {
+                    #teleparse::syntax::Result::Success(result)
+                } else {
+                    #teleparse::syntax::Result::Recovered(result, errors)
+                }
             }
         }
         #root_derive
@@ -132,7 +158,7 @@ fn expand_struct_named(ident: syn::Ident, input: &mut syn::FieldsNamed, root_att
         if let Some(semantic) = field_attr.semantic {
             apply_semantic_impl.extend(quote! {
                 parser.apply_semantic(
-                    &#field_ident, 
+                    &result.#field_ident, 
                     #teleparse::token_set!(<Self::AST as #teleparse::syntax::AbstractSyntaxTree>::L{
                         #( #semantic )|*
                     })
@@ -143,6 +169,7 @@ fn expand_struct_named(ident: syn::Ident, input: &mut syn::FieldsNamed, root_att
 
     let pt_ty = input.named.iter().map(|f| &f.ty).collect::<Vec<_>>();
     let pt_ident = input.named.iter().map(|f| &f.ident).collect::<Vec<_>>();
+    let first_ty = pt_ty.first().unwrap();
     let first_ident = pt_ident.first().unwrap();
     let last_ident = pt_ident.last().unwrap();
     let last = syn::Index::from(pt_ty.len()-1);
@@ -150,35 +177,77 @@ fn expand_struct_named(ident: syn::Ident, input: &mut syn::FieldsNamed, root_att
 
 
     let root_derive = if root_attr.root {
-        Some(root::expand(quote! { DerivedAST }, &ident))
+        Some(root::expand(&ident))
     } else {
         None
     };
-    let output = quote! {
-        #[#teleparse::__priv::derive_ast(#ident)]
-        struct DerivedAST(#( #teleparse::parser::AstOf< #pt_ty > ),*);
-        #[automatically_derived]
-        impl #teleparse::ToSpan for DerivedAST {
-            fn span(&self) -> #teleparse::Span {
-                #teleparse::Span::new(self.0.span().lo, self.#last.span().hi)
+    let produce_impl = if pt_ident.len() == 1 {
+        quote! {
+            let result = <#first_ty as #teleparse::parser::Produce>
+                ::produce(parser, meta)
+                .map(|#first_ident| Self { #first_ident });
+            #apply_semantic_impl
+            result
+        }
+    } else {
+        // let parse_ast_check = sequence::expand_parse_production_check();
+        // let parse_ast_core = pt_ty.iter().map(|ty| sequence::expand_parse_production_step(ty));
+        // let parse_ast_end = sequence::expand_parse_production_end();
+        quote! {
+            use #teleparse::syntax::Production;
+            // let token = parser.peek_token_src();
+            // let t = Self::prod_id();
+            // let first = meta.first.get(&t);
+            // if !first.contains(token) {
+            //     return #teleparse::syntax::Result::Panic(::std::vec![
+            //         parser.expecting(first.clone())
+            //     ]);
+            // }
+            let mut errors = ::std::vec::Vec::new();
+            let result = Self {
+        #(
+            #pt_ident: match <#pt_ty as #teleparse::parser::Produce>::produce(parser, meta) {
+                #teleparse::syntax::Result::Success(x) => x,
+                #teleparse::syntax::Result::Recovered(x, e) => {
+                    errors.extend(e);
+                    x
+                }
+                #teleparse::syntax::Result::Panic(e) => {
+                    errors.extend(e);
+                    return #teleparse::syntax::Result::Panic(errors);
+                }
+            }
+        ),*
+            };
+            #apply_semantic_impl
+            if errors.is_empty() {
+                #teleparse::syntax::Result::Success(result)
+            } else {
+                #teleparse::syntax::Result::Recovered(result, errors)
             }
         }
+    };
+
+    let output = quote! {
+        #[#teleparse::__priv::derive_production(#ident)]
+        struct DerivedProd(#( <#pt_ty as #teleparse::parser::Produce>::Prod ),*);
         #[automatically_derived]
         impl #teleparse::ToSpan for #ident {
-            fn span(&self) -> #teleparse::Span {
-                #teleparse::Span::new(self.#first_ident.span().lo, self.#last_ident.span().hi)
+            fn lo(&self) -> #teleparse::Pos {
+                self.#first_ident.lo()
+            }
+            fn hi(&self) -> #teleparse::Pos {
+                self.#last_ident.hi()
             }
         }
         #[automatically_derived]
-        impl #teleparse::parser::ParseTree for #ident {
-            type AST = DerivedAST;
-            fn from_ast<'s>(
-                ast: Self::AST, 
-                parser: &mut #teleparse::parser::Parser<'s, <Self::AST as #teleparse::syntax::AbstractSyntaxTree>::L>
-            ) -> Self {
-                let ( #(#pt_ident),* ) = ( #( <#pt_ty>::from_ast(ast.#indices, parser)),*);
-                #apply_semantic_impl
-                Self { #(#pt_ident),* }
+        impl #teleparse::parser::Produce for #ident {
+            type Prod = DerivedProd;
+            fn produce<'s>(
+                parser: &mut #teleparse::parser::Parser<'s, <Self::Prod as #teleparse::syntax::Production>::L>,
+                meta: &#teleparse::syntax::Metadata<<Self::Prod as #teleparse::syntax::Production>::L>,
+            ) -> #teleparse::syntax::Result<Self, <Self::Prod as #teleparse::syntax::Production>::L> {
+                #produce_impl
             }
         }
         #root_derive
@@ -232,7 +301,7 @@ fn expand_enum(ident: syn::Ident, input: &mut syn::DataEnum, root_attr: &RootAtt
         if let Some(semantic) = variant_attr.semantic {
             apply_semantic_impl.push(quote! {
                 parser.apply_semantic(
-                    &ast, 
+                    &inner, 
                     #teleparse::token_set!(<Self::AST as #teleparse::syntax::AbstractSyntaxTree>::L{
                         #( #semantic )|*
                     })
@@ -243,35 +312,47 @@ fn expand_enum(ident: syn::Ident, input: &mut syn::DataEnum, root_attr: &RootAtt
         }
     }
 
+    let i = 0..pt_ty.len();
+
     let root_derive = if root_attr.root {
-        Some(root::expand(quote! { DeriveAST }, &ident))
+        Some(root::expand(&ident))
     } else {
         None
     };
     
     let output = quote! {
-        #[#teleparse::__priv::derive_ast(#ident)]
+        #[#teleparse::__priv::derive_production(#ident)]
         #[derive(#teleparse::ToSpan)]
         #[doc(hidden)]
-        enum DerivedAST {
-            #( #pt_ident(#teleparse::parser::AstOf< #pt_ty >), )*
+        enum DerivedProd {
+            #( #pt_ident(<#pt_ty as #teleparse::parser::Produce>::Prod), )*
         }
         #[automatically_derived]
-        impl #teleparse::parser::ParseTree for #ident {
-            type AST = DerivedAST;
+        impl #teleparse::parser::Produce for #ident {
+            type Prod = DerivedProd;
 
-            fn from_ast<'s>(
-                ast: Self::AST, 
-                parser: &mut #teleparse::parser::Parser<'s, <Self::AST as #teleparse::syntax::AbstractSyntaxTree>::L>
-            ) -> Self {
-                match ast {
-                    #(
-                        DerivedAST::#pt_ident(ast) => {
-                            let ast = <#pt_ty>::from_ast(ast, parser);
+            fn produce<'s>(
+                parser: &mut #teleparse::parser::Parser<'s, <Self::Prod as #teleparse::syntax::Production>::L>, 
+                meta: &#teleparse::syntax::Metadata<<Self::Prod as #teleparse::syntax::Production>::L>,
+            ) -> #teleparse::syntax::Result<Self, <Self::Prod as #teleparse::syntax::Production>::L> {
+                use #teleparse::syntax::Production;
+                let t = Self::prod_id();
+                let token_src = parser.peek_token_src();
+                match meta.jump.look_up(&t, token_src) {
+                #(
+                    Some(#i) => {
+                        <#pt_ty>::produce(parser, meta).map(|inner| {
                             #apply_semantic_impl
-                            Self::#pt_ident(ast)
-                        }
-                    )*
+                            Self::#pt_ident(inner)
+                        })
+                    }
+                )*
+                    _ => {
+                        let first = meta.first.get(&t);
+                        let err = parser.expecting(first.clone());
+                        let err_vec = ::std::vec![err];
+                        #teleparse::syntax::Result::Panic(err_vec)
+                    },
                 }
             }
         }

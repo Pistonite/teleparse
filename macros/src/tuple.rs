@@ -11,18 +11,14 @@ pub fn expand(tuple: &syn::ExprTuple) -> syn::Result<TokenStream2> {
     let middle_ty = &types[1..];
 
     let teleparse = crate_ident();
-    let implementation = sequence::expand_ast_sequence(&tuple, &types)?;
-    let parse_ast_check = sequence::expand_parse_ast_check();
-    let parse_ast_core = types.iter().map(sequence::expand_parse_ast_step);
-    let parse_ast_end = sequence::expand_parse_ast_end();
 
     let output = quote! {
         #[automatically_derived]
         impl<
-            #first_ty: #teleparse::AbstractSyntaxTree,
-            #( #middle_ty: #teleparse::AbstractSyntaxTree<L=<#first_ty as #teleparse::AbstractSyntaxTree>::L> ),*
-        > #teleparse::AbstractSyntaxTree for #tuple {
-            #implementation
+            #first_ty: #teleparse::syntax::Production,
+            #( #middle_ty: #teleparse::syntax::Production<L=<#first_ty as #teleparse::syntax::Production>::L> ),*
+        > #teleparse::syntax::Production for #tuple {
+            type L = <#first_ty as #teleparse::syntax::Production>::L;
             fn debug() -> ::std::borrow::Cow<'static, str> {
                 let mut s = ::std::string::String::from("(");
                 s.push_str(&<#first_ty>::debug()); 
@@ -34,13 +30,63 @@ pub fn expand(tuple: &syn::ExprTuple) -> syn::Result<TokenStream2> {
 
                 ::std::borrow::Cow::Owned(s)
             }
-            fn parse_ast<'s>(
-                parser: &mut #teleparse::parser::Parser<'s, Self::L>, 
-                meta: &#teleparse::syntax::Metadata<Self::L>,
-            ) -> #teleparse::syntax::Result<Self, Self::L> {
-                #parse_ast_check
-                let result = ( #( #parse_ast_core ),* );
-                #parse_ast_end
+            fn register(meta: &mut #teleparse::syntax::MetadataBuilder<Self::L>) {
+                let t = Self::id();
+                if meta.visit(t, ||Self::debug().into_owned()) {
+                    meta.add_sequence(t, &[#( <#types>::id() ),*]);
+                #(
+                    #types::register(meta);
+                )*
+                }
+            }
+        }
+        #[automatically_derived]
+        impl<
+            #first_ty: #teleparse::parser::Produce,
+            #( #middle_ty: #teleparse::parser::Produce ),*
+        > #teleparse::parser::Produce for #tuple 
+        where 
+        #(
+            <#middle_ty as #teleparse::parser::Produce>::Prod 
+            : #teleparse::syntax::Production<
+                L=<<#first_ty>::Prod as #teleparse::syntax::Production>::L
+            >
+        ),* {
+            type Prod = (#( <#types>::Prod ),*);
+            fn produce<'s>(
+                parser: &mut #teleparse::parser::Parser<'s, <Self::Prod as #teleparse::syntax::Production>::L>, 
+                meta: &#teleparse::syntax::Metadata<<Self::Prod as #teleparse::syntax::Production>::L>,
+            ) -> #teleparse::syntax::Result<Self, <Self::Prod as #teleparse::syntax::Production>::L> {
+                use #teleparse::syntax::Production;
+                // let token = parser.peek_token_src();
+                // let t = Self::prod_id();
+                // let first = meta.first.get(&t);
+                // if !first.contains(token) {
+                //     return #teleparse::syntax::Result::Panic(::std::vec![
+                //         parser.expecting(first.clone())
+                //     ]);
+                // }
+                let mut errors = ::std::vec::Vec::new();
+                let result = (
+            #(
+                match <#types as #teleparse::parser::Produce>::produce(parser, meta) {
+                    #teleparse::syntax::Result::Success(x) => x,
+                    #teleparse::syntax::Result::Recovered(x, e) => {
+                        errors.extend(e);
+                        x
+                    }
+                    #teleparse::syntax::Result::Panic(e) => {
+                        errors.extend(e);
+                        return #teleparse::syntax::Result::Panic(errors);
+                    }
+                }
+            ),*
+                );
+                if errors.is_empty() {
+                    #teleparse::syntax::Result::Success(result)
+                } else {
+                    #teleparse::syntax::Result::Recovered(result, errors)
+                }
             }
         }
     };

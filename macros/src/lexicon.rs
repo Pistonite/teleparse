@@ -403,18 +403,18 @@ fn derive_terminal(
     };
     let match_parse_impl = match match_lit {
         Some(literal) => quote! {
-            let follow = meta.follow.get(&Self::type_id());
+            let follow = meta.follow.get(&<Self as #teleparse::syntax::Production>::id());
             parser.parse_token_lit(#enum_ident::#variant_ident, #literal, follow).map(Self::from)
         },
         None => quote! {
             parser.parse_token(#enum_ident::#variant_ident).map(Self::from)
         }
     };
-    let terminal_parse_impl = if terminal_parse {
-        Some(root::expand(&terminal_ident, &terminal_ident))
-    } else {
-        None
-    };
+    // let terminal_parse_impl = if terminal_parse {
+    //     Some(root::expand(&terminal_ident))
+    // } else {
+    //     None
+    // };
     quote! {
         #[doc = #doc]
         #[derive(Clone, Copy, PartialEq, Eq, Hash, #teleparse::ToSpan)]
@@ -439,70 +439,67 @@ fn derive_terminal(
                 }
             }
             #[automatically_derived]
-            impl #teleparse::AbstractSyntaxTree for #terminal_ident {
+            impl #teleparse::syntax::Production for #terminal_ident {
                 type L = #enum_ident;
                 fn debug() -> ::std::borrow::Cow<'static, str> { ::std::borrow::Cow::Borrowed(#terminal_ident_str) }
-                fn build_first(builder: &mut #teleparse::syntax::FirstBuilder<Self::L>) {
-                    let t = Self::type_id();
-                    if builder.visit(t, #terminal_ident_str) {
-                        let expr = #teleparse::syntax::FirstRel::insert_token(
-                            t, 
-                            #enum_ident::#variant_ident,
-                            #match_option_impl
-                        );
-                        builder.add(expr);
+                fn register(meta: &mut #teleparse::syntax::MetadataBuilder<Self::L>) {
+                    let t = <Self as #teleparse::syntax::Production>::id();
+                    if meta.visit(t, ||#terminal_ident_str.to_string()) {
+                        meta.add_terminal(t, #enum_ident::#variant_ident, #match_option_impl);
+                        // let expr = #teleparse::syntax::FirstRel::insert_token(
+                        //     t, 
+                        //     #enum_ident::#variant_ident,
+                        //     #match_option_impl
+                        // );
+                        // builder.add(expr);
                     }
                 }
-                fn check_left_recursive(
-                    _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-                    _stack: &mut ::std::vec::Vec<::std::string::String>, 
-                    _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-                    _first: &#teleparse::syntax::First<Self::L>
-                ) -> ::core::result::Result<(), #teleparse::GrammarError> {
-                    // a terminal has no recursive rules
-                    Ok(())
-                }
-                fn check_first_conflict(
-                    _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>, 
-                    _first: &#teleparse::syntax::First<Self::L>
-                ) -> ::core::result::Result<(), #teleparse::GrammarError> {
-                    // a terminal has no recursive rules and therefore no conflicts
-                    Ok(())
-                }
-                fn build_follow(_builder: &mut #teleparse::syntax::FollowBuilder<Self::L>) {
-                    // no FOLLOW rules are produced from a terminal
-                }
-                fn check_first_follow_conflict(
-                    _seen: &mut std::collections::BTreeSet<::core::any::TypeId>, 
-                    _first: &#teleparse::syntax::First<Self::L>, 
-                    _follow: &#teleparse::syntax::Follow<Self::L>
-                ) -> ::core::result::Result<(), #teleparse::GrammarError> {
-                    // terminals don't produce epsilon and therefore has no FIRST/FOLLOW conflict
-                    Ok(())
-                }
-                fn build_jump(
-                    _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>, 
-                    _first: &#teleparse::syntax::First<Self::L>,
-                    _jump: &mut #teleparse::syntax::Jump<Self::L>
-                ) {
-                    // no parse table needed
-                }
-                #[inline]
-                fn parse_ast<'s>(
-                    parser: &mut #teleparse::Parser<'s, Self::L>, 
-                    meta: &#teleparse::syntax::Metadata<Self::L>,
-                ) -> #teleparse::syntax::Result<Self, Self::L> {
+                // fn check_left_recursive(
+                //     _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
+                //     _stack: &mut ::std::vec::Vec<::std::string::String>, 
+                //     _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
+                //     _first: &#teleparse::syntax::First<Self::L>
+                // ) -> ::core::result::Result<(), #teleparse::GrammarError> {
+                //     // a terminal has no recursive rules
+                //     Ok(())
+                // }
+                // fn check_first_conflict(
+                //     _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>, 
+                //     _first: &#teleparse::syntax::First<Self::L>
+                // ) -> ::core::result::Result<(), #teleparse::GrammarError> {
+                //     // a terminal has no recursive rules and therefore no conflicts
+                //     Ok(())
+                // }
+                // fn build_follow(_builder: &mut #teleparse::syntax::FollowBuilder<Self::L>) {
+                //     // no FOLLOW rules are produced from a terminal
+                // }
+                // fn check_first_follow_conflict(
+                //     _seen: &mut std::collections::BTreeSet<::core::any::TypeId>, 
+                //     _first: &#teleparse::syntax::First<Self::L>, 
+                //     _follow: &#teleparse::syntax::Follow<Self::L>
+                // ) -> ::core::result::Result<(), #teleparse::GrammarError> {
+                //     // terminals don't produce epsilon and therefore has no FIRST/FOLLOW conflict
+                //     Ok(())
+                // }
+                // fn build_jump(
+                //     _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>, 
+                //     _first: &#teleparse::syntax::First<Self::L>,
+                //     _jump: &mut #teleparse::syntax::Jump<Self::L>
+                // ) {
+                //     // no parse table needed
+                // }
+            }
+            #[automatically_derived]
+            impl #teleparse::parser::Produce for #terminal_ident {
+                type Prod = Self;
+                fn produce<'s>(
+                    parser: &mut #teleparse::Parser<'s, <Self::Prod as #teleparse::syntax::Production>::L>, 
+                    meta: &#teleparse::syntax::Metadata<<Self::Prod as #teleparse::syntax::Production>::L>,
+                ) -> #teleparse::syntax::Result<Self, <Self::Prod as #teleparse::syntax::Production>::L> {
                     #match_parse_impl
                 }
             }
-            #[automatically_derived]
-            impl #teleparse::ParseTree for #terminal_ident {
-                type AST = Self;
-                fn from_ast<'s>(ast: Self, _: &mut #teleparse::Parser<'s, #enum_ident>) -> Self {
-                    ast
-                }
-            }
-            #terminal_parse_impl
+            // #terminal_parse_impl
         };
     }
 }

@@ -3,7 +3,7 @@
 use std::any::TypeId;
 use std::collections::BTreeMap;
 
-use crate::{Lexicon, ParseTree};
+use crate::Lexicon;
 
 mod builder;
 pub use builder::*;
@@ -36,10 +36,6 @@ impl<L: Lexicon> Follow<L> {
     #[inline]
     pub fn get(&self, t: &TypeId) -> &FollowSet<L> {
         self.map.get(t).unwrap_or(&self.empty)
-    }
-
-    pub fn get_pt<PT: ParseTree>(&self) -> &FollowSet<L> {
-        self.get(&PT::ast_id())
     }
 }
 

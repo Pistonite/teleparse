@@ -71,13 +71,21 @@ impl Debug for Span {
 ///
 /// [`Token`]s and derived syntax nodes all implement this trait
 pub trait ToSpan {
-    /// Get the span of this type
-    fn span(&self) -> Span;
+    fn lo(&self) -> Pos;
+    fn hi(&self) -> Pos;
+    fn span(&self) -> Span {
+        Span::new(self.lo(), self.hi())
+    }
 }
 pub use teleparse_macros::ToSpan;
 
 impl ToSpan for Span {
-    #[inline]
+    fn lo(&self) -> Pos {
+        self.lo
+    }
+    fn hi(&self) -> Pos {
+        self.hi
+    }
     fn span(&self) -> Span {
         *self
     }
@@ -87,8 +95,12 @@ macro_rules! derive_to_span_tuple {
     ($last:tt, $($n:ident),*) => {
         impl<$($n: ToSpan),*> ToSpan for ($($n,)*) {
             #[inline]
-            fn span(&self) -> Span {
-                (self.0.span().lo, self.$last.span().hi).into()
+            fn lo(&self) -> Pos {
+                self.0.lo()
+            }
+            #[inline]
+            fn hi(&self) -> Pos {
+                self.$last.hi()
             }
         }
     };

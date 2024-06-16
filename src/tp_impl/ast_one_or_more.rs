@@ -1,12 +1,11 @@
 use std::any::TypeId;
 use std::borrow::Cow;
 use std::collections::BTreeSet;
-use std::marker::PhantomData;
 
-use crate::syntax::{First, FirstBuilder, FirstRel, Follow, FollowBuilder, FollowRel, Jump, Metadata, Result as SynResult};
-use crate::{AbstractSyntaxTree, GrammarError, ParseTree, Parser, Span, ToSpan};
+use crate::syntax::{First, FirstBuilder, Follow, FollowBuilder, Jump, Metadata, Result as SynResult};
+use crate::{AbstractSyntaxTree, GrammarError, Parser, Span, ToSpan};
 
-use super::{Node, OptionAST};
+use super::OptionAST;
 
 #[doc(hidden)]
 #[derive(Debug, Clone, PartialEq)]
