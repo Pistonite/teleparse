@@ -41,9 +41,13 @@ Progress:
   - [x] Loop `tp::Loop<T>` (loop until the end of input)
     - [x] Test
     - [ ] Documentation
-  - [ ] delimited `tp::Split<T, P>`, `tp::Pun<T, P>` (pun has optional trailing and split forbids trailing)
-    - [ ] Test
-    - [ ] Documentation
+  - [ ] delimited `tp::Split<T, P>`, `tp::Punct<T, P>` (pun has optional trailing and split forbids trailing)
+    - [x] Split
+      - [ ] Test
+      - [ ] Documentation
+    - [ ] Punct
+      - [ ] Test
+      - [ ] Documentation
   - [ ] recovery `tp::Recover<A, B>`
   - [ ] conversion `tp::Into<X: From<T>, T>`
     - [ ] Test
