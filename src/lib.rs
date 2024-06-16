@@ -58,6 +58,9 @@ pub mod tp {
     pub type Vec<T> = Star<std::vec::Vec<T>, T>;
     pub type VecDeque<T> = Star<std::collections::VecDeque<T>, T>;
     pub use crate::tp_impl::iter::Loop;
+    pub use crate::tp_impl::split::Split;
+    pub use crate::tp_impl::punct::Punct;
+    pub use crate::tp_impl::recover::Recover;
 }
 
 
@@ -70,8 +73,8 @@ pub(crate) mod test;
 pub enum GrammarError {
     #[error("Left recursion detected in the grammar! Stack: {0}")]
     LeftRecursion(String),
-    #[error("The non-terminal `{0}` has a FIRST/FIRST conflict producing `{1}`. The conflicting terminals are: {2}")]
-    FirstFirstConflict(String, String, String),
+    #[error("The non-terminal `{0}` has a FIRST/FIRST conflict producing either `{1}` or `{2}`. The conflicting terminals are: {3}")]
+    FirstFirstConflict(String, String, String, String),
     #[error("The non-terminal `{0}` has a FIRST/FOLLOW conflict producing `{1}` followed by `{2}`. `{1}` can be empty and both can start with: {3}")]
     FirstFollowSeqConflict(String, String, String, String),
     #[error("The non-terminal `{0}` has conflict in its FIRST and FOLLOW sets. The conflicting terminals are: {1}")]

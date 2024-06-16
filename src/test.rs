@@ -27,10 +27,10 @@ pub enum MathTokenType {
     Op,
     /// Parentheses
     #[teleparse(terminal(
-        ParamOpen = "(",
-        ParamClose = ")"
+        ParenOpen = "(",
+        ParenClose = ")"
     ))]
-    Param,
+    Paren,
 
     #[teleparse(regex(r"\d+"), terminal(Integer))]
     Integer

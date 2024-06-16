@@ -20,6 +20,9 @@ impl<T: Production> Production for OptionProd<T> {
             if let Some(inner) = rest.strip_suffix(")+") {
                 return Cow::Owned(format!("({})*", inner))
             }
+            if let Some(inner) = rest.strip_suffix("]+") {
+                return Cow::Owned(format!("({}]*", inner))
+            }
         }
         Cow::Owned(format!("({})?", T::debug()))
     }
@@ -182,7 +185,8 @@ mod tests {
     fn test_nested_not_ll1() {
         assert_not_ll1!(Nested, GrammarError::FirstFirstConflict(
             "((Ident)?)?".to_string(),
-            "epsilon".to_string(),
+            "(Ident)?".to_string(),
+            "()".to_string(),
             "<empty>".to_string(),
         ));
     }

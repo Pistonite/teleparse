@@ -15,6 +15,7 @@ impl<T> Node<T> {
         Self { span: span.into(), value }
     }
 
+    #[inline]
     pub fn into_inner(self) -> T {
         self.value
     }

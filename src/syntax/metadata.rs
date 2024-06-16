@@ -247,16 +247,23 @@ fn check_conflicts<L: Lexicon>(
             for inner in types.iter() {
                 let first_set = first.get(inner);
                 if check_set.intersects(&first_set) {
-                    let self_name = names.get(&t).map(|x|x.as_str()).unwrap_or_default();
-                    let produce_name = names.get(inner).map(|x|x.as_str()).unwrap_or_default();
-                    let intersection = check_set
-                        .intersection_repr(&first_set)
-                        .into_iter()
-                        .join(", ");
-                    return Err(GrammarError::FirstFirstConflict(
-                        self_name.to_string(),
-                        produce_name.to_string(),
-                        intersection));
+                    // find which one is conflicting
+                    for before in types.iter() {
+                        if first_set.intersects(&first.get(before)) {
+                            let self_name = names.get(&t).map(|x|x.as_str()).unwrap_or_default();
+                            let before_name = names.get(before).map(|x|x.as_str()).unwrap_or_default();
+                            let inner_name = names.get(inner).map(|x|x.as_str()).unwrap_or_default();
+                            let intersection = first_set
+                                .intersection_repr(&first.get(before))
+                                .into_iter()
+                                .join(", ");
+                            return Err(GrammarError::FirstFirstConflict(
+                                self_name.to_string(),
+                                before_name.to_string(),
+                                inner_name.to_string(),
+                                intersection));
+                        }
+                    }
                 }
                 check_set.union(&first_set);
             }

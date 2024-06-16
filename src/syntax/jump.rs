@@ -60,12 +60,10 @@ pub struct DebugJump<'a, 'b, L: Lexicon>(pub &'a Jump<L>, pub &'b BTreeMap<TypeI
 impl<'a, 'b, L: Lexicon> std::fmt::Debug for DebugJump<'a, 'b, L> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut fmt = f.debug_struct("Jump");
-
         for (ty, jump_table) in &self.0.map {
             let name = self.1.get(ty).map(|x| x.as_str()).unwrap_or("<unknown>");
             fmt.field(name, jump_table);
         }
-
         fmt.finish()
     }
 }

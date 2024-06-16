@@ -28,7 +28,7 @@ Progress:
     - [ ] Trybuild tests
   - [ ] Documentation
   - [ ] Hooks
-- [ ] Utils `tp`
+- [x] Utils `tp`
   - [x] Tuples
   - [x] boxed
   - [x] option-based `tp::Option<T>` and `tp::Exists<T>`
@@ -41,18 +41,22 @@ Progress:
   - [x] Loop `tp::Loop<T>` (loop until the end of input)
     - [x] Test
     - [ ] Documentation
-  - [ ] delimited `tp::Split<T, P>`, `tp::Punct<T, P>` (pun has optional trailing and split forbids trailing)
-    - [x] Split
-      - [ ] Test
+  - [x] delimited `tp::Split<T, P>`, `tp::Punct<T, P>`
+    - [x] Split (no trailing)
+      - [x] Test
       - [ ] Documentation
-    - [ ] Punct
-      - [ ] Test
+    - [x] Punct (optional trailing)
+      - [x] Test
       - [ ] Documentation
-  - [ ] recovery `tp::Recover<A, B>`
-  - [ ] conversion `tp::Into<X: From<T>, T>`
+  - [x] recovery `tp::Recover<A, B>`
     - [ ] Test
     - [ ] Documentation
   - [ ] Documentation
+- [ ] Static Metadata
+  - [ ] Bench
+  - [ ] Test
+  - [ ] Documentation
+- [ ] Usability testing
 - [ ] mdBook
   - [ ] derive_lexicon
   - [ ] derive_syntax

@@ -88,54 +88,6 @@ impl<'s, L: Lexicon> Parser<'s, L> {
         }
     }
 
-    // /// Attempt to parse one syntax tree into the state, may skip invalid tokens and characters
-    // /// to form a valid syntax tree
-    // ///
-    // /// Return None if a valid syntax tree could not be formed
-    // /// when the end of the source is reached
-    // fn parse_ast_with_meta<AST: AbstractSyntaxTree<L=L>>(&mut self, meta: &Metadata<L>) -> Option<AST> {
-    //     // assume the input will have 0 or more invalid tokens at front and in the end
-    //     let first = meta.first.get(&AST::type_id());
-    //     let mut peek_token = self.peek_token_src();
-    //
-    //     while !first.contains(peek_token) && peek_token.is_some() {
-    //         if let Some(t) = self.consume_token() {
-    //             self.info.invalid_tokens.push(t);
-    //         }
-    //         peek_token = self.peek_token_src();
-    //     }
-    //
-    //     let lo = self.current_span().lo;
-    //
-    //     if lo != 0 {
-    //         self.info.errors.push(Error::new(
-    //             Span::new(0, lo), 
-    //             ErrorKind::UnexpectedTokens));
-    //     }
-    //
-    //         let ast = match AST::parse_ast(self, meta) {
-    //             SynResult::Success(tree) => {
-    //                 Some(tree)
-    //             }
-    //             SynResult::Recovered(tree, errors) => {
-    //                 self.info.errors.extend(errors);
-    //                 Some(tree)
-    //             }
-    //             SynResult::Panic(errors) => {
-    //                 self.info.errors.extend(errors);
-    //             None
-    //             }
-    //         };
-    //
-    //     if let Some(t) = self.peek_token() {
-    //         self.info.errors.push(Error::new(
-    //             Span::new(t.span.hi, self.info.source.len()),
-    //             ErrorKind::UnexpectedTokens));
-    //     }
-    //
-    //     ast
-    // }
-
     ///////////////////////////////////////////////////////////
     // Stream API
     ///////////////////////////////////////////////////////////
@@ -153,14 +105,13 @@ impl<'s, L: Lexicon> Parser<'s, L> {
     /// token.
     pub fn parse_token( &mut self, ty: L) -> SynResult<Token<L>, L> {
         let token = match self.peek_token() {
-            Some(token) => token,
-            None => return SynResult::Panic(vec![self.unexpected_eof()]),
+            Some(token) if token.ty == ty => token,
+            _ => {
+                let expected = FirstSet::one(ty, None);
+                let error = syntax::Error::new(self.current_span(), ErrorKind::Expecting(expected));
+                return SynResult::Panic(vec![error]);
+            }
         };
-        if token.ty != ty {
-            let expected = FirstSet::one(ty, None);
-            let error = syntax::Error::new(token.span, ErrorKind::Expecting(expected));
-            return SynResult::Panic(vec![error]);
-        }
         self.consume_token();
         SynResult::Success(token)
     }

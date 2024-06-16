@@ -13,7 +13,7 @@ pub struct Epsilon<L: Lexicon + 'static>(PhantomData<L>);
 impl<L: Lexicon + 'static> Production for Epsilon<L> {
     type L = L;
     fn debug() -> Cow<'static, str>{
-        Cow::Borrowed("epsilon")
+        Cow::Borrowed("()")
     }
     fn register(meta: &mut MetadataBuilder<Self::L>) {
         let t = Self::id();
