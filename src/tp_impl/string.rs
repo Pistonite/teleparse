@@ -1,9 +1,11 @@
 //! string-based syntax tree nodes ([`Quote`], [`Parse`]
+use std::any::TypeId;
+use std::collections::BTreeSet;
 use std::marker::PhantomData;
 use std::str::FromStr;
 
 use crate::syntax::{Metadata, Result as SynResult};
-use crate::{Parser, Produce, Production, ToSpan};
+use crate::{GrammarError, Parser, Produce, Production, ToSpan};
 
 use super::Node;
 
@@ -58,7 +60,6 @@ impl<S: FromStr, T: Produce> Produce for Parse<S, T>
             Node::new(span, S::from_str(src)).into()
         })
     }
-
 }
 
 

@@ -1,8 +1,10 @@
+use std::any::TypeId;
 use std::borrow::Cow;
+use std::collections::BTreeSet;
 use std::marker::PhantomData;
 
 use crate::syntax::{self, ErrorKind, FirstSet, Metadata, MetadataBuilder, Result as SynResult};
-use crate::{Parser, Pos, Produce, Production, Span, ToSpan};
+use crate::{GrammarError, Parser, Pos, Produce, Production, Span, ToSpan};
 
 use super::option::OptionProd;
 use super::Node;
@@ -519,6 +521,39 @@ mod tests {
             "(Ident)?".to_string(),
             "( (Ident)? )*".to_string(),
             "Ident".to_string()
+        ));
+    }
+
+    #[derive_syntax]
+    #[teleparse(root)]
+    #[derive(Debug, PartialEq, Clone)]
+    struct LoopRecover(tp::Loop<tp::Recover<Ident, tp::Option<OpAdd>>>);
+
+    #[test]
+    fn loop_will_not_stuck() -> Result<(), GrammarError> {
+        let mut parser = Parser::<T>::new("((((")?;
+        //---------------------------------^^^^ UnexpectedTokens
+        let t = parser.parse::<LoopRecover>()?.unwrap();
+        assert_eq!(t, LoopRecover(Node::new(4..4, vec![]).into()));
+        assert_eq!(parser.info().errors, vec![
+            syntax::Error::new(0..4, ErrorKind::UnexpectedTokens),
+        ]);
+    
+        Ok(())
+    }
+
+    #[derive_syntax]
+    #[teleparse(root, no_test)]
+    #[derive(Debug, PartialEq, Clone)]
+    struct LoopRecover2(tp::Loop<tp::Recover<tp::Option<Ident>, tp::Option<OpAdd>>>);
+
+    #[test]
+    fn loop_recover_option_not_ll1() {
+        assert_not_ll1!(LoopRecover2, GrammarError::FirstFollowSeqConflict(
+            "( (Ident)? (+)? )+".to_string(),
+            "(Ident)? (+)?".to_string(),
+            "( (Ident)? (+)? )*".to_string(),
+            "\"+\", Ident".to_string()
         ));
     }
 

@@ -1,12 +1,13 @@
+use std::any::TypeId;
 use std::borrow::Cow;
+use std::collections::BTreeSet;
 use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
 
 use crate::syntax::{self, Metadata, MetadataBuilder, Result as SynResult};
-use crate::{Parser, Produce, Production, Span, ToSpan};
+use crate::{GrammarError, Parser, Produce, Production, Span, ToSpan};
 
 use super::option::OptionProd;
-use super::Node;
 
 // Punct<T, P> => T (P (Punct<T, P>)?)?
 #[doc(hidden)]

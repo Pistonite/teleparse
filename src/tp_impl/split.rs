@@ -1,7 +1,9 @@
+use std::any::TypeId;
+use std::collections::BTreeSet;
 use std::ops::{Deref, DerefMut};
 
 use crate::syntax::{self, Metadata, Result as SynResult};
-use crate::{Parser, Produce, Production, ToSpan};
+use crate::{GrammarError, Parser, Produce, Production, ToSpan};
 
 use super::iter::OneOrMore;
 use super::option::OptionProd;
@@ -121,7 +123,6 @@ impl<T: Produce, P: Produce> Produce for Split<T, P>
         let s = Self { elems: Node::new(lo..hi, elems), puncts };
         (s, errors).into()
     }
-
 }
 
 #[cfg(test)]

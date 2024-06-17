@@ -49,7 +49,7 @@ Progress:
       - [x] Test
       - [ ] Documentation
   - [x] recovery `tp::Recover<A, B>`
-    - [ ] Test
+    - [x] Test
     - [ ] Documentation
   - [ ] Documentation
 - [ ] Static Metadata

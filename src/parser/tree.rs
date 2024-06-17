@@ -1,5 +1,6 @@
 
 use std::any::TypeId;
+use std::collections::BTreeSet;
 
 use crate::syntax::{self, Metadata, Production};
 use crate::{GrammarError, ToSpan};
@@ -24,6 +25,7 @@ pub trait Produce: Sized + ToSpan {
     fn prod_id() -> TypeId {
         <Self::Prod as Production>::id()
     }
+
 }
 
 pub trait Root: Produce

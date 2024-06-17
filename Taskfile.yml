@@ -1,6 +1,13 @@
 version: "3"
 
 tasks:
+  book:
+    desc: Watch and serve the book
+    cmds:
+      - txtpp book -r
+      - mdbook serve book -n 0.0.0.0 &
+      - cargo watch -s "txtpp book -r -N"
+
   doc:
     desc: Watch and serve documentation
     cmds:
