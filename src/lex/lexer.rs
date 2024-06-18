@@ -1,7 +1,3 @@
-//! Implementation of a lexer based on a set of rules
-//!
-//! See [`lex`](super) module-level documentation for more information.
-
 use std::marker::PhantomData;
 
 use logos::{Lexer as LogosLexer, Logos};
@@ -10,7 +6,7 @@ use super::{Lexicon, Span, Token};
 
 /// Trait for lexer
 ///
-/// See [module level documentation](super) for more information
+/// See [module-level documentation](super) for more information
 pub trait Lexer<'s> {
     type L: Lexicon;
 

@@ -12,17 +12,17 @@ fn main() {
     // can be parsed as Ident and KwClass
     assert_eq!(
         Ident::parse(source),
-        Ok(Some(Ident(Token::new(0..5, MyToken::Word))))
+        Ok(Some(Ident::from_span(0..5)))
     );
     assert_eq!(
         KwClass::parse(source),
-        Ok(Some(KwClass(Token::new(0..5, MyToken::Word))))
+        Ok(Some(KwClass::from_span(0..5)))
     );
     // other words can only be parsed as Ident
     let source = "javascript";
     assert_eq!(
         Ident::parse(source),
-        Ok(Some(Ident(Token::new(0..10, MyToken::Word))))
+        Ok(Some(Ident::from_span(0..10)))
     );
     assert_eq!(
         KwClass::parse(source),

@@ -1,5 +1,3 @@
-//! Utils for handling [`Token`]s from lexer output
-
 use std::fmt::Debug;
 
 use super::{ToSpan, Span, Lexicon};

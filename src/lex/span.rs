@@ -1,5 +1,3 @@
-//! Utils for handling and converting [`Span`]s
-
 use std::ops::Range;
 use std::fmt::Debug;
 

@@ -4,7 +4,7 @@ Teleparse is a powerful library designed for creating parsers for custom languag
 ## Features
 
 - Utilizes Rust's powerful proc-macro system to simplify language declaration, ensuring excellent synergy between data structures and the language being parsed. There's no need to learn a DSL for parser declaration.
-- Includes an LL(1) top-down, non-recursive descent parser. The grammar can be verified as LL(1) through generated tests.
+- Includes an LL(1) top-down, recursive-descent, non-back-tracking parser. The grammar can be verified as LL(1) through generated tests.
 - Offers utilities for parsing common language constructs, such as optional symbols and symbol-delimited lists, with built-in error detection and recovery.
 - No separate build tool needed to generate parser code.
 

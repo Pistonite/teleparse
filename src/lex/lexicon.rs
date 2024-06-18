@@ -11,7 +11,7 @@ use super::Lexer;
 
 /// Trait for defining the token types of a grammar
 ///
-/// See [module level documentation](super) for more information
+/// See [module-level documentation](super) for more information
 #[doc(alias = "TokenType")]
 pub trait Lexicon: Debug + Clone + Copy + PartialEq + Eq + Hash + 'static {
     /// Bit flag representation of the token types

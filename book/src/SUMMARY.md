@@ -2,19 +2,18 @@
 
 - [Introduction](./intro.md)
   - [Textbook Example](./example_g.md)
-  - [Textbook Example - Simplified](./example_simple_g.md)
+  - [Textbook Example - simplified](./example_simple_g.md)
   - [Parser Workflow](./flow.md)
 
 # Lexical Analysis
 
 - [`derive_lexicon`](./lexical_analysis/derive_lexicon_g.md)
-  - [Terminals](./lexical_analysis/terminals_g.md)
-    - [Using `regex` and `terminal` attributes](./lexical_analysis/regex_terminals.md)
-    - [Only `terminal`](./lexical_analysis/regex_terminals/terminal_only_g.md)
-    - [Both `terminal` and `regex`](./lexical_analysis/regex_terminals/both_terminal_regex_g.md)
-    - [Only `regex`](./lexical_analysis/regex_terminals/regex_only_g.md)
-    - [Neither (Semantic Types)](./lexical_analysis/regex_terminals/semantic_g.md)
-  - [Regex Validation](./lexical_analysis/regex_validation_g.md)
+  - [Understanding Terminals](./lexical_analysis/terminals_g.md)
+  - [Using `regex` and `terminal` Attributes](./lexical_analysis/regex_terminals_g.md)
+  - [Inferring the Pattern](./lexical_analysis/inferred_regex_g.md)
+  - [Handling Comments](./lexical_analysis/extracted_g.md)
+  - [Semantic Tokens]()
+  - [Lexer Validation](./lexical_analysis/lexer_validation_g.md)
 
 # Syntax Analysis
 

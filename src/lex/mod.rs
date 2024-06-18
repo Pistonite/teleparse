@@ -1,4 +1,14 @@
-#![doc = include_str!("./readme_g.md")]
+//! # Lexical Analysis
+//!
+//! This module implements token-related utilities used
+//! for [`#[derive_lexicon]`](crate::derive_lexicon).
+//! You can read more in the [teleparse
+//! book](https://teleparse.pistonite.org/lexical_analysis/derive_lexicon_g.html)
+//!
+//! ## Example
+//! ```rust
+#![doc = include_str!("../../tests/expand/lexicon_example.rs")]
+//! ```
 
 mod lexer;
 pub use lexer::*;

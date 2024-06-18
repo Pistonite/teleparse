@@ -1,4 +1,4 @@
-# Terminals
+# Understanding Terminals
 
 *Terminal*s are leaf nodes in the syntax tree. For example, in the "textbook" grammar:
 ```text

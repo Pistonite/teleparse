@@ -57,6 +57,9 @@ impl<'a, 'b, L: Lexicon> std::fmt::Debug for DebugFirst<'a, 'b, L> {
     }
 }
 
+/// Macro for creating [`FirstSet`] from a list of terminals
+///
+/// See [`terminal_set`](crate::terminal_set) for more information.
 #[macro_export]
 macro_rules! first_set {
     ($($x:tt)*) => {

@@ -4,9 +4,10 @@ tasks:
   book:
     desc: Watch and serve the book
     cmds:
-      - txtpp book -r
-      - mdbook serve book -n 0.0.0.0 &
-      - cargo watch -s "txtpp book -r -N"
+      - txtpp book -r && mdbook build book
+      - live-server book/book -p 8081 &
+      # - ../live-server/target/release/live-server.exe book/book -p 8081 &
+      - cargo watch -s "txtpp book -r -N && mdbook build book"
 
   doc:
     desc: Watch and serve documentation

@@ -56,6 +56,9 @@ impl<'a, 'b, L: Lexicon> std::fmt::Debug for DebugFollow<'a, 'b, L> {
     }
 }
 
+/// Macro for creating [`FollowSet`] from a list of terminals
+///
+/// See [`terminal_set`](crate::terminal_set) for more information.
 #[macro_export]
 macro_rules! follow_set {
     ($($x:tt)*) => {
