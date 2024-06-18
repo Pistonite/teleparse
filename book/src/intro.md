@@ -17,3 +17,11 @@ Add `teleparse` as a dependency in your project:
 ```console
 $ cargo add teleparse
 ```
+
+It is recommended to import the `teleparse::prelude` module in
+your module that interfaces with `teleparse` to bring all required traits, macros
+and utility types into scope. You will see almost all the examples do this.
+
+```rust
+use teleparse::prelude::*;
+```

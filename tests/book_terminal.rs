@@ -2,9 +2,9 @@ use teleparse::prelude::*;
 use teleparse::GrammarError;
 
 #[derive_lexicon]
-#[teleparse(ignore(r#"\s+"#), terminal_parse)]
+#[teleparse(ignore(r"\s+"), terminal_parse)]
 pub enum TokenType {
-    #[teleparse(regex(r#"\w+"#), terminal(Id))]
+    #[teleparse(regex(r"\w+"), terminal(Id))]
     Ident,
 }
 

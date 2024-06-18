@@ -12,9 +12,9 @@ The grammar can be described verbally as follows:
 - A term (`T`) is a list of factors (`F`) separated by `*`.
 - A factor (`F`) is either an identifier or an expression enclosed in parentheses.
 
-You may also seen this LL(1) grammar used to describe the above.
-(It's ok if you don't understand this for now. 
-The book will go into more details about how languages are notated later.)
+You may also seen the following used to describe the above.
+(It's called Backus-Naur Form or **BNF**. It's ok if you don't understand this for now. 
+Some places might have `::=` instead of `=>`.)
 ```text
 E  => T E'
 E' => + T E' | ε
