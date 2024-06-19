@@ -12,7 +12,6 @@
   - [Using `regex` and `terminal` Attributes](./lexical_analysis/regex_terminals_g.md)
   - [Inferring the Pattern](./lexical_analysis/inferred_regex_g.md)
   - [Handling Comments](./lexical_analysis/extracted_g.md)
-  - [Semantic Tokens]()
   - [Lexer Validation](./lexical_analysis/lexer_validation_g.md)
 
 # Syntax Analysis

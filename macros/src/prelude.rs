@@ -3,7 +3,7 @@ use regex::Regex;
 pub(crate) use proc_macro::TokenStream;
 pub(crate) use proc_macro2::Span;
 pub(crate) use quote::{quote, format_ident};
-pub(crate) use syn::{parse_macro_input, parse_quote};
+pub(crate) use syn::parse_macro_input;
 pub(crate) use syn::punctuated::Punctuated;
 
 /// Type to distinct with proc_macro::TokenStream
@@ -130,10 +130,6 @@ pub(crate) enum EnsureOne<T> {
     None,
     One(T),
     More,
-}
-
-pub(crate) fn ident_to_type(ident: &syn::Ident) -> syn::Type {
-    parse_quote! { #ident }
 }
 
 pub(crate) fn checked_regex_rule(input: &syn::LitStr) -> syn::Result<Regex> {

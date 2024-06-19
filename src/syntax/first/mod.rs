@@ -1,5 +1,3 @@
-#![doc = include_str!("./README.md")]
-
 use std::any::TypeId;
 use std::collections::BTreeMap;
 use crate::Lexicon;

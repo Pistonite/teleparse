@@ -363,14 +363,14 @@ fn parse_root_attributes(input: &mut syn::DeriveInput) -> syn::Result<RootAttr> 
 
 struct FieldAttr {
     semantic: Option<Vec<syn::Ident>>,
-    hook: Option<syn::Ident>,
+    // hook: Option<syn::Ident>,
 }
 
 fn parse_field_attributes<T: ToTokens>(field: &T, attrs: Vec<syn::Attribute>) -> syn::Result<FieldAttr> {
     let mut semantic = None;
     let mut hook = None;
     let attr = match ensure_one(attrs) {
-        EnsureOne::None => return Ok(FieldAttr { semantic, hook }),
+        EnsureOne::None => return Ok(FieldAttr { semantic }),
         EnsureOne::More => syn_error!(field, "Multiple {} attributes found! You might want to merge them.", CRATE),
         EnsureOne::One(attr) => attr,
     };
@@ -397,6 +397,6 @@ fn parse_field_attributes<T: ToTokens>(field: &T, attrs: Vec<syn::Attribute>) ->
         }
     }
 
-    Ok(FieldAttr { semantic, hook })
+    Ok(FieldAttr { semantic })
 }
 

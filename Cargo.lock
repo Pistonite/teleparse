@@ -511,7 +511,6 @@ dependencies = [
  "logos",
  "macrotest",
  "num",
- "regex",
  "teleparse-macros",
  "thiserror",
  "trybuild",

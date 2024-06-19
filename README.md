@@ -58,7 +58,7 @@ Progress:
   - [ ] Documentation
 - [ ] Usability testing
 - [ ] mdBook
-  - [ ] derive_lexicon
+  - [x] derive_lexicon
   - [ ] derive_syntax
     - [ ] semantic tokens
   - [ ] using `tp`
