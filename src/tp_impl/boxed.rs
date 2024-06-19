@@ -1,15 +1,11 @@
-
-use std::any::TypeId;
-use std::collections::BTreeSet;
-
 use crate::syntax::{Result as SynResult, Metadata};
-use crate::{GrammarError, Parser, Pos, Produce, Production, Span, ToSpan};
-
+use crate::{Parser, Pos, Produce, Production, Span, ToSpan};
 use crate::production_passthrough;
 
 impl<T: Production> Production for Box<T> {
     production_passthrough!(T);
 }
+
 impl<T: ToSpan> ToSpan for Box<T> {
     fn lo(&self) -> Pos {
         self.as_ref().lo()

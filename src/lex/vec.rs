@@ -586,8 +586,8 @@ mod tests {
     #[test]
     fn left_over_min_right_over_max() {
         let vec = example();
-        assert_eq!(vec.overlap(0..100).as_slice(), &vec.as_slice()[..]);
-        assert_eq!(vec.inside(0..100).as_slice(), &vec.as_slice()[..]);
+        assert_eq!(vec.overlap(0..100).as_slice(), vec.as_slice());
+        assert_eq!(vec.inside(0..100).as_slice(), vec.as_slice());
     }
 
     #[test]

@@ -1,11 +1,7 @@
-use std::io::ErrorKind;
-
-use crate::syntax::{self, Epsilon, Metadata, MetadataBuilder, Result as SynResult};
+use crate::syntax::{Metadata, Result as SynResult};
 use crate::{Parser, Pos, Produce, Production, ToSpan};
 
-use super::option::OptionProd;
 use super::Node;
-
 
 // When parser panics, skip tokens until an R can be parsed
 #[derive(Debug, Clone, PartialEq)]
@@ -47,7 +43,7 @@ impl<T: Produce, R: Produce> Produce for Recover<T, R>
                     (None, x.span(), Some(x))
                 },
                 SynResult::Panic(e) => {
-                    (e.into_iter().rev().next(), parser.current_span_empty(), None)
+                    (e.into_iter().next_back(), parser.current_span_empty(), None)
                 }
             }
         } else {
@@ -66,7 +62,7 @@ impl<T: Produce, R: Produce> Produce for Recover<T, R>
                             Some(x)
                         },
                         SynResult::Panic(e) => {
-                            if let Some(e) = e.into_iter().rev().next() {
+                            if let Some(e) = e.into_iter().next_back() {
                                 if let Some(p) = &mut panic {
                                     p.span.hi = e.span.hi;
                                 } else {
@@ -88,7 +84,7 @@ impl<T: Produce, R: Produce> Produce for Recover<T, R>
                         break Some(x)
                     },
                     SynResult::Panic(e) => {
-                        if let Some(e) = e.into_iter().rev().next() {
+                        if let Some(e) = e.into_iter().next_back() {
                             if let Some(p) = &mut panic {
                                 p.span.hi = e.span.hi;
                             } else {
@@ -133,7 +129,6 @@ mod tests {
 
     use crate::test::{OpAdd, Ident, ParenOpen, ParenClose};
     use crate::test::MathTokenType as T;
-    use crate::test::prelude::*;
     use crate::{Parser, GrammarError};
 
     #[derive_syntax]
@@ -233,6 +228,7 @@ mod tests {
     #[derive_syntax]
     #[teleparse(root)]
     #[derive(Debug, PartialEq)]
+    #[allow(clippy::type_complexity)]
     struct Recover2(tp::Recover<(ParenOpen, Ident, ParenClose), (ParenOpen, OpAdd, Ident, ParenClose)>);
 
     #[test]

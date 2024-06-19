@@ -1,10 +1,8 @@
-use std::any::TypeId;
 use std::borrow::Cow;
-use std::collections::BTreeSet;
 use std::marker::PhantomData;
 
 use crate::syntax::{self, ErrorKind, FirstSet, Metadata, MetadataBuilder, Result as SynResult};
-use crate::{GrammarError, Parser, Pos, Produce, Production, Span, ToSpan};
+use crate::{Parser, Pos, Produce, Production, Span, ToSpan};
 
 use super::option::OptionProd;
 use super::Node;

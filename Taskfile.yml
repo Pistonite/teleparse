@@ -50,8 +50,8 @@ tasks:
     env:
       RUSTDOCFLAGS: -D warnings
     cmds:
-      - cargo clippy --package teleparse-macros --all-targets ${{.CLIPPY_FLAGS}}
-      - cargo clippy --package teleparse --all-targets ${{.CLIPPY_FLAGS}}
+      - cargo clippy --package teleparse-macros --all-targets -- {{.CLIPPY_FLAGS}}
+      - cargo clippy --package teleparse --all-targets -- {{.CLIPPY_FLAGS}}
       - cargo doc
       - cargo fmt --check
 

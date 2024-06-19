@@ -1,5 +1,3 @@
-#![doc = include_str!("./README.md")]
-
 mod info;
 pub use info::*;
 mod parser;

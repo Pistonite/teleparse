@@ -295,10 +295,10 @@ mod tests {
         let mut set = TerminalSet::<T>::new();
         assert!(!set.contains_e());
         assert!(!set.contains(None));
-        assert_eq!(set.insert_e(), true);
+        assert!(set.insert_e());
         assert!(set.contains_e());
         assert!(set.contains(None));
-        assert_eq!(set.insert_e(), false);
+        assert!(!set.insert_e());
         assert!(set.contains_e());
         assert!(set.contains(None));
     }

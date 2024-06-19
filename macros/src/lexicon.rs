@@ -189,7 +189,7 @@ pub fn expand(input: &mut syn::DeriveInput) -> syn::Result<TokenStream2> {
                             enum_ident,
                             variant_ident,
                             ident,
-                            Some(&value),
+                            Some(value),
                         ));
                     }
                     _ => syn_error!(
@@ -228,7 +228,7 @@ pub fn expand(input: &mut syn::DeriveInput) -> syn::Result<TokenStream2> {
                     // if we are able to match, we must be able to match the entire string
                     // For example, if the regex matches `key` and the literal is `keyboard`.
                     // If we were to match `keyboard`, `key` should be matched instead
-                    if let Some(mat) = regex_obj.find(&match_lit) {
+                    if let Some(mat) = regex_obj.find(match_lit) {
                         if mat.start() != 0 {
                             syn_error!(
                                 regex,
@@ -414,7 +414,7 @@ fn derive_terminal(
         }
     };
     let terminal_parse_impl = if terminal_parse {
-        Some(root::expand(&terminal_ident))
+        Some(root::expand(terminal_ident))
     } else {
         None
     };

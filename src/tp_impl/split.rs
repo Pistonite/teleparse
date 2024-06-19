@@ -1,9 +1,7 @@
-use std::any::TypeId;
-use std::collections::BTreeSet;
 use std::ops::{Deref, DerefMut};
 
 use crate::syntax::{self, Metadata, Result as SynResult};
-use crate::{GrammarError, Parser, Produce, Production, ToSpan};
+use crate::{Parser, Produce, Production, ToSpan};
 
 use super::iter::OneOrMore;
 use super::option::OptionProd;
@@ -15,6 +13,55 @@ pub struct Split<T: Produce, P: Produce>
     {
     pub elems: Node<Vec<T>>,
     pub puncts: Vec<P>,
+}
+
+impl<T: Produce, P: Produce> Deref for Split<T, P> 
+    where P::Prod: Production<L = <T::Prod as Production>::L>,{
+    type Target = Vec<T>;
+    fn deref(&self) -> &Self::Target {
+        &self.elems
+    }
+}
+
+impl<T: Produce, P: Produce> DerefMut for Split<T, P> 
+    where P::Prod: Production<L = <T::Prod as Production>::L>,
+{
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.elems
+    }
+}
+
+impl<T: Produce, P: Produce> IntoIterator for Split<T, P> 
+    where P::Prod: Production<L = <T::Prod as Production>::L>,
+{
+    type Item = T;
+    type IntoIter = std::vec::IntoIter<T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.elems.into_inner().into_iter()
+    }
+}
+
+impl<'a, T: Produce, P: Produce> IntoIterator for &'a Split<T, P> 
+    where P::Prod: Production<L = <T::Prod as Production>::L>,
+{
+    type Item = &'a T;
+    type IntoIter = std::slice::Iter<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.elems.iter()
+    }
+}
+
+impl<'a, T: Produce, P: Produce> IntoIterator for &'a mut Split<T, P> 
+    where P::Prod: Production<L = <T::Prod as Production>::L>,
+{
+    type Item = &'a mut T;
+    type IntoIter = std::slice::IterMut<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.elems.iter_mut()
+    }
 }
 
 impl<T: Produce, P: Produce> Produce for Split<T, P> 
@@ -495,53 +542,4 @@ mod tests {
         ));
     }
 
-}
-
-impl<T: Produce, P: Produce> Deref for Split<T, P> 
-    where P::Prod: Production<L = <T::Prod as Production>::L>,{
-    type Target = Vec<T>;
-    fn deref(&self) -> &Self::Target {
-        &self.elems
-    }
-}
-
-impl<T: Produce, P: Produce> DerefMut for Split<T, P> 
-    where P::Prod: Production<L = <T::Prod as Production>::L>,
-{
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.elems
-    }
-}
-
-impl<T: Produce, P: Produce> IntoIterator for Split<T, P> 
-    where P::Prod: Production<L = <T::Prod as Production>::L>,
-{
-    type Item = T;
-    type IntoIter = std::vec::IntoIter<T>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.elems.into_inner().into_iter()
-    }
-}
-
-impl<'a, T: Produce, P: Produce> IntoIterator for &'a Split<T, P> 
-    where P::Prod: Production<L = <T::Prod as Production>::L>,
-{
-    type Item = &'a T;
-    type IntoIter = std::slice::Iter<'a, T>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.elems.iter()
-    }
-}
-
-impl<'a, T: Produce, P: Produce> IntoIterator for &'a mut Split<T, P> 
-    where P::Prod: Production<L = <T::Prod as Production>::L>,
-{
-    type Item = &'a mut T;
-    type IntoIter = std::slice::IterMut<'a, T>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.elems.iter_mut()
-    }
 }

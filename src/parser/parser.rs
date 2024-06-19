@@ -1,11 +1,8 @@
-
-use std::marker::PhantomData;
-
 use crate::lex::{Lexer, Set, Token, TokenSrc};
 use crate::syntax::{self, Error, ErrorKind, FirstSet, FollowSet, Metadata, Result as SynResult};
 use crate::{GrammarError, Lexicon, Production, Span, ToSpan};
 
-use super::{Info, Root, Produce};
+use super::{Info, Root};
 
 pub struct Parser<'s, L: Lexicon> {
     /// The core state of the parser

@@ -1,11 +1,9 @@
-use std::any::TypeId;
 use std::borrow::Cow;
-use std::collections::BTreeSet;
 use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
 
 use crate::syntax::{self, Metadata, MetadataBuilder, Result as SynResult};
-use crate::{GrammarError, Parser, Produce, Production, Span, ToSpan};
+use crate::{Parser, Produce, Production, Span, ToSpan};
 
 use super::option::OptionProd;
 
@@ -32,6 +30,56 @@ pub struct Punct<T: Produce, P: Produce>
     pub elems: Vec<T>,
     pub puncts: Vec<P>,
 }
+
+impl<T: Produce, P: Produce> Deref for Punct<T, P> 
+    where P::Prod: Production<L = <T::Prod as Production>::L>,{
+    type Target = Vec<T>;
+    fn deref(&self) -> &Self::Target {
+        &self.elems
+    }
+}
+
+impl<T: Produce, P: Produce> DerefMut for Punct<T, P> 
+    where P::Prod: Production<L = <T::Prod as Production>::L>,
+{
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.elems
+    }
+}
+
+impl<T: Produce, P: Produce> IntoIterator for Punct<T, P> 
+    where P::Prod: Production<L = <T::Prod as Production>::L>,
+{
+    type Item = T;
+    type IntoIter = std::vec::IntoIter<T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.elems.into_iter()
+    }
+}
+
+impl<'a, T: Produce, P: Produce> IntoIterator for &'a Punct<T, P> 
+    where P::Prod: Production<L = <T::Prod as Production>::L>,
+{
+    type Item = &'a T;
+    type IntoIter = std::slice::Iter<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.elems.iter()
+    }
+}
+
+impl<'a, T: Produce, P: Produce> IntoIterator for &'a mut Punct<T, P> 
+    where P::Prod: Production<L = <T::Prod as Production>::L>,
+{
+    type Item = &'a mut T;
+    type IntoIter = std::slice::IterMut<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.elems.iter_mut()
+    }
+}
+
 impl<T: Produce, P: Produce> Produce for Punct<T, P> 
     where P::Prod: Production<L = <T::Prod as Production>::L>,
 {
@@ -566,54 +614,5 @@ mod tests {
             "((+)? ( (Ident)? )[(+)?]*)?".to_string(),
             "Ident".to_string()
         ));
-    }
-}
-
-impl<T: Produce, P: Produce> Deref for Punct<T, P> 
-    where P::Prod: Production<L = <T::Prod as Production>::L>,{
-    type Target = Vec<T>;
-    fn deref(&self) -> &Self::Target {
-        &self.elems
-    }
-}
-
-impl<T: Produce, P: Produce> DerefMut for Punct<T, P> 
-    where P::Prod: Production<L = <T::Prod as Production>::L>,
-{
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.elems
-    }
-}
-
-impl<T: Produce, P: Produce> IntoIterator for Punct<T, P> 
-    where P::Prod: Production<L = <T::Prod as Production>::L>,
-{
-    type Item = T;
-    type IntoIter = std::vec::IntoIter<T>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.elems.into_iter()
-    }
-}
-
-impl<'a, T: Produce, P: Produce> IntoIterator for &'a Punct<T, P> 
-    where P::Prod: Production<L = <T::Prod as Production>::L>,
-{
-    type Item = &'a T;
-    type IntoIter = std::slice::Iter<'a, T>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.elems.iter()
-    }
-}
-
-impl<'a, T: Produce, P: Produce> IntoIterator for &'a mut Punct<T, P> 
-    where P::Prod: Production<L = <T::Prod as Production>::L>,
-{
-    type Item = &'a mut T;
-    type IntoIter = std::slice::IterMut<'a, T>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.elems.iter_mut()
     }
 }

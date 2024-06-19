@@ -57,7 +57,7 @@ where F:
 
 pub(crate) fn parse_crate_attr_meta(attr: &syn::Attribute) -> syn::Result<
 Punctuated<syn::Meta, syn::Token![,]>> {
-    Ok(attr.parse_args_with(Punctuated::<syn::Meta, syn::Token![,]>::parse_terminated)?)
+    attr.parse_args_with(Punctuated::<syn::Meta, syn::Token![,]>::parse_terminated)
 }
 
 /// Take teleparse attributes from a list of attributes
