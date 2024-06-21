@@ -22,8 +22,8 @@ impl<S, T: Produce> Produce for Quote<S, T>
 {
     type Prod = T::Prod;
 
-    fn produce<'s>(
-        parser: &mut Parser<'s, <Self::Prod as Production>::L>,
+    fn produce(
+        parser: &mut Parser<'_, <Self::Prod as Production>::L>,
         meta: &Metadata<<Self::Prod as Production>::L>,
     ) -> SynResult<Self, <Self::Prod as Production>::L> {
         T::produce(parser, meta).map(|x| {
@@ -48,8 +48,8 @@ impl<S: FromStr, T: Produce> Produce for Parse<S, T>
 {
     type Prod = T::Prod;
 
-    fn produce<'s>(
-        parser: &mut Parser<'s, <Self::Prod as Production>::L>,
+    fn produce(
+        parser: &mut Parser<'_, <Self::Prod as Production>::L>,
         meta: &Metadata<<Self::Prod as Production>::L>,
     ) -> SynResult<Self, <Self::Prod as Production>::L> {
         T::produce(parser, meta).map(|x| {

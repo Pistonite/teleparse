@@ -108,8 +108,8 @@ fn expand_struct_unnamed(ident: syn::Ident, input: &mut syn::FieldsUnnamed, root
         #[automatically_derived]
         impl #teleparse::parser::Produce for #ident {
             type Prod = #prod_struct;
-            fn produce<'s>(
-                parser: &mut #teleparse::parser::Parser<'s, <Self::Prod as #teleparse::syntax::Production>::L>,
+            fn produce(
+                parser: &mut #teleparse::parser::Parser<'_, <Self::Prod as #teleparse::syntax::Production>::L>,
                 meta: &#teleparse::syntax::Metadata<<Self::Prod as #teleparse::syntax::Production>::L>,
             ) -> #teleparse::syntax::Result<Self, <Self::Prod as #teleparse::syntax::Production>::L> {
                 use #teleparse::parser::Produce;
@@ -192,8 +192,8 @@ fn expand_struct_named(ident: syn::Ident, input: &mut syn::FieldsNamed, root_att
         #[automatically_derived]
         impl #teleparse::parser::Produce for #ident {
             type Prod = #prod_struct;
-            fn produce<'s>(
-                parser: &mut #teleparse::parser::Parser<'s, <Self::Prod as #teleparse::syntax::Production>::L>,
+            fn produce(
+                parser: &mut #teleparse::parser::Parser<'_, <Self::Prod as #teleparse::syntax::Production>::L>,
                 meta: &#teleparse::syntax::Metadata<<Self::Prod as #teleparse::syntax::Production>::L>,
             ) -> #teleparse::syntax::Result<Self, <Self::Prod as #teleparse::syntax::Production>::L> {
                 use #teleparse::parser::Produce;
@@ -291,8 +291,8 @@ fn expand_enum(ident: syn::Ident, input: &mut syn::DataEnum, root_attr: &RootAtt
         #[automatically_derived]
         impl #teleparse::parser::Produce for #ident {
             type Prod = #prod_struct;
-            fn produce<'s>(
-                parser: &mut #teleparse::parser::Parser<'s, <Self::Prod as #teleparse::syntax::Production>::L>, 
+            fn produce(
+                parser: &mut #teleparse::parser::Parser<'_, <Self::Prod as #teleparse::syntax::Production>::L>, 
                 meta: &#teleparse::syntax::Metadata<<Self::Prod as #teleparse::syntax::Production>::L>,
             ) -> #teleparse::syntax::Result<Self, <Self::Prod as #teleparse::syntax::Production>::L> {
                 use #teleparse::syntax::Production;

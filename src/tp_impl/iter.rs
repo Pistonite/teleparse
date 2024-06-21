@@ -34,8 +34,8 @@ impl<V: FromIterator<T> + std::fmt::Debug, T: Produce> std::fmt::Debug for Plus<
 
 impl<V: FromIterator<T>, T: Produce> Produce for Plus<V, T> {
     type Prod = OneOrMore<T::Prod>;
-    fn produce<'s>(
-        parser: &mut Parser<'s, <Self::Prod as Production>::L>,
+    fn produce(
+        parser: &mut Parser<'_, <Self::Prod as Production>::L>,
         meta: &Metadata<<Self::Prod as Production>::L>,
     ) -> SynResult<Self, <Self::Prod as Production>::L> {
         let (first_elem, mut errors) = match T::produce(parser, meta) {
@@ -72,8 +72,8 @@ impl<V: FromIterator<T> + Default + std::fmt::Debug, T: Produce> std::fmt::Debug
 }
 impl<V: FromIterator<T>+ Default, T: Produce> Produce for Star<V, T> {
     type Prod = OptionProd<OneOrMore<T::Prod>>;
-    fn produce<'s>(
-        parser: &mut Parser<'s, <Self::Prod as Production>::L>,
+    fn produce(
+        parser: &mut Parser<'_, <Self::Prod as Production>::L>,
         meta: &Metadata<<Self::Prod as Production>::L>,
     ) -> SynResult<Self, <Self::Prod as Production>::L> {
         <super::option::Optional<Plus<V, T>>>::produce(parser, meta)
@@ -96,8 +96,8 @@ impl<T: Produce + std::fmt::Debug> std::fmt::Debug for Loop<T> {
 
 impl<T: Produce> Produce for Loop<T> {
     type Prod = OneOrMore<T::Prod>;
-    fn produce<'s>(
-        parser: &mut Parser<'s, <Self::Prod as Production>::L>,
+    fn produce(
+        parser: &mut Parser<'_, <Self::Prod as Production>::L>,
         meta: &Metadata<<Self::Prod as Production>::L>,
     ) -> SynResult<Self, <Self::Prod as Production>::L> {
         let mut errors = Vec::new();
@@ -191,11 +191,8 @@ impl<T: Produce> Iterator for ProduceIter<'_, '_, '_, '_, '_, T> {
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let token = self.parser.peek_token_src();
-        if token.is_none() {
-            return None;
-        }
-        if !self.first.contains(token) {
+        let token = self.parser.peek_token_src()?;
+        if !self.first.contains(Some(token)) {
             return None;
         }
         match T::produce(self.parser, self.meta) {

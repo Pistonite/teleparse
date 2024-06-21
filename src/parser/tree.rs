@@ -8,8 +8,8 @@ use super::Parser;
 pub trait Produce: Sized + ToSpan {
     type Prod: Production;
 
-    fn produce<'s>(
-        parser: &mut Parser<'s, <Self::Prod as Production>::L>, 
+    fn produce(
+        parser: &mut Parser<'_, <Self::Prod as Production>::L>, 
         meta: &Metadata<<Self::Prod as Production>::L>,
     ) -> syntax::Result<Self, <Self::Prod as Production>::L>;
 
@@ -29,7 +29,7 @@ pub trait Root: Produce
 
     fn assert_ll1() {
         if let Err(e) = Self::metadata() {
-            assert!(false, "{} is not LL(1): {}", Self::Prod::debug(), e);
+            panic!("{} is not LL(1): {}", Self::Prod::debug(), e);
         }
     }
 }

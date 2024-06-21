@@ -21,8 +21,8 @@ impl<T: ToSpan> ToSpan for Box<T> {
 impl<T: Produce> Produce for Box<T> {
     type Prod = Box<T::Prod>;
 
-    fn produce<'s>(
-        parser: &mut Parser<'s, <Self::Prod as Production>::L>, 
+    fn produce(
+        parser: &mut Parser<'_, <Self::Prod as Production>::L>, 
         meta: &Metadata<<Self::Prod as Production>::L>,
     ) -> SynResult<Self, <Self::Prod as Production>::L> {
         T::produce(parser, meta).map(Box::new)

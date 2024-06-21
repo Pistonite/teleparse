@@ -88,8 +88,8 @@ impl<T: Produce, P: Produce> Produce for Punct<T, P>
     // Split cannot end on separator, so it will try to find an item and
     // "commit" a (P T) pair.
     // Punct will always commit the P first, and try to parse T if it can, or stop
-    fn produce<'s>(
-        parser: &mut Parser<'s, <Self::Prod as Production>::L>,
+    fn produce(
+        parser: &mut Parser<'_, <Self::Prod as Production>::L>,
         meta: &Metadata<<Self::Prod as Production>::L>,
     ) -> SynResult<Self, <Self::Prod as Production>::L> {
         let (lo, mut elems, mut errors) = match T::produce(parser, meta) {
@@ -152,7 +152,7 @@ impl<T: Produce, P: Produce> Produce for Punct<T, P>
                         continue 'outer;
                     }
                     SynResult::Panic(e) => {
-                        if let Some(e) = e.into_iter().rev().next() {
+                        if let Some(e) = e.into_iter().next_back() {
                             if let Some(p) = &mut panic {
                                 p.span.hi = e.span.hi;
                             } else {

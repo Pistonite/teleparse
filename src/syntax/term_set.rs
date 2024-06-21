@@ -103,11 +103,11 @@ impl<L: Lexicon> TerminalSet<L> {
     }
 
     /// Check if the set contains the terminal `(ty, lit)`
-    pub fn contains<'s>(&self, token: Option<TokenSrc<'s, L>>) -> bool {
+    pub fn contains(&self, token: Option<TokenSrc<'_, L>>) -> bool {
         match token {
             None => self.e,
             Some(token) => {
-                self.map.get(token.ty).contains(&token.src)
+                self.map.get(token.ty).contains(token.src)
             }
         }
     }
@@ -160,10 +160,9 @@ impl<L: Lexicon> TerminalSet<L> {
     ///
     /// This returns immediately when one terminal is found in both sets
     pub fn intersects(&self, other: &Self, include_e: bool) -> bool {
-        if include_e {
-            if self.e && other.e {
+        if include_e && self.e && other.e {
                 return true;
-            }
+            
         }
         for (set, other_set) in self.map.iter().zip(other.map.iter()) {
             if set.intersects(other_set) {
@@ -192,10 +191,8 @@ impl<L: Lexicon> TerminalSet<L> {
     /// in which case it will never appear in the intersection.
     pub fn intersection_repr(&self, other: &Self, include_e: bool) -> BTreeSet<String> {
         let mut terminals = BTreeSet::new();
-        if include_e {
-            if self.e && other.e {
+        if include_e && self.e && other.e {
                 terminals.insert("<empty>".to_string());
-            }
         }
         for ((ty, set), other_set) in self.map.iter_zip().zip(other.map.iter()) {
             let intersection = set.intersection(other_set);

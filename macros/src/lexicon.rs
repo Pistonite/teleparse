@@ -321,7 +321,7 @@ pub fn expand(input: &mut syn::DeriveInput) -> syn::Result<TokenStream2> {
                     }
                 }
 
-                fn lexer<'s>(source: &'s str) -> ::core::result::Result<Self::Lexer<'s>, #teleparse::GrammarError> {
+                fn lexer(source: &str) -> ::core::result::Result<Self::Lexer<'_>, #teleparse::GrammarError> {
                     use #teleparse::__priv::logos::Logos;
                     Ok(#teleparse::lex::LogosLexerWrapper::new( DerivedLogos::lexer(source)))
                 }
@@ -457,8 +457,8 @@ fn derive_terminal(
             #[automatically_derived]
             impl #teleparse::parser::Produce for #terminal_ident {
                 type Prod = Self;
-                fn produce<'s>(
-                    parser: &mut #teleparse::Parser<'s, <Self::Prod as #teleparse::syntax::Production>::L>, 
+                fn produce(
+                    parser: &mut #teleparse::Parser<'_, <Self::Prod as #teleparse::syntax::Production>::L>, 
                     meta: &#teleparse::syntax::Metadata<<Self::Prod as #teleparse::syntax::Production>::L>,
                 ) -> #teleparse::syntax::Result<Self, <Self::Prod as #teleparse::syntax::Production>::L> {
                     #match_parse_impl

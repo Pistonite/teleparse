@@ -52,8 +52,8 @@ impl<T: std::fmt::Debug + Produce> std::fmt::Debug for Optional<T> {
 
 impl<T: Produce> Produce for Optional<T> {
     type Prod = OptionProd<T::Prod>;
-    fn produce<'s>(
-        parser: &mut Parser<'s, <Self::Prod as Production>::L>,
+    fn produce(
+        parser: &mut Parser<'_, <Self::Prod as Production>::L>,
         meta: &Metadata<<Self::Prod as Production>::L>,
     ) -> SynResult<Self, <Self::Prod as Production>::L> {
         produce_option(parser,meta,|x|x).map(Self::from)
@@ -73,16 +73,16 @@ impl<T: Produce> std::fmt::Debug for Exists<T> {
 
 impl<T: Produce> Produce for Exists<T> {
     type Prod = OptionProd<T::Prod>;
-    fn produce<'s>(
-        parser: &mut Parser<'s, <Self::Prod as Production>::L>,
+    fn produce(
+        parser: &mut Parser<'_, <Self::Prod as Production>::L>,
         meta: &Metadata<<Self::Prod as Production>::L>,
     ) -> SynResult<Self, <Self::Prod as Production>::L> {
         produce_option(parser,meta,|x: Option<T>|x.is_some()).map(Self::from)
     }
 
 }
-    fn produce_option<'s, T , O, F: FnOnce(Option<T>) -> O, L: Lexicon>(
-        parser: &mut Parser<'s, L>,
+    fn produce_option<T , O, F: FnOnce(Option<T>) -> O, L: Lexicon>(
+        parser: &mut Parser<'_, L>,
         meta: &Metadata<L>,
 f: F
     ) -> SynResult<Node<O>, L>

@@ -61,7 +61,7 @@ impl<L: Lexicon> FirstSet<L> {
 
     /// Check if the set contains the term `(ty, lit)`
     #[inline]
-    pub fn contains<'s>(&self, token: Option<TokenSrc<'s, L>>) -> bool {
+    pub fn contains(&self, token: Option<TokenSrc<'_, L>>) -> bool {
         self.0.contains(token)
     }
 

@@ -49,7 +49,7 @@ impl<'s, L: Lexicon> Parser<'s, L> {
             Ok(meta) => meta,
             Err(err) => return Err(err.clone()),
         };
-        Ok(self.parse_with_meta::<T>(&meta))
+        Ok(self.parse_with_meta::<T>(meta))
     }
 
     // /// Create an iterator that can be used to parse all syntax tree roots in the source
@@ -180,11 +180,9 @@ impl<'s, L: Lexicon> Parser<'s, L> {
         match self.peeked.take() {
             Some(token) => {
                 self.info.tokens.push_unchecked(token);
-                return Some(token);
+                Some(token)
             }
-            None => {
-                return None;
-            }
+            None => None
         }
     }
 
@@ -193,8 +191,7 @@ impl<'s, L: Lexicon> Parser<'s, L> {
         if self.peeked.is_none() {
             self.try_read_next_token();
         }
-        return self.peeked;
-
+        self.peeked
     }
 
     /// If the next token is available, read it and store it in `peeked`

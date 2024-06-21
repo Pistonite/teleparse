@@ -37,8 +37,8 @@ const _: () = {
     {
         type Prod = (<$e1>::Prod, $(<$e>::Prod,)*);
 
-        fn produce<'s>(
-            parser: &mut $crate::parser::Parser<'s, <Self::Prod as Production>::L>, 
+        fn produce(
+            parser: &mut $crate::parser::Parser<'_, <Self::Prod as Production>::L>, 
             meta: &$crate::syntax::Metadata<<Self::Prod as Production>::L>,
         ) -> $crate::syntax::Result<Self, <Self::Prod as Production>::L> {
             let mut errors = ::std::vec::Vec::new();

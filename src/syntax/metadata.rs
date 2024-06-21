@@ -91,7 +91,6 @@ impl<L: Lexicon> MetadataBuilder<L> {
         let mut jump = Jump::new();
         seen.clear();
         build_jump(
-            &names,
             &prods,
             root,
             &mut seen,
@@ -246,15 +245,15 @@ fn check_conflicts<L: Lexicon>(
             let mut check_set = FirstSet::new();
             for inner in types.iter() {
                 let first_set = first.get(inner);
-                if check_set.intersects(&first_set) {
+                if check_set.intersects(first_set) {
                     // find which one is conflicting
                     for before in types.iter() {
-                        if first_set.intersects(&first.get(before)) {
+                        if first_set.intersects(first.get(before)) {
                             let self_name = names.get(&t).map(|x|x.as_str()).unwrap_or_default();
                             let before_name = names.get(before).map(|x|x.as_str()).unwrap_or_default();
                             let inner_name = names.get(inner).map(|x|x.as_str()).unwrap_or_default();
                             let intersection = first_set
-                                .intersection_repr(&first.get(before))
+                                .intersection_repr(first.get(before))
                                 .into_iter()
                                 .join(", ");
                             return Err(GrammarError::FirstFirstConflict(
@@ -265,7 +264,7 @@ fn check_conflicts<L: Lexicon>(
                         }
                     }
                 }
-                check_set.union(&first_set);
+                check_set.union(first_set);
             }
             check_self_first_follow_conflict(
                 names,
@@ -358,7 +357,6 @@ fn check_self_first_follow_conflict<L: Lexicon>(
 }
 
 fn build_jump<L: Lexicon>(
-    names: &BTreeMap<TypeId, String>,
     prods: &BTreeMap<TypeId, ProductionEntry>,
     t: TypeId,
     seen: &mut BTreeSet<TypeId>,
@@ -374,7 +372,6 @@ fn build_jump<L: Lexicon>(
         Some(ProductionEntry::Sequence(types)) => {
             for inner in types.iter() {
                 build_jump(
-                    names,
                     prods,
                     *inner,
                     seen,
@@ -388,7 +385,6 @@ fn build_jump<L: Lexicon>(
                 let first_set = first.get(inner);
                 jump.register(t, first_set, i);
                 build_jump(
-                    names,
                     prods,
                     *inner,
                     seen,

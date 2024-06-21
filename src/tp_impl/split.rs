@@ -69,8 +69,8 @@ impl<T: Produce, P: Produce> Produce for Split<T, P>
 {
     // Split<T> => T (P T)*
     type Prod = (T::Prod, OptionProd<OneOrMore<(P::Prod, T::Prod)>>);
-    fn produce<'s>(
-        parser: &mut Parser<'s, <Self::Prod as Production>::L>,
+    fn produce(
+        parser: &mut Parser<'_, <Self::Prod as Production>::L>,
         meta: &Metadata<<Self::Prod as Production>::L>,
     ) -> SynResult<Self, <Self::Prod as Production>::L> {
         let (lo, mut elems, mut errors) = match T::produce(parser, meta) {
@@ -133,7 +133,7 @@ impl<T: Produce, P: Produce> Produce for Split<T, P>
                             continue 'outer;
                         },
                         SynResult::Panic(e) => {
-                            if let Some(e) = e.into_iter().rev().next() {
+                            if let Some(e) = e.into_iter().next_back() {
                                 if let Some(p) = &mut panic {
                                     p.span.hi = e.span.hi;
                                 } else {
@@ -144,13 +144,12 @@ impl<T: Produce, P: Produce> Produce for Split<T, P>
                     }
                     // recovery
                     token = parser.peek_token_src();
-                } else {
-                    if let Some(p) = &mut panic {
+                } else if let Some(p) = &mut panic {
                         p.span.hi = parser.current_span().hi;
                     } else {
                         panic = Some(parser.expecting(elem_first.clone()));
                     }
-                }
+                
                 if punct_first.contains(token) {
                     if let Some(e) = panic {
                         errors.push(e);

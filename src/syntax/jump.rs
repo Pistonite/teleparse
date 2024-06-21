@@ -45,12 +45,12 @@ pub struct Jump<L: Lexicon> {
 
 impl<L: Lexicon> Jump<L> {
     pub fn register(&mut self, t: TypeId, first: &FirstSet<L>, id: usize) {
-        let mut entry = self.map.entry(t).or_default();
-        first.add_to_jump_table(&mut entry, id);
+        let entry = self.map.entry(t).or_default();
+        first.add_to_jump_table(entry, id);
     }
 
     #[inline]
-    pub fn look_up<'s>(&self, t: &TypeId, token: Option<TokenSrc<'s, L>>) -> Option<usize> {
+    pub fn look_up(&self, t: &TypeId, token: Option<TokenSrc<'_, L>>) -> Option<usize> {
         self.map.get(t).and_then(|entry| entry.look_up(token))
     }
 }
@@ -108,7 +108,7 @@ impl<L: Lexicon> std::fmt::Debug for JumpTable<L> {
 impl<L: Lexicon> JumpTable<L> {
     /// Look up the parsing table entry for a token or epsilon
     #[inline]
-    pub fn look_up<'s>(&self, token: Option<TokenSrc<'s, L>>) -> Option<usize> {
+    pub fn look_up(&self, token: Option<TokenSrc<'_, L>>) -> Option<usize> {
         token.map(|token| self.look_up_token(&token)).unwrap_or(self.epsilon)
     }
 

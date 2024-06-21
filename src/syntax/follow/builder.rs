@@ -86,16 +86,14 @@ impl<'a, L: Lexicon> FollowBuilder<'a, L> {
             // unlike FIRST table, there's no relations that will only execute once
             // so we can skip the retain step here
             for rel in &mut self.rels {
-                changed = rel.process_rel(&self.first, &mut map) || changed;
+                changed = rel.process_rel(self.first, &mut map) || changed;
             }
         }
 
-        let follow = Follow {
+        Follow {
             map,
             empty: FollowSet::new(),
-        };
-
-        follow
+        }
     }
 }
 

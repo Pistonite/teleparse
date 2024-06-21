@@ -28,8 +28,8 @@ impl<T: Produce, R: Produce> Produce for Recover<T, R>
     where R::Prod: Production<L = <T::Prod as Production>::L> 
 {
     type Prod = (T::Prod, R::Prod);
-    fn produce<'s>(
-        parser: &mut Parser<'s, <Self::Prod as Production>::L>,
+    fn produce(
+        parser: &mut Parser<'_, <Self::Prod as Production>::L>,
         meta: &Metadata<<Self::Prod as Production>::L>,
     ) -> SynResult<Self, <Self::Prod as Production>::L> {
         let mut errors = Vec::new();

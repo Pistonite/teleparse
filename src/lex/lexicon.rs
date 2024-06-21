@@ -44,5 +44,5 @@ pub trait Lexicon: Debug + Clone + Copy + PartialEq + Eq + Hash + 'static {
     fn should_extract(&self) -> bool;
 
     /// Create a lexer for parsing this token type
-    fn lexer<'s>(source: &'s str) -> Result<Self::Lexer<'s>, GrammarError>;
+    fn lexer(source: &str) -> Result<Self::Lexer<'_>, GrammarError>;
 }

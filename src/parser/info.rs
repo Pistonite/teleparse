@@ -28,7 +28,6 @@ impl<'s, L: Lexicon> Info<'s, L> {
             errors: Vec::new(),
         }
     }
-    /// 
     pub fn to_src(&self, token: &Token<L>) -> TokenSrc<'s, L> {
         token.to_src(self.source)
     }
