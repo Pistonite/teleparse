@@ -37,7 +37,7 @@ use super::{FirstSet, TerminalSet};
 ///
 /// See [module-level documentation](self) for more information.
 #[derive(Derivative, Debug)]
-#[derivative(Default(new="true", bound=""))]
+#[derivative(Default(new = "true", bound = ""))]
 pub struct Jump<L: Lexicon> {
     /// This maps (X) -> ((ty, lit) -> Yi)
     map: BTreeMap<TypeId, JumpTable<L>>,
@@ -74,7 +74,7 @@ impl<'a, 'b, L: Lexicon> std::fmt::Debug for DebugJump<'a, 'b, L> {
 ///
 /// This maps (ty, lit) -> Yi
 #[derive(Derivative)]
-#[derivative(Default(bound=""))]
+#[derivative(Default(bound = ""))]
 pub struct JumpTable<L: Lexicon> {
     /// The id to return when looking up epsilon
     epsilon: Option<usize>,
@@ -109,7 +109,9 @@ impl<L: Lexicon> JumpTable<L> {
     /// Look up the parsing table entry for a token or epsilon
     #[inline]
     pub fn look_up(&self, token: Option<TokenSrc<'_, L>>) -> Option<usize> {
-        token.map(|token| self.look_up_token(&token)).unwrap_or(self.epsilon)
+        token
+            .map(|token| self.look_up_token(&token))
+            .unwrap_or(self.epsilon)
     }
 
     /// Look up the parsing table entry for a token
@@ -119,7 +121,7 @@ impl<L: Lexicon> JumpTable<L> {
 
         match entry.1.get(token.src).copied() {
             Some(value) => Some(value),
-            None => entry.0
+            None => entry.0,
         }
     }
 

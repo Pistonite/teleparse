@@ -66,7 +66,7 @@ Progress:
   - [ ] using parser data
 
 Here is the "textbook grammar" implemented in a few minutes (full version at `tests/first_follow.rs`)
-```
+```text
 E -> T E'
 E' -> + T E' | ε
 T -> F T'

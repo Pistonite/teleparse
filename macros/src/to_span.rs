@@ -9,12 +9,14 @@ pub fn expand(input: &syn::DeriveInput) -> syn::Result<TokenStream2> {
         syn::Data::Union(_) => {
             syn_error!(input, "Union is not supported for ToSpan");
         }
-        syn::Data::Enum(data) => {
-            (expand_enum(data, quote! { lo() })?, expand_enum(data, quote! { hi() })?)
-        }
-        syn::Data::Struct(data) => {
-            (expand_struct(data, quote! { lo() })?, expand_struct(data, quote! { hi() })?)
-        }
+        syn::Data::Enum(data) => (
+            expand_enum(data, quote! { lo() })?,
+            expand_enum(data, quote! { hi() })?,
+        ),
+        syn::Data::Struct(data) => (
+            expand_struct(data, quote! { lo() })?,
+            expand_struct(data, quote! { hi() })?,
+        ),
     };
 
     let out = quote! {
@@ -36,7 +38,9 @@ fn expand_struct(input: &syn::DataStruct, expr: TokenStream2) -> syn::Result<Tok
     match &input.fields {
         syn::Fields::Named(fields) => {
             let ident = match fields.named.first() {
-                Some(syn::Field { ident: Some(id), .. }) => id,
+                Some(syn::Field {
+                    ident: Some(id), ..
+                }) => id,
                 _ => {
                     return unsupported_empty_field(&input.fields);
                 }
@@ -45,14 +49,10 @@ fn expand_struct(input: &syn::DataStruct, expr: TokenStream2) -> syn::Result<Tok
                 self.#ident.#expr
             })
         }
-        syn::Fields::Unnamed(_) => {
-            Ok(quote! {
-                self.0.#expr
-            })
-        }
-        syn::Fields::Unit => {
-            unsupported_empty_field(&input.fields)
-        }
+        syn::Fields::Unnamed(_) => Ok(quote! {
+            self.0.#expr
+        }),
+        syn::Fields::Unit => unsupported_empty_field(&input.fields),
     }
 }
 
@@ -63,7 +63,9 @@ fn expand_enum(input: &syn::DataEnum, expr: TokenStream2) -> syn::Result<TokenSt
         match &variant.fields {
             syn::Fields::Named(fields) => {
                 let field = match fields.named.first() {
-                    Some(syn::Field { ident: Some(id), .. }) => id,
+                    Some(syn::Field {
+                        ident: Some(id), ..
+                    }) => id,
                     _ => {
                         return unsupported_empty_field(&variant.fields);
                     }

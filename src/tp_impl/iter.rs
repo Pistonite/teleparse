@@ -22,7 +22,6 @@ impl<T: Production> Production for OneOrMore<T> {
     }
 }
 
-
 #[derive(Node, ToSpan, Clone, PartialEq)]
 pub struct Plus<V: FromIterator<T>, T: Produce>(Node<V>, PhantomData<T>);
 
@@ -39,27 +38,24 @@ impl<V: FromIterator<T>, T: Produce> Produce for Plus<V, T> {
         meta: &Metadata<<Self::Prod as Production>::L>,
     ) -> SynResult<Self, <Self::Prod as Production>::L> {
         let (first_elem, mut errors) = match T::produce(parser, meta) {
-            SynResult::Success(t) => {
-                (t, Vec::new())
-            }
-            SynResult::Recovered(t, e) => {
-                (t, e)
-            }
+            SynResult::Success(t) => (t, Vec::new()),
+            SynResult::Recovered(t, e) => (t, e),
             SynResult::Panic(e) => {
                 return SynResult::Panic(e);
             }
         };
         let mut hi = first_elem.hi();
         let produce_iter = ProduceIter::new(
-            parser, meta, 
-            meta.first.get(&Self::prod_id()), &mut errors, &mut hi);
+            parser,
+            meta,
+            meta.first.get(&Self::prod_id()),
+            &mut errors,
+            &mut hi,
+        );
         let lo = first_elem.lo();
-        let v: V = std::iter::once(first_elem)
-            .chain(produce_iter)
-            .collect();
+        let v: V = std::iter::once(first_elem).chain(produce_iter).collect();
         (Node::new(lo..hi, v).into(), errors).into()
     }
-
 }
 
 #[derive(Node, ToSpan, Clone, PartialEq)]
@@ -70,19 +66,17 @@ impl<V: FromIterator<T> + Default + std::fmt::Debug, T: Produce> std::fmt::Debug
         self.0.fmt(f)
     }
 }
-impl<V: FromIterator<T>+ Default, T: Produce> Produce for Star<V, T> {
+impl<V: FromIterator<T> + Default, T: Produce> Produce for Star<V, T> {
     type Prod = OptionProd<OneOrMore<T::Prod>>;
     fn produce(
         parser: &mut Parser<'_, <Self::Prod as Production>::L>,
         meta: &Metadata<<Self::Prod as Production>::L>,
     ) -> SynResult<Self, <Self::Prod as Production>::L> {
-        <super::option::Optional<Plus<V, T>>>::produce(parser, meta)
-            .map(|n| match n.0.value {
-                Some(t) => Node::new(t.span(), t.into_inner()).into(),
-                None => Node::new(n.span(), V::default()).into(),
-            })
+        <super::option::Optional<Plus<V, T>>>::produce(parser, meta).map(|n| match n.0.value {
+            Some(t) => Node::new(t.span(), t.into_inner()).into(),
+            None => Node::new(n.span(), V::default()).into(),
+        })
     }
-
 }
 
 #[derive(Node, ToSpan, Clone, PartialEq)]
@@ -159,7 +153,6 @@ impl<T: Produce> Produce for Loop<T> {
         };
         (Node::new(span, output).into(), errors).into()
     }
-
 }
 
 struct ProduceIter<'a, 'b, 'c, 'd, 's, T: Produce> {
@@ -182,7 +175,7 @@ impl<'a, 'b, 'c, 'd, 's, T: Produce> ProduceIter<'a, 'b, 'c, 'd, 's, T> {
             meta,
             first,
             errors,
-            hi
+            hi,
         }
     }
 }
@@ -217,253 +210,325 @@ impl<T: Produce> Iterator for ProduceIter<'_, '_, '_, '_, '_, T> {
 mod tests {
     use crate::prelude::*;
     use crate::syntax::ErrorKind;
-    use crate::{syntax, Parser, GrammarError};
-    
+    use crate::{syntax, GrammarError, Parser};
+
     use crate::test::prelude::*;
     use crate::test::MathTokenType as T;
     use crate::test::{Ident, OpAdd};
-    
+
     #[derive_syntax]
     #[teleparse(root)]
     #[derive(Debug, PartialEq, Clone)]
     struct IdentList(tp::Nev<Ident>);
-    
+
     #[test]
     fn parse_single_item() -> Result<(), GrammarError> {
         let t = IdentList::parse("a")?.unwrap();
         let t_str = format!("{:?}", t.0);
         assert_eq!(t_str, "0..1 => [token Ident(0..1)]");
-        assert_eq!(t, IdentList(Node::new(0..1, vec![
-            Ident::from_span(0..1)
-        ]).into()));
+        assert_eq!(
+            t,
+            IdentList(Node::new(0..1, vec![Ident::from_span(0..1)]).into())
+        );
 
         Ok(())
     }
-    
+
     #[test]
     fn parse_two_items() -> Result<(), GrammarError> {
         let mut parser = Parser::<T>::new("a b")?;
         let t = parser.parse::<IdentList>()?.unwrap();
         let t_str = format!("{:?}", t.0);
         assert_eq!(t_str, "0..3 => [token Ident(0..1), token Ident(2..3)]");
-        assert_eq!(t, IdentList(Node::new(0..3, vec![
-            Ident::from_span(0..1),
-            Ident::from_span(2..3),
-        ]).into()));
-    
+        assert_eq!(
+            t,
+            IdentList(
+                Node::new(0..3, vec![Ident::from_span(0..1), Ident::from_span(2..3),]).into()
+            )
+        );
+
         Ok(())
     }
-    
+
     #[test]
     fn parse_many() {
         let t = IdentList::parse("a b c  d e").unwrap().unwrap();
-        assert_eq!(t, IdentList(Node::new(0..10, vec![
-            Ident::from_span(0..1),
-            Ident::from_span(2..3),
-            Ident::from_span(4..5),
-            Ident::from_span(7..8),
-            Ident::from_span(9..10),
-        ]).into()));
+        assert_eq!(
+            t,
+            IdentList(
+                Node::new(
+                    0..10,
+                    vec![
+                        Ident::from_span(0..1),
+                        Ident::from_span(2..3),
+                        Ident::from_span(4..5),
+                        Ident::from_span(7..8),
+                        Ident::from_span(9..10),
+                    ]
+                )
+                .into()
+            )
+        );
     }
-    
+
     #[test]
     fn parse_with_panic() -> Result<(), GrammarError> {
         let mut parser = Parser::<T>::new("a b c+e")?;
         let root = parser.parse::<IdentList>()?;
-    
+
         assert_eq!(parser.remaining(), "+e");
-        assert_eq!(root, Some(
-            IdentList(Node::new(0..5, vec![
-                Ident::from_span(0..1),
-                Ident::from_span(2..3),
-                Ident::from_span(4..5),
-            ]).into())),
+        assert_eq!(
+            root,
+            Some(IdentList(
+                Node::new(
+                    0..5,
+                    vec![
+                        Ident::from_span(0..1),
+                        Ident::from_span(2..3),
+                        Ident::from_span(4..5),
+                    ]
+                )
+                .into()
+            )),
         );
-    
+
         assert_eq!(parser.parse::<IdentList>()?, None);
         assert_eq!(parser.remaining(), "+e");
-    
+
         parser.consume_token();
         let root = parser.parse::<IdentList>()?;
-    
-        assert_eq!(root, Some(
-            IdentList(Node::new(6..7, vec![
-                Ident::from_span(6..7),
-            ]).into()),
-        ));
-       
-    
+
+        assert_eq!(
+            root,
+            Some(IdentList(
+                Node::new(6..7, vec![Ident::from_span(6..7),]).into()
+            ),)
+        );
+
         Ok(())
     }
-    
+
     #[derive_syntax]
     #[teleparse(root)]
     #[derive(Debug, PartialEq, Clone)]
-    struct ListPlusList(tp::Plus<Vec<Ident>, Ident>, OpAdd, tp::Plus<Vec<Ident>, Ident>);
-    
+    struct ListPlusList(
+        tp::Plus<Vec<Ident>, Ident>,
+        OpAdd,
+        tp::Plus<Vec<Ident>, Ident>,
+    );
+
     #[test]
     fn parse_single_item_each() {
         let t = ListPlusList::parse("a+ b").unwrap().unwrap();
         let t_str = format!("{:?}", t);
         assert_eq!(t_str, "ListPlusList(0..1 => [token Ident(0..1)], token Op(1..2), 3..4 => [token Ident(3..4)])");
         assert_eq!(t.span(), Span::from(0..4));
-        assert_eq!(t, ListPlusList(
-            Node::new(0..1, vec![Ident::from_span(0..1)]).into(),
-            OpAdd::from_span(1..2),
-            Node::new(3..4, vec![Ident::from_span(3..4)]).into(),
-        ));
+        assert_eq!(
+            t,
+            ListPlusList(
+                Node::new(0..1, vec![Ident::from_span(0..1)]).into(),
+                OpAdd::from_span(1..2),
+                Node::new(3..4, vec![Ident::from_span(3..4)]).into(),
+            )
+        );
     }
-    
+
     #[test]
     fn parse_multiple_items_each() {
         let t = ListPlusList::parse("a b c + b c d").unwrap().unwrap();
-        assert_eq!(t, ListPlusList(
-            Node::new(0..5, vec![
-                Ident::from_span(0..1),
-                Ident::from_span(2..3),
-                Ident::from_span(4..5),
-            ]).into(),
-            OpAdd::from_span(6..7),
-            Node::new(8..13, vec![
-                Ident::from_span(8..9),
-                Ident::from_span(10..11),
-                Ident::from_span(12..13),
-            ]).into(),
-        ));
+        assert_eq!(
+            t,
+            ListPlusList(
+                Node::new(
+                    0..5,
+                    vec![
+                        Ident::from_span(0..1),
+                        Ident::from_span(2..3),
+                        Ident::from_span(4..5),
+                    ]
+                )
+                .into(),
+                OpAdd::from_span(6..7),
+                Node::new(
+                    8..13,
+                    vec![
+                        Ident::from_span(8..9),
+                        Ident::from_span(10..11),
+                        Ident::from_span(12..13),
+                    ]
+                )
+                .into(),
+            )
+        );
     }
-    
+
     #[derive_syntax]
     #[teleparse(root, no_test)]
     #[derive(Debug, PartialEq, Clone)]
     struct ListOfOption(tp::Plus<Vec<tp::Option<Ident>>, tp::Option<Ident>>);
-    
+
     #[test]
     fn list_of_option_not_ll1() {
-        assert_not_ll1!(ListOfOption, GrammarError::FirstFollowSeqConflict(
-            "( (Ident)? )+".to_string(),
-            "(Ident)?".to_string(),
-            "( (Ident)? )*".to_string(),
-            "Ident".to_string()
-        ));
+        assert_not_ll1!(
+            ListOfOption,
+            GrammarError::FirstFollowSeqConflict(
+                "( (Ident)? )+".to_string(),
+                "(Ident)?".to_string(),
+                "( (Ident)? )*".to_string(),
+                "Ident".to_string()
+            )
+        );
     }
-    
+
     #[derive_syntax]
     #[teleparse(root, no_test)]
     #[derive(Debug, PartialEq, Clone)]
     struct SameList(tp::Nev<OpAdd>, tp::Nev<OpAdd>);
-    
+
     #[test]
     fn two_list_of_same_not_ll1() {
-        assert_not_ll1!(SameList, GrammarError::FirstFollowConflict(
-            "( + )*".to_string(),
-            "\"+\"".to_string(),
-        ));
+        assert_not_ll1!(
+            SameList,
+            GrammarError::FirstFollowConflict("( + )*".to_string(), "\"+\"".to_string(),)
+        );
     }
-    
+
     #[derive_syntax]
     #[teleparse(root)]
     #[derive(Debug, PartialEq, Clone)]
     struct SeparatedList(Ident, tp::Nev<(OpAdd, Ident)>);
-    
+
     #[test]
     fn parse_separated_list() {
         let t = SeparatedList::parse("a + b + c").unwrap().unwrap();
-        assert_eq!(t, SeparatedList(
-            Ident::from_span(0..1),
-            Node::new(2..9, vec![
-                (OpAdd::from_span(2..3), Ident::from_span(4..5)),
-                (OpAdd::from_span(6..7), Ident::from_span(8..9)),
-            ]).into(),
-        ));
+        assert_eq!(
+            t,
+            SeparatedList(
+                Ident::from_span(0..1),
+                Node::new(
+                    2..9,
+                    vec![
+                        (OpAdd::from_span(2..3), Ident::from_span(4..5)),
+                        (OpAdd::from_span(6..7), Ident::from_span(8..9)),
+                    ]
+                )
+                .into(),
+            )
+        );
     }
-    
+
     #[test]
     fn parse_separated_list_multiple() -> Result<(), GrammarError> {
         let mut parser = Parser::<T>::new("a  +b c+e")?;
         let root = parser.parse::<SeparatedList>()?;
-    
+
         assert_eq!(parser.remaining(), "c+e");
-        assert_eq!(root, Some(
-            SeparatedList(
+        assert_eq!(
+            root,
+            Some(SeparatedList(
                 Ident::from_span(0..1),
-                Node::new(3..5, vec![
-                    (OpAdd::from_span(3..4), Ident::from_span(4..5)),
-                ]).into(),
-            ),
-        ));
-    
+                Node::new(
+                    3..5,
+                    vec![(OpAdd::from_span(3..4), Ident::from_span(4..5)),]
+                )
+                .into(),
+            ),)
+        );
+
         let root = parser.parse::<SeparatedList>()?;
         assert_eq!(parser.remaining(), "");
-        assert_eq!(root, Some(
-            SeparatedList(
+        assert_eq!(
+            root,
+            Some(SeparatedList(
                 Ident::from_span(6..7),
-                Node::new(7..9, vec![
-                    (OpAdd::from_span(7..8), Ident::from_span(8..9)),
-                ]).into(),
-            ),
-        ));
-    
+                Node::new(
+                    7..9,
+                    vec![(OpAdd::from_span(7..8), Ident::from_span(8..9)),]
+                )
+                .into(),
+            ),)
+        );
+
         Ok(())
     }
-    
+
     #[test]
     fn parse_separated_list_panic() -> Result<(), GrammarError> {
         let mut parser = Parser::<T>::new("a + b + +e")?;
         let root = parser.parse::<SeparatedList>()?;
         assert_eq!(parser.remaining(), "+e");
-        assert_eq!(root, Some(
-            SeparatedList(
+        assert_eq!(
+            root,
+            Some(SeparatedList(
                 Ident::from_span(0..1),
-                Node::new(2..5, vec![
-                    (OpAdd::from_span(2..3), Ident::from_span(4..5)),
-                ]).into(),
-            ),
-        ));
-        assert_eq!(parser.info().errors, vec![
-            syntax::Error::new(8..9, ErrorKind::Expecting(first_set!(T{Ident:*}))),
-        ]);
-    
+                Node::new(
+                    2..5,
+                    vec![(OpAdd::from_span(2..3), Ident::from_span(4..5)),]
+                )
+                .into(),
+            ),)
+        );
+        assert_eq!(
+            parser.info().errors,
+            vec![syntax::Error::new(
+                8..9,
+                ErrorKind::Expecting(first_set!(T{Ident:*}))
+            ),]
+        );
+
         Ok(())
     }
-    
+
     #[derive_syntax]
     #[teleparse(root)]
     #[derive(Debug, PartialEq, Clone)]
     struct IdentListStar(tp::Star<Vec<Ident>, Ident>);
-    
+
     #[test]
     fn parse_star() {
         let t = IdentListStar::parse("").unwrap().unwrap();
         assert_eq!(t, IdentListStar(Node::new(0..0, vec![]).into()));
-    
+
         let t = IdentListStar::parse("a b c").unwrap().unwrap();
-        assert_eq!(t, IdentListStar(Node::new(0..5, vec![
-            Ident::from_span(0..1),
-            Ident::from_span(2..3),
-            Ident::from_span(4..5),
-        ]).into()));
+        assert_eq!(
+            t,
+            IdentListStar(
+                Node::new(
+                    0..5,
+                    vec![
+                        Ident::from_span(0..1),
+                        Ident::from_span(2..3),
+                        Ident::from_span(4..5),
+                    ]
+                )
+                .into()
+            )
+        );
     }
-    
+
     #[derive_syntax]
     #[teleparse(root, no_test)]
     #[derive(Debug, PartialEq, Clone)]
     struct ConsecutiveStar(tp::Star<Vec<Ident>, Ident>, tp::Vec<Ident>);
-    
+
     #[test]
     fn consecutive_star_not_ll1() {
-        assert_not_ll1!(ConsecutiveStar, GrammarError::FirstFollowSeqConflict(
-            "ConsecutiveStar".to_string(),
-            "( Ident )*".to_string(),
-            "( Ident )*".to_string(),
-            "Ident".to_string()
-        ));
+        assert_not_ll1!(
+            ConsecutiveStar,
+            GrammarError::FirstFollowSeqConflict(
+                "ConsecutiveStar".to_string(),
+                "( Ident )*".to_string(),
+                "( Ident )*".to_string(),
+                "Ident".to_string()
+            )
+        );
     }
-    
+
     #[derive_syntax]
     #[teleparse(root)]
     #[derive(Debug, PartialEq, Clone)]
     struct LoopRoot(tp::Loop<Ident>);
-    
+
     #[test]
     fn parse_loop_empty() {
         let t = LoopRoot::parse("").unwrap().unwrap();
@@ -475,48 +540,72 @@ mod tests {
         let t = LoopRoot::parse("+++").unwrap().unwrap();
         assert_eq!(t, LoopRoot(Node::new(3..3, vec![]).into()));
     }
-    
+
     #[test]
     fn parse_loop() {
         let t = LoopRoot::parse("a b c").unwrap().unwrap();
-        assert_eq!(t, LoopRoot(Node::new(0..5, vec![
-            Ident::from_span(0..1),
-            Ident::from_span(2..3),
-            Ident::from_span(4..5),
-        ]).into()));
+        assert_eq!(
+            t,
+            LoopRoot(
+                Node::new(
+                    0..5,
+                    vec![
+                        Ident::from_span(0..1),
+                        Ident::from_span(2..3),
+                        Ident::from_span(4..5),
+                    ]
+                )
+                .into()
+            )
+        );
     }
-    
+
     #[test]
     fn parse_loop_recover() -> Result<(), GrammarError> {
         let mut parser = Parser::<T>::new("+a+ b++ c")?;
         let t = parser.parse::<LoopRoot>()?.unwrap();
-        assert_eq!(t, LoopRoot(Node::new(1..9, vec![
-            Ident::from_span(1..2),
-            Ident::from_span(4..5),
-            Ident::from_span(8..9),
-        ]).into()));
-        assert_eq!(parser.info().errors, vec![
-            syntax::Error::new(0..1, ErrorKind::UnexpectedTokens),
-            syntax::Error::new(2..3, ErrorKind::UnexpectedTokens),
-            syntax::Error::new(5..7, ErrorKind::UnexpectedTokens),
-        ]);
-    
+        assert_eq!(
+            t,
+            LoopRoot(
+                Node::new(
+                    1..9,
+                    vec![
+                        Ident::from_span(1..2),
+                        Ident::from_span(4..5),
+                        Ident::from_span(8..9),
+                    ]
+                )
+                .into()
+            )
+        );
+        assert_eq!(
+            parser.info().errors,
+            vec![
+                syntax::Error::new(0..1, ErrorKind::UnexpectedTokens),
+                syntax::Error::new(2..3, ErrorKind::UnexpectedTokens),
+                syntax::Error::new(5..7, ErrorKind::UnexpectedTokens),
+            ]
+        );
+
         Ok(())
     }
-    
+
     #[derive_syntax]
     #[teleparse(root, no_test)]
     #[derive(Debug, PartialEq, Clone)]
     struct LoopOption(tp::Loop<tp::Option<Ident>>);
-    
+
     #[test]
     fn loop_option_not_ll1() {
-        assert_not_ll1!(LoopOption, GrammarError::FirstFollowSeqConflict(
-            "( (Ident)? )+".to_string(),
-            "(Ident)?".to_string(),
-            "( (Ident)? )*".to_string(),
-            "Ident".to_string()
-        ));
+        assert_not_ll1!(
+            LoopOption,
+            GrammarError::FirstFollowSeqConflict(
+                "( (Ident)? )+".to_string(),
+                "(Ident)?".to_string(),
+                "( (Ident)? )*".to_string(),
+                "Ident".to_string()
+            )
+        );
     }
 
     #[derive_syntax]
@@ -530,10 +619,11 @@ mod tests {
         //---------------------------------^^^^ UnexpectedTokens
         let t = parser.parse::<LoopRecover>()?.unwrap();
         assert_eq!(t, LoopRecover(Node::new(4..4, vec![]).into()));
-        assert_eq!(parser.info().errors, vec![
-            syntax::Error::new(0..4, ErrorKind::UnexpectedTokens),
-        ]);
-    
+        assert_eq!(
+            parser.info().errors,
+            vec![syntax::Error::new(0..4, ErrorKind::UnexpectedTokens),]
+        );
+
         Ok(())
     }
 
@@ -544,12 +634,14 @@ mod tests {
 
     #[test]
     fn loop_recover_option_not_ll1() {
-        assert_not_ll1!(LoopRecover2, GrammarError::FirstFollowSeqConflict(
-            "( (Ident)? (+)? )+".to_string(),
-            "(Ident)? (+)?".to_string(),
-            "( (Ident)? (+)? )*".to_string(),
-            "\"+\", Ident".to_string()
-        ));
+        assert_not_ll1!(
+            LoopRecover2,
+            GrammarError::FirstFollowSeqConflict(
+                "( (Ident)? (+)? )+".to_string(),
+                "(Ident)? (+)?".to_string(),
+                "( (Ident)? (+)? )*".to_string(),
+                "\"+\", Ident".to_string()
+            )
+        );
     }
-
 }

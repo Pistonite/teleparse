@@ -10,7 +10,7 @@ use super::Node;
 // Option<T> => T | epsilon
 #[doc(hidden)]
 pub struct OptionProd<T: Production>(PhantomData<T>);
-    
+
 impl<T: Production> Production for OptionProd<T> {
     type L = T::L;
     #[inline]
@@ -18,10 +18,10 @@ impl<T: Production> Production for OptionProd<T> {
         let inner = T::debug();
         if let Some(rest) = inner.strip_prefix('(') {
             if let Some(inner) = rest.strip_suffix(")+") {
-                return Cow::Owned(format!("({})*", inner))
+                return Cow::Owned(format!("({})*", inner));
             }
             if let Some(inner) = rest.strip_suffix("]+") {
-                return Cow::Owned(format!("({}]*", inner))
+                return Cow::Owned(format!("({}]*", inner));
             }
         }
         Cow::Owned(format!("({})?", T::debug()))
@@ -40,12 +40,8 @@ pub struct Optional<T: Produce>(pub Node<Option<T>>);
 impl<T: std::fmt::Debug + Produce> std::fmt::Debug for Optional<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self.0.value {
-            Some(node) => {
-                f.debug_tuple("Some").field(&node).finish()
-            }
-            None => {
-                f.debug_tuple("None").field(&self.0.span).finish()
-            }
+            Some(node) => f.debug_tuple("Some").field(&node).finish(),
+            None => f.debug_tuple("None").field(&self.0.span).finish(),
         }
     }
 }
@@ -56,9 +52,8 @@ impl<T: Produce> Produce for Optional<T> {
         parser: &mut Parser<'_, <Self::Prod as Production>::L>,
         meta: &Metadata<<Self::Prod as Production>::L>,
     ) -> SynResult<Self, <Self::Prod as Production>::L> {
-        produce_option(parser,meta,|x|x).map(Self::from)
+        produce_option(parser, meta, |x| x).map(Self::from)
     }
-
 }
 
 /// Node that stores if an optional subtree is produced
@@ -77,48 +72,39 @@ impl<T: Produce> Produce for Exists<T> {
         parser: &mut Parser<'_, <Self::Prod as Production>::L>,
         meta: &Metadata<<Self::Prod as Production>::L>,
     ) -> SynResult<Self, <Self::Prod as Production>::L> {
-        produce_option(parser,meta,|x: Option<T>|x.is_some()).map(Self::from)
+        produce_option(parser, meta, |x: Option<T>| x.is_some()).map(Self::from)
     }
-
 }
-    fn produce_option<T , O, F: FnOnce(Option<T>) -> O, L: Lexicon>(
-        parser: &mut Parser<'_, L>,
-        meta: &Metadata<L>,
-f: F
-    ) -> SynResult<Node<O>, L>
-where T: Produce + ToSpan,
-T::Prod: Production<L = L>,
+fn produce_option<T, O, F: FnOnce(Option<T>) -> O, L: Lexicon>(
+    parser: &mut Parser<'_, L>,
+    meta: &Metadata<L>,
+    f: F,
+) -> SynResult<Node<O>, L>
+where
+    T: Produce + ToSpan,
+    T::Prod: Production<L = L>,
 {
-        let token = parser.peek_token_src();
-        if token.is_none() {
-            // produces epsilon
-            return SynResult::Success(
-                Node::new(parser.current_span_empty(), f(None))
-            );
+    let token = parser.peek_token_src();
+    if token.is_none() {
+        // produces epsilon
+        return SynResult::Success(Node::new(parser.current_span_empty(), f(None)));
+    }
+    let first = meta.first.get(&T::prod_id());
+    if !first.contains(token) {
+        // produces epsilon
+        return SynResult::Success(Node::new(parser.current_span_empty(), f(None)));
+    }
+    // if parse fails, delay to parent to panic
+    match T::produce(parser, meta) {
+        SynResult::Success(t) => SynResult::Success(Node::new(t.span(), f(Some(t)))),
+        SynResult::Recovered(t, error) => {
+            SynResult::Recovered(Node::new(t.span(), f(Some(t))), error)
         }
-        let first = meta.first.get(&T::prod_id());
-        if !first.contains(token) {
-            // produces epsilon
-            return SynResult::Success(
-                Node::new(parser.current_span_empty(), f(None))
-            );
-        }
-        // if parse fails, delay to parent to panic
-        match T::produce(parser, meta) {
-            SynResult::Success(t) => {
-                SynResult::Success(Node::new(t.span(), f(Some(t))))
-            },
-            SynResult::Recovered(t, error) =>{
-                SynResult::Recovered(Node::new(t.span(), f(Some(t))), error)
-            }
-            SynResult::Panic(error) => {
-                SynResult::Recovered(
-                        Node::new(parser.current_span_empty(), f(None))
-                        , error
-                    )
-            }
+        SynResult::Panic(error) => {
+            SynResult::Recovered(Node::new(parser.current_span_empty(), f(None)), error)
         }
     }
+}
 
 #[cfg(test)]
 mod tests {
@@ -150,9 +136,10 @@ mod tests {
         let t = OptIdent::parse("a").unwrap().unwrap();
         let t_str = format!("{:?}", t.0);
         assert_eq!(t_str, "Some(token Ident(0..1))");
-        assert_eq!(t, OptIdent(Node::new(0..1, Some(
-            Ident(Token::new(0..1, T::Ident))
-        )).into()));
+        assert_eq!(
+            t,
+            OptIdent(Node::new(0..1, Some(Ident(Token::new(0..1, T::Ident)))).into())
+        );
     }
 
     #[test]
@@ -169,12 +156,15 @@ mod tests {
 
     #[test]
     fn test_seq_not_ll1() {
-        assert_not_ll1!(Seq, GrammarError::FirstFollowSeqConflict(
-            "Seq".to_string(),
-            "(+)?".to_string(),
-            "+".to_string(),
-            "\"+\"".to_string()
-        ));
+        assert_not_ll1!(
+            Seq,
+            GrammarError::FirstFollowSeqConflict(
+                "Seq".to_string(),
+                "(+)?".to_string(),
+                "+".to_string(),
+                "\"+\"".to_string()
+            )
+        );
     }
 
     #[derive_syntax]
@@ -183,12 +173,15 @@ mod tests {
 
     #[test]
     fn test_nested_not_ll1() {
-        assert_not_ll1!(Nested, GrammarError::FirstFirstConflict(
-            "((Ident)?)?".to_string(),
-            "(Ident)?".to_string(),
-            "()".to_string(),
-            "<empty>".to_string(),
-        ));
+        assert_not_ll1!(
+            Nested,
+            GrammarError::FirstFirstConflict(
+                "((Ident)?)?".to_string(),
+                "(Ident)?".to_string(),
+                "()".to_string(),
+                "<empty>".to_string(),
+            )
+        );
     }
 
     #[derive_syntax]

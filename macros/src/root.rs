@@ -1,4 +1,3 @@
-
 use quote::ToTokens;
 
 use crate::*;
@@ -11,7 +10,7 @@ pub fn expand<T: ToTokens>(pt_ty: T) -> TokenStream2 {
         impl #teleparse::parser::Root for #pt_ty {
             fn metadata(
             ) -> &'static ::core::result::Result<
-                #teleparse::syntax::Metadata<<Self::Prod as #teleparse::syntax::Production>::L>, 
+                #teleparse::syntax::Metadata<<Self::Prod as #teleparse::syntax::Production>::L>,
                 #teleparse::GrammarError
             > {
                 use #teleparse::syntax::Production;

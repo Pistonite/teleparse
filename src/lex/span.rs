@@ -1,5 +1,5 @@
-use std::ops::Range;
 use std::fmt::Debug;
+use std::ops::Range;
 
 /// Position in the source code
 pub type Pos = usize;
@@ -67,7 +67,7 @@ impl Debug for Span {
 
 /// Trait for types that can be converted to a [`Span`]
 ///
-/// [`Token`]s and derived syntax nodes all implement this trait
+/// [`Token`](super::Token)s and derived syntax nodes all implement this trait
 pub trait ToSpan {
     fn lo(&self) -> Pos;
     fn hi(&self) -> Pos;

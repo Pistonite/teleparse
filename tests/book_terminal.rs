@@ -14,15 +14,16 @@ pub enum TokenType {
 struct ThreeIdents(Id, Id, Id);
 
 #[test]
-fn main() -> Result<(), GrammarError>{
+fn main() -> Result<(), GrammarError> {
     let t = ThreeIdents::parse("a b c")?;
-    assert_eq!(t, Some(
-        ThreeIdents(
+    assert_eq!(
+        t,
+        Some(ThreeIdents(
             Id::from_span(0..1),
             Id::from_span(2..3),
             Id::from_span(4..5),
-        )
-    ));
+        ))
+    );
 
     let pizza = Id::parse("pizza")?;
     assert_eq!(pizza, Some(Id::from_span(0..5)));

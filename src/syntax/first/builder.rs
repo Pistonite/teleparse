@@ -11,7 +11,7 @@ use super::{First, FirstSet};
 ///
 /// See [module-level documentation](super) for more information.
 #[derive(Derivative, Debug)]
-#[derivative(Default(new="true", bound=""))]
+#[derivative(Default(new = "true", bound = ""))]
 pub struct FirstBuilder<L: Lexicon> {
     // /// Which AST types are already processed
     // seen: BTreeMap<TypeId, String>,
@@ -43,7 +43,10 @@ impl<L: Lexicon> FirstBuilder<L> {
     pub fn build_union(&mut self, x: TypeId, variants: &[TypeId]) {
         for y in variants {
             self.add(FirstRel::union_minus_epsilon(x, *y));
-            self.add(FirstRel::if_epsilon_in_all_iter([y], FirstRel::insert_epsilon(x)));
+            self.add(FirstRel::if_epsilon_in_all_iter(
+                [y],
+                FirstRel::insert_epsilon(x),
+            ));
         }
     }
 
@@ -53,11 +56,17 @@ impl<L: Lexicon> FirstBuilder<L> {
         let mut set = BTreeSet::new();
         for yi in sequence {
             // if Y1 ... Yi-1 can all produce epsilon, add FIRST(Yi) - { epsilon }
-            self.add(FirstRel::if_epsilon_in_all_iter(set.iter(), FirstRel::union_minus_epsilon(x, *yi)));
+            self.add(FirstRel::if_epsilon_in_all_iter(
+                set.iter(),
+                FirstRel::union_minus_epsilon(x, *yi),
+            ));
             set.insert(*yi);
         }
         // if all Y1 ... Yn can produce epsilon, add epsilon
-        self.add(FirstRel::if_epsilon_in_all(set, FirstRel::insert_epsilon(x)));
+        self.add(FirstRel::if_epsilon_in_all(
+            set,
+            FirstRel::insert_epsilon(x),
+        ));
     }
 
     /// Build the FIRST table into a [First] instance
@@ -75,7 +84,10 @@ impl<L: Lexicon> FirstBuilder<L> {
 
     /// Process the relations once and return if anything changed
     #[must_use]
-    fn process_rels(first: &mut BTreeMap<TypeId, FirstSet<L>>, rels: &mut Vec<FirstRel<L>>) -> bool {
+    fn process_rels(
+        first: &mut BTreeMap<TypeId, FirstSet<L>>,
+        rels: &mut Vec<FirstRel<L>>,
+    ) -> bool {
         let mut changed = false;
         rels.retain_mut(|rel| {
             let (chg, retain) = rel.process_rel(first);
@@ -84,9 +96,7 @@ impl<L: Lexicon> FirstBuilder<L> {
         });
         changed
     }
-
 }
-
 
 #[derive(Debug, PartialEq)]
 pub enum FirstRel<L: Lexicon> {
@@ -117,7 +127,10 @@ impl<L: Lexicon> FirstRel<L> {
     }
 
     #[inline]
-    pub fn if_epsilon_in_all_iter<'s, Iter: IntoIterator<Item=&'s TypeId>>(set: Iter, expr: FirstRel<L>) -> Self {
+    pub fn if_epsilon_in_all_iter<'s, Iter: IntoIterator<Item = &'s TypeId>>(
+        set: Iter,
+        expr: FirstRel<L>,
+    ) -> Self {
         let set = set.into_iter().copied().collect::<BTreeSet<_>>();
         Self::if_epsilon_in_all(set, expr)
     }
@@ -139,23 +152,17 @@ impl<L: Lexicon> FirstRel<L> {
             Self::Insert(t, insert) => {
                 let set = first.entry(*t).or_default();
                 let changed = match insert {
-                    FirstInsert::Epsilon => {
-                        set.insert_epsilon()
-                    },
-                    FirstInsert::Token(token, lit) => {
-                        set.insert(*token, *lit)
-                    }
+                    FirstInsert::Epsilon => set.insert_epsilon(),
+                    FirstInsert::Token(token, lit) => set.insert(*token, *lit),
                 };
                 // after something is added to the set, it's always going
                 // to be there, so we can skip further insertions
                 (changed, false)
-            },
+            }
             Self::UnionMinusEpsilon(a, b) => {
                 let mut first_a = first.remove(a).unwrap_or_default();
                 let changed = match first.get(b) {
-                    Some(first_b) => {
-                        first_a.union_minus_epsilon(first_b)
-                    }
+                    Some(first_b) => first_a.union_minus_epsilon(first_b),
                     None => false,
                 };
                 first.insert(*a, first_a);
@@ -164,18 +171,16 @@ impl<L: Lexicon> FirstRel<L> {
             }
             Self::IfEpsilonInAll(set, inner) => {
                 // keep the sets that don't contain epsilon
-                set.retain(|t| {
-                    match first.get(t) {
-                        Some(set) => !set.contains_epsilon(),
-                        None => true,
-                    }
+                set.retain(|t| match first.get(t) {
+                    Some(set) => !set.contains_epsilon(),
+                    None => true,
                 });
                 // once the set is empty, indicating all of them have epsilon
                 // so there intersection has epsilon as well.
                 // In which case we can execute the inner relation
                 if !set.is_empty() {
                     // otherwise, nothing changed, and we need to keep this relation
-                    return            (false, true);
+                    return (false, true);
                 }
                 if let Some(mut inner) = std::mem::take(inner) {
                     let (changed, retain) = inner.process_rel(first);
@@ -188,7 +193,6 @@ impl<L: Lexicon> FirstRel<L> {
             }
         }
     }
-
 }
 
 /// Insert operation for FIRST set. Does not depend on other FIRST sets.
@@ -199,5 +203,3 @@ pub enum FirstInsert<L: Lexicon> {
     /// Union with `{ epsilon }`
     Epsilon,
 }
-
-

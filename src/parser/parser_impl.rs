@@ -36,14 +36,15 @@ impl<'s, L: Lexicon> Parser<'s, L> {
     ///////////////////////////////////////////////////////////
     // High-level API
     ///////////////////////////////////////////////////////////
-    
+
     // /Attempt to parse the syntax tree root once.
     // ///
-    // /Note that if you are parsing the same root multiple times, 
+    // /Note that if you are parsing the same root multiple times,
     // /it's more efficient to use [`Parser::iter`]
     #[inline]
-    pub fn parse<T: Root>(&mut self) -> Result<Option<T>, GrammarError> 
-    where T::Prod : Production<L=L>
+    pub fn parse<T: Root>(&mut self) -> Result<Option<T>, GrammarError>
+    where
+        T::Prod: Production<L = L>,
     {
         let meta = match T::metadata() {
             Ok(meta) => meta,
@@ -67,13 +68,12 @@ impl<'s, L: Lexicon> Parser<'s, L> {
     //     Ok(self.iter()?.collect())
     // }
 
-    fn parse_with_meta<T: Root>(&mut self, meta: &Metadata<L>) -> Option<T> 
-    where T::Prod : Production<L=L>
+    fn parse_with_meta<T: Root>(&mut self, meta: &Metadata<L>) -> Option<T>
+    where
+        T::Prod: Production<L = L>,
     {
         match T::produce(self, meta) {
-            SynResult::Success(tree) => {
-                Some(tree)
-            }
+            SynResult::Success(tree) => Some(tree),
             SynResult::Recovered(tree, errors) => {
                 self.info.errors.extend(errors);
                 Some(tree)
@@ -88,7 +88,7 @@ impl<'s, L: Lexicon> Parser<'s, L> {
     ///////////////////////////////////////////////////////////
     // Stream API
     ///////////////////////////////////////////////////////////
-    
+
     /// Parse a token of a specific type
     ///
     /// ## Consumption
@@ -100,7 +100,7 @@ impl<'s, L: Lexicon> Parser<'s, L> {
     /// ## Panic
     /// If the token is not of the expected type, the parser panics, and will not consume the
     /// token.
-    pub fn parse_token( &mut self, ty: L) -> SynResult<Token<L>, L> {
+    pub fn parse_token(&mut self, ty: L) -> SynResult<Token<L>, L> {
         let token = match self.peek_token() {
             Some(token) if token.ty == ty => token,
             _ => {
@@ -126,13 +126,16 @@ impl<'s, L: Lexicon> Parser<'s, L> {
     /// ## Panic
     /// The parser panics if the next token does not match and is not in the follow set.
     /// The next token is not consumed.
-    /// 
-    pub fn parse_token_lit( &mut self, ty: L, match_lit: &'static str
-        , follow: &FollowSet<L>
+    ///
+    pub fn parse_token_lit(
+        &mut self,
+        ty: L,
+        match_lit: &'static str,
+        follow: &FollowSet<L>,
     ) -> SynResult<Token<L>, L> {
         let token = match self.peek_token() {
             Some(token) => token,
-            None =>  {
+            None => {
                 if follow.contains_eof() {
                     let expecting = FirstSet::one(ty, Some(match_lit));
                     let token = Token::new(self.current_span(), ty);
@@ -164,7 +167,7 @@ impl<'s, L: Lexicon> Parser<'s, L> {
     }
 
     /// Create a syntax error for an unexpected end of file
-    pub fn unexpected_eof(&mut self) -> Error<L>{
+    pub fn unexpected_eof(&mut self) -> Error<L> {
         Error::new(self.current_span(), ErrorKind::UnexpectedEof)
     }
 
@@ -182,7 +185,7 @@ impl<'s, L: Lexicon> Parser<'s, L> {
                 self.info.tokens.push_unchecked(token);
                 Some(token)
             }
-            None => None
+            None => None,
         }
     }
 
@@ -203,13 +206,14 @@ impl<'s, L: Lexicon> Parser<'s, L> {
             let info = &mut self.info;
             if let Some(span) = invalid {
                 info.invalid_source.push(span);
-                info.errors.push(Error::new(span, ErrorKind::UnexpectedCharacters));
+                info.errors
+                    .push(Error::new(span, ErrorKind::UnexpectedCharacters));
             }
             if let Some(token) = token {
                 if !token.ty.should_extract() {
                     self.peeked = Some(token);
                     return;
-                } 
+                }
                 info.extracted_tokens.push(token);
                 continue;
             }
@@ -224,7 +228,9 @@ impl<'s, L: Lexicon> Parser<'s, L> {
 
     /// Get the span of the lookahead token, or the EOF span if there is no more tokens
     pub fn current_span(&mut self) -> Span {
-        self.peek_token().map(|t| t.span).unwrap_or_else(|| self.info.eof())
+        self.peek_token()
+            .map(|t| t.span)
+            .unwrap_or_else(|| self.info.eof())
     }
 
     /// Get start of the lookahead token as a 0-length span
@@ -234,14 +240,12 @@ impl<'s, L: Lexicon> Parser<'s, L> {
     }
 
     pub fn apply_semantic<S: ToSpan>(&mut self, span: &S, semantic: Set<L>) {
-        self.info.tokens.inside_mut(span.span()).apply_semantic(semantic);
+        self.info
+            .tokens
+            .inside_mut(span.span())
+            .apply_semantic(semantic);
     }
-
-
-
-
 }
-
 
 //
 // pub struct ParserIter<'s, 'p, L: Lexicon, R>
@@ -311,4 +315,3 @@ impl<'s, L: Lexicon> Parser<'s, L> {
 //     }
 // }
 //
-

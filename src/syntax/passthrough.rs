@@ -1,9 +1,8 @@
-
 #[macro_export]
 #[doc(hidden)]
 macro_rules! ast_passthrough {
     ($ast:ty) => {
-        type L=<$ast as $crate::syntax::AbstractSyntaxTree>::L;
+        type L = <$ast as $crate::syntax::AbstractSyntaxTree>::L;
         fn type_id() -> ::core::any::TypeId {
             <$ast>::type_id()
         }
@@ -22,14 +21,12 @@ macro_rules! ast_passthrough {
             <$ast>::check_left_recursive(seen, stack, set, first)
         }
         fn check_first_conflict(
-            seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>, 
-            first: &$crate::syntax::first::First<Self::L>
+            seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
+            first: &$crate::syntax::first::First<Self::L>,
         ) -> ::core::result::Result<(), $crate::GrammarError> {
             <$ast>::check_first_conflict(seen, first)
         }
-        fn build_follow(
-            builder: &mut $crate::syntax::follow::FollowBuilder<Self::L>
-        ) {
+        fn build_follow(builder: &mut $crate::syntax::follow::FollowBuilder<Self::L>) {
             <$ast>::build_follow(builder)
         }
         fn check_first_follow_conflict(
@@ -42,10 +39,9 @@ macro_rules! ast_passthrough {
         fn build_jump(
             seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
             first: &$crate::syntax::first::First<Self::L>,
-            jump: &mut $crate::syntax::jump::Jump<Self::L>
+            jump: &mut $crate::syntax::jump::Jump<Self::L>,
         ) {
             <$ast>::build_jump(seen, first, jump)
         }
     };
 }
-

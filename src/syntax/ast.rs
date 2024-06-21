@@ -1,6 +1,6 @@
-use std::{any::TypeId, marker::PhantomData};
-use std::borrow::Cow;
 use crate::Lexicon;
+use std::borrow::Cow;
+use std::{any::TypeId, marker::PhantomData};
 
 use super::MetadataBuilder;
 
@@ -8,12 +8,12 @@ pub struct Epsilon<L: Lexicon + 'static>(PhantomData<L>);
 
 impl<L: Lexicon + 'static> Production for Epsilon<L> {
     type L = L;
-    fn debug() -> Cow<'static, str>{
+    fn debug() -> Cow<'static, str> {
         Cow::Borrowed("()")
     }
     fn register(meta: &mut MetadataBuilder<Self::L>) {
         let t = Self::id();
-        if meta.visit(t, ||Self::debug().into_owned()) {
+        if meta.visit(t, || Self::debug().into_owned()) {
             meta.add_epsilon(t);
         }
     }
@@ -36,20 +36,18 @@ pub trait Production: 'static {
 
     /// Get the type name for the AST node for debugging
     #[inline]
-    fn debug() -> Cow<'static, str>{
+    fn debug() -> Cow<'static, str> {
         Cow::Borrowed(std::any::type_name::<Self>())
     }
 
     fn register(meta: &mut MetadataBuilder<Self::L>);
-
 }
-
 
 #[macro_export]
 #[doc(hidden)]
 macro_rules! production_passthrough {
     ($P:ty) => {
-        type L=<$P as $crate::syntax::Production>::L;
+        type L = <$P as $crate::syntax::Production>::L;
         #[inline]
         fn id() -> ::core::any::TypeId {
             <$P>::id()
@@ -64,7 +62,6 @@ macro_rules! production_passthrough {
         }
     };
 }
-
 
 #[macro_export]
 #[doc(hidden)]

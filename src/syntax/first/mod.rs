@@ -1,6 +1,6 @@
+use crate::Lexicon;
 use std::any::TypeId;
 use std::collections::BTreeMap;
-use crate::Lexicon;
 
 mod builder;
 pub use builder::*;

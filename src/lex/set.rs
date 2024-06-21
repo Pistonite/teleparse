@@ -87,10 +87,7 @@ pub struct Iter<L: Lexicon> {
 
 impl<L: Lexicon> Iter<L> {
     pub fn new(set: Set<L>) -> Self {
-        Self {
-            set,
-            cur: START,
-        }
+        Self { set, cur: START }
     }
 }
 
@@ -147,7 +144,6 @@ macro_rules! token_set {
         $crate::lex::Set::from_bits(b)
     } }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -222,4 +218,3 @@ mod tests {
         assert_eq!(iter.next(), None);
     }
 }
-

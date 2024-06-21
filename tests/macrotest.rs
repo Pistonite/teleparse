@@ -14,5 +14,3 @@ mod own_src {
         macrotest::expand("src/lex/expand/*.rs");
     }
 }
-
-

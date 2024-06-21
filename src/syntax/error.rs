@@ -14,7 +14,10 @@ pub struct Error<L: Lexicon> {
 
 impl<L: Lexicon> Error<L> {
     pub fn new<S: Into<Span>>(span: S, data: ErrorKind<L>) -> Self {
-        Self { span: span.into(), data }
+        Self {
+            span: span.into(),
+            data,
+        }
     }
 
     pub fn message(&self, input: &str) -> String {
@@ -43,7 +46,7 @@ pub enum ErrorKind<L: Lexicon> {
     UnexpectedTokens,
     Expecting(FirstSet<L>),
     UnexpectedEof,
-    UnexpectedNoAdvanceInLoop
+    UnexpectedNoAdvanceInLoop,
 }
 
 /// Result of parsing an AST node
@@ -70,7 +73,6 @@ impl<T, L: Lexicon> From<(T, Vec<Error<L>>)> for Result<T, L> {
 }
 
 impl<T, L: Lexicon> Result<T, L> {
-
     #[inline]
     pub fn map<T2, F: FnOnce(T) -> T2>(self, f: F) -> Result<T2, L> {
         match self {
@@ -79,8 +81,6 @@ impl<T, L: Lexicon> Result<T, L> {
             Self::Panic(errors) => Result::Panic(errors),
         }
     }
-
-    
 }
 
 #[macro_export]
@@ -93,11 +93,11 @@ macro_rules! handle_result {
             $crate::syntax::Result::Recovered(x, e) => {
                 $errors.extend(e);
                 x
-            },
+            }
             $crate::syntax::Result::Panic(e) => {
                 $errors.extend(e);
                 return $crate::syntax::Result::Panic($errors);
             }
         }
-    }}
+    }};
 }

@@ -17,7 +17,12 @@ pub trait Lexicon: Debug + Clone + Copy + PartialEq + Eq + Hash + 'static {
     /// Bit flag representation of the token types
     ///
     /// When derived, One of u8, u16, u32, u64, or u128 is chosen based on the number of variants in the enum
-    type Bit: Unsigned + Integer + BitAnd<Output = Self::Bit> + BitOr<Output = Self::Bit> + Not<Output = Self::Bit> + Copy;
+    type Bit: Unsigned
+        + Integer
+        + BitAnd<Output = Self::Bit>
+        + BitOr<Output = Self::Bit>
+        + Not<Output = Self::Bit>
+        + Copy;
 
     /// Lexer associated with this TokenType
     type Lexer<'s>: Lexer<'s, L = Self>;

@@ -4,7 +4,7 @@ use derivative::Derivative;
 
 /// A set of literal constants
 #[derive(Derivative, Clone, PartialEq)]
-#[derivative(Default(new="true"))]
+#[derivative(Default(new = "true"))]
 pub enum LitSet {
     /// A finite set
     #[derivative(Default)]
@@ -22,8 +22,7 @@ impl std::fmt::Debug for LitSet {
     }
 }
 
-impl<T : IntoIterator<Item = &'static str>, > From<T> for LitSet
-{
+impl<T: IntoIterator<Item = &'static str>> From<T> for LitSet {
     #[inline]
     fn from(set: T) -> Self {
         Self::Match(set.into_iter().collect())
@@ -48,7 +47,7 @@ impl LitSet {
     pub fn clear(&mut self) {
         match self {
             Self::Match(set) => set.clear(),
-            Self::Any => {},
+            Self::Any => {}
         }
     }
 
@@ -71,7 +70,7 @@ impl LitSet {
             Self::Any => false,
         }
     }
-    
+
     /// Check if the set contains a literal constant
     #[inline]
     pub fn contains(&self, lit: &str) -> bool {
@@ -105,12 +104,12 @@ impl LitSet {
             }
             (s, _) => {
                 let is_self_any = matches!(s, Self::Any);
-                *s= Self::Any;
+                *s = Self::Any;
                 !is_self_any
             }
         }
     }
-    
+
     /// Test if this set intersects with another set
     pub fn intersects(&self, other: &Self) -> bool {
         match (self, other) {
@@ -127,10 +126,8 @@ impl LitSet {
             (Self::Match(set), Self::Match(other_set)) => {
                 Self::Match(set.intersection(other_set).copied().collect())
             }
-            (Self::Any, Self::Any)  => Self::Any,
-            (Self::Any, s) | (s, Self::Any) => {
-                s.clone()
-            }
+            (Self::Any, Self::Any) => Self::Any,
+            (Self::Any, s) | (s, Self::Any) => s.clone(),
         }
     }
 
@@ -143,7 +140,6 @@ impl LitSet {
             Self::Any => None,
         }
     }
-
 }
 
 #[cfg(test)]

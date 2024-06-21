@@ -5,27 +5,21 @@ use teleparse::prelude::*;
 pub enum TokenType {
     #[teleparse(regex(r#"\w+"#), terminal(Ident))]
     Ident,
-    #[teleparse(terminal(
-        OpAdd = "+",
-        OpMul = "*",
-    ))]
+    #[teleparse(terminal(OpAdd = "+", OpMul = "*",))]
     Op,
-    #[teleparse(terminal(
-        ParenOpen = "(",
-        ParenClose = ")"
-    ))]
+    #[teleparse(terminal(ParenOpen = "(", ParenClose = ")"))]
     Paren,
 }
 
 #[derive_syntax]
 #[teleparse(root)]
-struct E { 
+struct E {
     first: T,
     rest: Eprime,
 }
 
 // Eplus has to be a separate struct because it contains Eprime.
-// Eprime(tp::Option<(OpAdd, T, Box<Eprime>)>) 
+// Eprime(tp::Option<(OpAdd, T, Box<Eprime>)>)
 // will cause a loop in Eprime -> tp::Option -> Eprime when trying
 // to determine if traits are satisfied
 #[derive_syntax]
@@ -34,7 +28,7 @@ struct Eprime(tp::Option<Eplus>);
 #[derive_syntax]
 struct Eplus {
     op: OpAdd,
-    t: T,
+    _t: T,
     rest: Box<Eprime>,
 }
 
@@ -50,7 +44,7 @@ struct Tprime(tp::Option<Tstar>);
 #[derive_syntax]
 struct Tstar {
     op: OpMul,
-    f: F,
+    _f: F,
     rest: Box<Tprime>,
 }
 
@@ -63,7 +57,7 @@ enum F {
 #[test]
 fn main() -> Result<(), teleparse::GrammarError> {
     let source = "(a+b)*(c+d)";
-    let t = E::parse(source)?;
+    let _ = E::parse(source)?;
 
     Ok(())
 }

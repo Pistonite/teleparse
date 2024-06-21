@@ -10,7 +10,7 @@ use crate::Lexicon;
 ///
 /// See [module-level documentation](super) for more information.
 #[derive(Derivative, PartialEq, Clone)]
-#[derivative(Default(new="true", bound=""))]
+#[derivative(Default(new = "true", bound = ""))]
 pub struct FirstSet<L: Lexicon>(TerminalSet<L>);
 
 impl<L: Lexicon> std::fmt::Debug for FirstSet<L> {
@@ -39,14 +39,14 @@ impl<L: Lexicon> FirstSet<L> {
         self.0.clear();
     }
 
-    /// Insert epsilon into the set. 
+    /// Insert epsilon into the set.
     ///
     /// Returns if the set is changed
     #[inline]
     pub fn insert_epsilon(&mut self) -> bool {
         self.0.insert_e()
     }
-    
+
     /// Check if the set contains epsilon
     #[inline]
     pub fn contains_epsilon(&self) -> bool {
@@ -132,5 +132,3 @@ impl<L: Lexicon> FirstSet<L> {
         &self.0
     }
 }
-
-

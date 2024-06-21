@@ -10,22 +10,10 @@ pub enum MyToken {
 fn main() {
     let source = "class";
     // can be parsed as Ident and KwClass
-    assert_eq!(
-        Ident::parse(source),
-        Ok(Some(Ident::from_span(0..5)))
-    );
-    assert_eq!(
-        KwClass::parse(source),
-        Ok(Some(KwClass::from_span(0..5)))
-    );
+    assert_eq!(Ident::parse(source), Ok(Some(Ident::from_span(0..5))));
+    assert_eq!(KwClass::parse(source), Ok(Some(KwClass::from_span(0..5))));
     // other words can only be parsed as Ident
     let source = "javascript";
-    assert_eq!(
-        Ident::parse(source),
-        Ok(Some(Ident::from_span(0..10)))
-    );
-    assert_eq!(
-        KwClass::parse(source),
-        Ok(None)
-    );
+    assert_eq!(Ident::parse(source), Ok(Some(Ident::from_span(0..10))));
+    assert_eq!(KwClass::parse(source), Ok(None));
 }
