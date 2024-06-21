@@ -9,7 +9,7 @@ use super::{Follow, FollowSet};
 
 /// Builder for the FOLLOW function
 ///
-/// See [module-level documentation](self) for more information.
+/// See [module-level documentation](super) for more information.
 #[derive(Debug)]
 pub struct FollowBuilder<'a, L: Lexicon> {
     /// The built FIRST table, needed to build the FOLLOW table
@@ -59,7 +59,10 @@ impl<'a, L: Lexicon> FollowBuilder<'a, L> {
         let mut set = BTreeSet::new();
         for yi in sequence.iter().rev() {
             // if Yi ... Yn all has epsilon in FIRST(Yi), then FOLLOW(Yi) = FOLLOW(Yi) U FOLLOW(X)
-            self.add(FollowRel::if_epsilon_in_all_first_iter(set.iter(), FollowRel::union_follow(*yi, x)));
+            self.add(FollowRel::if_epsilon_in_all_first_iter(
+                set.iter(),
+                FollowRel::union_follow(*yi, x),
+            ));
             set.insert(*yi);
         }
         for yi in sequence.windows(2).rev() {
@@ -86,16 +89,14 @@ impl<'a, L: Lexicon> FollowBuilder<'a, L> {
             // unlike FIRST table, there's no relations that will only execute once
             // so we can skip the retain step here
             for rel in &mut self.rels {
-                changed = rel.process_rel(&self.first, &mut map) || changed;
+                changed = rel.process_rel(self.first, &mut map) || changed;
             }
         }
 
-        let follow = Follow {
+        Follow {
             map,
             empty: FollowSet::new(),
-        };
-
-        follow
+        }
     }
 }
 
@@ -123,7 +124,10 @@ impl FollowRel {
     }
 
     #[inline]
-    pub fn if_epsilon_in_all_first_iter<'s, Iter: IntoIterator<Item=&'s TypeId>>(set: Iter, expr: FollowRel) -> Self {
+    pub fn if_epsilon_in_all_first_iter<'s, Iter: IntoIterator<Item = &'s TypeId>>(
+        set: Iter,
+        expr: FollowRel,
+    ) -> Self {
         let set = set.into_iter().copied().collect::<BTreeSet<_>>();
         Self::if_epsilon_in_all_first(set, expr)
     }
@@ -141,9 +145,10 @@ impl FollowRel {
     /// Return if anything is changed
     #[must_use]
     fn process_rel<L: Lexicon>(
-        &mut self, 
+        &mut self,
         first: &First<L>,
-        follow: &mut BTreeMap<TypeId, FollowSet<L>>) -> bool {
+        follow: &mut BTreeMap<TypeId, FollowSet<L>>,
+    ) -> bool {
         match self {
             Self::UnionFirstMinusEpsilon(a, b) => {
                 let follow_a = follow.entry(*a).or_default();
@@ -153,9 +158,7 @@ impl FollowRel {
             Self::UnionFollow(a, b) => {
                 let mut follow_a = follow.remove(a).unwrap_or_default();
                 let changed = match follow.get(b) {
-                    Some(follow_b) => {
-                        follow_a.union_follow(follow_b)
-                    }
+                    Some(follow_b) => follow_a.union_follow(follow_b),
                     None => false,
                 };
                 follow.insert(*a, follow_a);
@@ -163,9 +166,7 @@ impl FollowRel {
             }
             Self::IfEpsilonInAllFirst(set, inner) => {
                 // keep the sets that don't contain epsilon
-                set.retain(|t| {
-                    !first.get(t).contains_epsilon()
-                });
+                set.retain(|t| !first.get(t).contains_epsilon());
                 // once the set is empty, indicating all of them have epsilon
                 // so there intersection has epsilon as well.
                 // In which case we can execute the inner relation

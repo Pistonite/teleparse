@@ -10,7 +10,10 @@ pub fn expand(input: &mut syn::DeriveInput) -> syn::Result<TokenStream2> {
     let teleparse = crate_ident();
 
     // parse the root attributes
-    let RootAttr { ignore, terminal_parse } = parse_root_attributes(input)?;
+    let RootAttr {
+        ignore,
+        terminal_parse,
+    } = parse_root_attributes(input)?;
 
     // parse the variant attributes
     // note this is done before checking the root attributes,
@@ -189,7 +192,7 @@ pub fn expand(input: &mut syn::DeriveInput) -> syn::Result<TokenStream2> {
                             enum_ident,
                             variant_ident,
                             ident,
-                            Some(&value),
+                            Some(value),
                         ));
                     }
                     _ => syn_error!(
@@ -228,7 +231,7 @@ pub fn expand(input: &mut syn::DeriveInput) -> syn::Result<TokenStream2> {
                     // if we are able to match, we must be able to match the entire string
                     // For example, if the regex matches `key` and the literal is `keyboard`.
                     // If we were to match `keyboard`, `key` should be matched instead
-                    if let Some(mat) = regex_obj.find(&match_lit) {
+                    if let Some(mat) = regex_obj.find(match_lit) {
                         if mat.start() != 0 {
                             syn_error!(
                                 regex,
@@ -321,7 +324,7 @@ pub fn expand(input: &mut syn::DeriveInput) -> syn::Result<TokenStream2> {
                     }
                 }
 
-                fn lexer<'s>(source: &'s str) -> ::core::result::Result<Self::Lexer<'s>, #teleparse::GrammarError> {
+                fn lexer(source: &str) -> ::core::result::Result<Self::Lexer<'_>, #teleparse::GrammarError> {
                     use #teleparse::__priv::logos::Logos;
                     Ok(#teleparse::lex::LogosLexerWrapper::new( DerivedLogos::lexer(source)))
                 }
@@ -372,7 +375,10 @@ fn parse_root_attributes(input: &mut syn::DeriveInput) -> syn::Result<RootAttr> 
         Some(ignore) => ignore.into_iter().collect::<Vec<_>>(),
         None => Vec::new(),
     };
-    Ok(RootAttr { ignore, terminal_parse })
+    Ok(RootAttr {
+        ignore,
+        terminal_parse,
+    })
 }
 
 fn check_enum_precondition(enum_data: &syn::DataEnum) -> syn::Result<()> {
@@ -398,7 +404,7 @@ fn derive_terminal(
     let teleparse = crate_ident();
     let debug_str = match match_lit {
         Some(lit) => lit.value(),
-        None =>terminal_ident.to_string()
+        None => terminal_ident.to_string(),
     };
     let match_option_impl = match match_lit {
         Some(match_lit) => quote! {Some(#match_lit) },
@@ -411,10 +417,10 @@ fn derive_terminal(
         },
         None => quote! {
             parser.parse_token(#enum_ident::#variant_ident).map(Self::from)
-        }
+        },
     };
     let terminal_parse_impl = if terminal_parse {
-        Some(root::expand(&terminal_ident))
+        Some(root::expand(terminal_ident))
     } else {
         None
     };
@@ -444,8 +450,8 @@ fn derive_terminal(
             #[automatically_derived]
             impl #teleparse::syntax::Production for #terminal_ident {
                 type L = #enum_ident;
-                fn debug() -> ::std::borrow::Cow<'static, str> { 
-                    ::std::borrow::Cow::Borrowed(#debug_str) 
+                fn debug() -> ::std::borrow::Cow<'static, str> {
+                    ::std::borrow::Cow::Borrowed(#debug_str)
                 }
                 fn register(meta: &mut #teleparse::syntax::MetadataBuilder<Self::L>) {
                     let t = <Self as #teleparse::syntax::Production>::id();
@@ -457,8 +463,8 @@ fn derive_terminal(
             #[automatically_derived]
             impl #teleparse::parser::Produce for #terminal_ident {
                 type Prod = Self;
-                fn produce<'s>(
-                    parser: &mut #teleparse::Parser<'s, <Self::Prod as #teleparse::syntax::Production>::L>, 
+                fn produce(
+                    parser: &mut #teleparse::Parser<'_, <Self::Prod as #teleparse::syntax::Production>::L>,
                     meta: &#teleparse::syntax::Metadata<<Self::Prod as #teleparse::syntax::Production>::L>,
                 ) -> #teleparse::syntax::Result<Self, <Self::Prod as #teleparse::syntax::Production>::L> {
                     #match_parse_impl

@@ -3,7 +3,7 @@ use teleparse::prelude::*;
 pub enum TokenType {
     Integer = 0usize,
     Operator = 1usize,
-    Param = 2usize,
+    Paren = 2usize,
 }
 #[automatically_derived]
 impl ::core::fmt::Debug for TokenType {
@@ -14,7 +14,7 @@ impl ::core::fmt::Debug for TokenType {
             match self {
                 TokenType::Integer => "Integer",
                 TokenType::Operator => "Operator",
-                TokenType::Param => "Param",
+                TokenType::Paren => "Paren",
             },
         )
     }
@@ -34,9 +34,9 @@ impl ::core::marker::StructuralPartialEq for TokenType {}
 impl ::core::cmp::PartialEq for TokenType {
     #[inline]
     fn eq(&self, other: &TokenType) -> bool {
-        let __self_tag = ::core::intrinsics::discriminant_value(self);
-        let __arg1_tag = ::core::intrinsics::discriminant_value(other);
-        __self_tag == __arg1_tag
+        let __self_discr = ::core::intrinsics::discriminant_value(self);
+        let __arg1_discr = ::core::intrinsics::discriminant_value(other);
+        __self_discr == __arg1_discr
     }
 }
 #[automatically_derived]
@@ -50,8 +50,8 @@ impl ::core::cmp::Eq for TokenType {
 impl ::core::hash::Hash for TokenType {
     #[inline]
     fn hash<__H: ::core::hash::Hasher>(&self, state: &mut __H) -> () {
-        let __self_tag = ::core::intrinsics::discriminant_value(self);
-        ::core::hash::Hash::hash(&__self_tag, state)
+        let __self_discr = ::core::intrinsics::discriminant_value(self);
+        ::core::hash::Hash::hash(&__self_discr, state)
     }
 }
 /// Terminal symbol derived from [`TokenType`] with `terminal(Integer)`
@@ -93,8 +93,18 @@ impl ::core::hash::Hash for Integer {
 }
 #[automatically_derived]
 impl teleparse::ToSpan for Integer {
-    fn span(&self) -> teleparse::Span {
-        self.0.span()
+    fn lo(&self) -> teleparse::Pos {
+        use teleparse::ToSpan;
+        self.0.lo()
+    }
+    fn hi(&self) -> teleparse::Pos {
+        use teleparse::ToSpan;
+        self.0.hi()
+    }
+}
+impl Integer {
+    pub fn from_span<S: ::core::convert::Into<teleparse::Span>>(span: S) -> Self {
+        Self::from(teleparse::Token::new(span, TokenType::Integer))
     }
 }
 const _: () = {
@@ -111,62 +121,34 @@ const _: () = {
         }
     }
     #[automatically_derived]
-    impl teleparse::AbstractSyntaxTree for Integer {
+    impl teleparse::syntax::Production for Integer {
         type L = TokenType;
         fn debug() -> ::std::borrow::Cow<'static, str> {
             ::std::borrow::Cow::Borrowed("Integer")
         }
-        fn build_first(builder: &mut teleparse::syntax::FirstBuilder<Self::L>) {
-            let t = Self::type_id();
-            if builder.visit(t, "Integer") {
-                let expr = teleparse::syntax::FirstRel::insert_token(
-                    t,
-                    TokenType::Integer,
-                    None,
-                );
-                builder.add(expr);
+        fn register(meta: &mut teleparse::syntax::MetadataBuilder<Self::L>) {
+            let t = <Self as teleparse::syntax::Production>::id();
+            if meta.visit(t, || Self::debug().into_owned()) {
+                meta.add_terminal(t, TokenType::Integer, None);
             }
-        }
-        fn check_left_recursive(
-            _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-            _stack: &mut ::std::vec::Vec<::std::string::String>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-            _first: &teleparse::syntax::First<Self::L>,
-        ) -> ::core::result::Result<(), teleparse::GrammarError> {
-            Ok(())
-        }
-        fn check_first_conflict(
-            _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-            _first: &teleparse::syntax::First<Self::L>,
-        ) -> ::core::result::Result<(), teleparse::GrammarError> {
-            Ok(())
-        }
-        fn build_follow(_builder: &mut teleparse::syntax::FollowBuilder<Self::L>) {}
-        fn check_first_follow_conflict(
-            _seen: &mut std::collections::BTreeSet<::core::any::TypeId>,
-            _first: &teleparse::syntax::First<Self::L>,
-            _follow: &teleparse::syntax::Follow<Self::L>,
-        ) -> ::core::result::Result<(), teleparse::GrammarError> {
-            Ok(())
-        }
-        fn build_jump(
-            _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-            _first: &teleparse::syntax::First<Self::L>,
-            _jump: &mut teleparse::syntax::Jump<Self::L>,
-        ) {}
-        #[inline]
-        fn parse_ast<'s>(
-            parser: &mut teleparse::Parser<'s, Self::L>,
-            meta: &teleparse::syntax::Metadata<Self::L>,
-        ) -> teleparse::syntax::Result<Self, Self::L> {
-            parser.parse_token(TokenType::Integer).map(Self::from)
         }
     }
     #[automatically_derived]
-    impl teleparse::ParseTree for Integer {
-        type AST = Self;
-        fn from_ast<'s>(ast: Self, _: &mut teleparse::Parser<'s, TokenType>) -> Self {
-            ast
+    impl teleparse::parser::Produce for Integer {
+        type Prod = Self;
+        fn produce(
+            parser: &mut teleparse::Parser<
+                '_,
+                <Self::Prod as teleparse::syntax::Production>::L,
+            >,
+            meta: &teleparse::syntax::Metadata<
+                <Self::Prod as teleparse::syntax::Production>::L,
+            >,
+        ) -> teleparse::syntax::Result<
+            Self,
+            <Self::Prod as teleparse::syntax::Production>::L,
+        > {
+            parser.parse_token(TokenType::Integer).map(Self::from)
         }
     }
 };
@@ -209,8 +191,18 @@ impl ::core::hash::Hash for OpAdd {
 }
 #[automatically_derived]
 impl teleparse::ToSpan for OpAdd {
-    fn span(&self) -> teleparse::Span {
-        self.0.span()
+    fn lo(&self) -> teleparse::Pos {
+        use teleparse::ToSpan;
+        self.0.lo()
+    }
+    fn hi(&self) -> teleparse::Pos {
+        use teleparse::ToSpan;
+        self.0.hi()
+    }
+}
+impl OpAdd {
+    pub fn from_span<S: ::core::convert::Into<teleparse::Span>>(span: S) -> Self {
+        Self::from(teleparse::Token::new(span, TokenType::Operator))
     }
 }
 const _: () = {
@@ -227,63 +219,35 @@ const _: () = {
         }
     }
     #[automatically_derived]
-    impl teleparse::AbstractSyntaxTree for OpAdd {
+    impl teleparse::syntax::Production for OpAdd {
         type L = TokenType;
         fn debug() -> ::std::borrow::Cow<'static, str> {
-            ::std::borrow::Cow::Borrowed("OpAdd")
+            ::std::borrow::Cow::Borrowed("+")
         }
-        fn build_first(builder: &mut teleparse::syntax::FirstBuilder<Self::L>) {
-            let t = Self::type_id();
-            if builder.visit(t, "OpAdd") {
-                let expr = teleparse::syntax::FirstRel::insert_token(
-                    t,
-                    TokenType::Operator,
-                    Some("+"),
-                );
-                builder.add(expr);
+        fn register(meta: &mut teleparse::syntax::MetadataBuilder<Self::L>) {
+            let t = <Self as teleparse::syntax::Production>::id();
+            if meta.visit(t, || Self::debug().into_owned()) {
+                meta.add_terminal(t, TokenType::Operator, Some("+"));
             }
-        }
-        fn check_left_recursive(
-            _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-            _stack: &mut ::std::vec::Vec<::std::string::String>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-            _first: &teleparse::syntax::First<Self::L>,
-        ) -> ::core::result::Result<(), teleparse::GrammarError> {
-            Ok(())
-        }
-        fn check_first_conflict(
-            _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-            _first: &teleparse::syntax::First<Self::L>,
-        ) -> ::core::result::Result<(), teleparse::GrammarError> {
-            Ok(())
-        }
-        fn build_follow(_builder: &mut teleparse::syntax::FollowBuilder<Self::L>) {}
-        fn check_first_follow_conflict(
-            _seen: &mut std::collections::BTreeSet<::core::any::TypeId>,
-            _first: &teleparse::syntax::First<Self::L>,
-            _follow: &teleparse::syntax::Follow<Self::L>,
-        ) -> ::core::result::Result<(), teleparse::GrammarError> {
-            Ok(())
-        }
-        fn build_jump(
-            _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-            _first: &teleparse::syntax::First<Self::L>,
-            _jump: &mut teleparse::syntax::Jump<Self::L>,
-        ) {}
-        #[inline]
-        fn parse_ast<'s>(
-            parser: &mut teleparse::Parser<'s, Self::L>,
-            meta: &teleparse::syntax::Metadata<Self::L>,
-        ) -> teleparse::syntax::Result<Self, Self::L> {
-            let follow = meta.follow.get(&Self::type_id());
-            parser.parse_token_lit(TokenType::Operator, "+", follow).map(Self::from)
         }
     }
     #[automatically_derived]
-    impl teleparse::ParseTree for OpAdd {
-        type AST = Self;
-        fn from_ast<'s>(ast: Self, _: &mut teleparse::Parser<'s, TokenType>) -> Self {
-            ast
+    impl teleparse::parser::Produce for OpAdd {
+        type Prod = Self;
+        fn produce(
+            parser: &mut teleparse::Parser<
+                '_,
+                <Self::Prod as teleparse::syntax::Production>::L,
+            >,
+            meta: &teleparse::syntax::Metadata<
+                <Self::Prod as teleparse::syntax::Production>::L,
+            >,
+        ) -> teleparse::syntax::Result<
+            Self,
+            <Self::Prod as teleparse::syntax::Production>::L,
+        > {
+            let follow = meta.follow.get(&<Self as teleparse::syntax::Production>::id());
+            parser.parse_token_lit(TokenType::Operator, "+", follow).map(Self::from)
         }
     }
 };
@@ -326,8 +290,18 @@ impl ::core::hash::Hash for OpMul {
 }
 #[automatically_derived]
 impl teleparse::ToSpan for OpMul {
-    fn span(&self) -> teleparse::Span {
-        self.0.span()
+    fn lo(&self) -> teleparse::Pos {
+        use teleparse::ToSpan;
+        self.0.lo()
+    }
+    fn hi(&self) -> teleparse::Pos {
+        use teleparse::ToSpan;
+        self.0.hi()
+    }
+}
+impl OpMul {
+    pub fn from_span<S: ::core::convert::Into<teleparse::Span>>(span: S) -> Self {
+        Self::from(teleparse::Token::new(span, TokenType::Operator))
     }
 }
 const _: () = {
@@ -344,89 +318,61 @@ const _: () = {
         }
     }
     #[automatically_derived]
-    impl teleparse::AbstractSyntaxTree for OpMul {
+    impl teleparse::syntax::Production for OpMul {
         type L = TokenType;
         fn debug() -> ::std::borrow::Cow<'static, str> {
-            ::std::borrow::Cow::Borrowed("OpMul")
+            ::std::borrow::Cow::Borrowed("*")
         }
-        fn build_first(builder: &mut teleparse::syntax::FirstBuilder<Self::L>) {
-            let t = Self::type_id();
-            if builder.visit(t, "OpMul") {
-                let expr = teleparse::syntax::FirstRel::insert_token(
-                    t,
-                    TokenType::Operator,
-                    Some("*"),
-                );
-                builder.add(expr);
+        fn register(meta: &mut teleparse::syntax::MetadataBuilder<Self::L>) {
+            let t = <Self as teleparse::syntax::Production>::id();
+            if meta.visit(t, || Self::debug().into_owned()) {
+                meta.add_terminal(t, TokenType::Operator, Some("*"));
             }
         }
-        fn check_left_recursive(
-            _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-            _stack: &mut ::std::vec::Vec<::std::string::String>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-            _first: &teleparse::syntax::First<Self::L>,
-        ) -> ::core::result::Result<(), teleparse::GrammarError> {
-            Ok(())
-        }
-        fn check_first_conflict(
-            _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-            _first: &teleparse::syntax::First<Self::L>,
-        ) -> ::core::result::Result<(), teleparse::GrammarError> {
-            Ok(())
-        }
-        fn build_follow(_builder: &mut teleparse::syntax::FollowBuilder<Self::L>) {}
-        fn check_first_follow_conflict(
-            _seen: &mut std::collections::BTreeSet<::core::any::TypeId>,
-            _first: &teleparse::syntax::First<Self::L>,
-            _follow: &teleparse::syntax::Follow<Self::L>,
-        ) -> ::core::result::Result<(), teleparse::GrammarError> {
-            Ok(())
-        }
-        fn build_jump(
-            _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-            _first: &teleparse::syntax::First<Self::L>,
-            _jump: &mut teleparse::syntax::Jump<Self::L>,
-        ) {}
-        #[inline]
-        fn parse_ast<'s>(
-            parser: &mut teleparse::Parser<'s, Self::L>,
-            meta: &teleparse::syntax::Metadata<Self::L>,
-        ) -> teleparse::syntax::Result<Self, Self::L> {
-            let follow = meta.follow.get(&Self::type_id());
+    }
+    #[automatically_derived]
+    impl teleparse::parser::Produce for OpMul {
+        type Prod = Self;
+        fn produce(
+            parser: &mut teleparse::Parser<
+                '_,
+                <Self::Prod as teleparse::syntax::Production>::L,
+            >,
+            meta: &teleparse::syntax::Metadata<
+                <Self::Prod as teleparse::syntax::Production>::L,
+            >,
+        ) -> teleparse::syntax::Result<
+            Self,
+            <Self::Prod as teleparse::syntax::Production>::L,
+        > {
+            let follow = meta.follow.get(&<Self as teleparse::syntax::Production>::id());
             parser.parse_token_lit(TokenType::Operator, "*", follow).map(Self::from)
         }
     }
-    #[automatically_derived]
-    impl teleparse::ParseTree for OpMul {
-        type AST = Self;
-        fn from_ast<'s>(ast: Self, _: &mut teleparse::Parser<'s, TokenType>) -> Self {
-            ast
-        }
-    }
 };
-/// Terminal symbol derived from [`TokenType`] with `terminal(ParamOpen = "(")`
-pub struct ParamOpen(pub teleparse::Token<TokenType>);
+/// Terminal symbol derived from [`TokenType`] with `terminal(ParenOpen = "(")`
+pub struct ParenOpen(pub teleparse::Token<TokenType>);
 #[automatically_derived]
-impl ::core::clone::Clone for ParamOpen {
+impl ::core::clone::Clone for ParenOpen {
     #[inline]
-    fn clone(&self) -> ParamOpen {
+    fn clone(&self) -> ParenOpen {
         let _: ::core::clone::AssertParamIsClone<teleparse::Token<TokenType>>;
         *self
     }
 }
 #[automatically_derived]
-impl ::core::marker::Copy for ParamOpen {}
+impl ::core::marker::Copy for ParenOpen {}
 #[automatically_derived]
-impl ::core::marker::StructuralPartialEq for ParamOpen {}
+impl ::core::marker::StructuralPartialEq for ParenOpen {}
 #[automatically_derived]
-impl ::core::cmp::PartialEq for ParamOpen {
+impl ::core::cmp::PartialEq for ParenOpen {
     #[inline]
-    fn eq(&self, other: &ParamOpen) -> bool {
+    fn eq(&self, other: &ParenOpen) -> bool {
         self.0 == other.0
     }
 }
 #[automatically_derived]
-impl ::core::cmp::Eq for ParamOpen {
+impl ::core::cmp::Eq for ParenOpen {
     #[inline]
     #[doc(hidden)]
     #[coverage(off)]
@@ -435,115 +381,97 @@ impl ::core::cmp::Eq for ParamOpen {
     }
 }
 #[automatically_derived]
-impl ::core::hash::Hash for ParamOpen {
+impl ::core::hash::Hash for ParenOpen {
     #[inline]
     fn hash<__H: ::core::hash::Hasher>(&self, state: &mut __H) -> () {
         ::core::hash::Hash::hash(&self.0, state)
     }
 }
 #[automatically_derived]
-impl teleparse::ToSpan for ParamOpen {
-    fn span(&self) -> teleparse::Span {
-        self.0.span()
+impl teleparse::ToSpan for ParenOpen {
+    fn lo(&self) -> teleparse::Pos {
+        use teleparse::ToSpan;
+        self.0.lo()
+    }
+    fn hi(&self) -> teleparse::Pos {
+        use teleparse::ToSpan;
+        self.0.hi()
+    }
+}
+impl ParenOpen {
+    pub fn from_span<S: ::core::convert::Into<teleparse::Span>>(span: S) -> Self {
+        Self::from(teleparse::Token::new(span, TokenType::Paren))
     }
 }
 const _: () = {
     #[automatically_derived]
-    impl ::core::convert::From<teleparse::Token<TokenType>> for ParamOpen {
+    impl ::core::convert::From<teleparse::Token<TokenType>> for ParenOpen {
         fn from(token: teleparse::Token<TokenType>) -> Self {
             Self(token)
         }
     }
     #[automatically_derived]
-    impl ::core::fmt::Debug for ParamOpen {
+    impl ::core::fmt::Debug for ParenOpen {
         fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
             self.0.fmt(f)
         }
     }
     #[automatically_derived]
-    impl teleparse::AbstractSyntaxTree for ParamOpen {
+    impl teleparse::syntax::Production for ParenOpen {
         type L = TokenType;
         fn debug() -> ::std::borrow::Cow<'static, str> {
-            ::std::borrow::Cow::Borrowed("ParamOpen")
+            ::std::borrow::Cow::Borrowed("(")
         }
-        fn build_first(builder: &mut teleparse::syntax::FirstBuilder<Self::L>) {
-            let t = Self::type_id();
-            if builder.visit(t, "ParamOpen") {
-                let expr = teleparse::syntax::FirstRel::insert_token(
-                    t,
-                    TokenType::Param,
-                    Some("("),
-                );
-                builder.add(expr);
+        fn register(meta: &mut teleparse::syntax::MetadataBuilder<Self::L>) {
+            let t = <Self as teleparse::syntax::Production>::id();
+            if meta.visit(t, || Self::debug().into_owned()) {
+                meta.add_terminal(t, TokenType::Paren, Some("("));
             }
-        }
-        fn check_left_recursive(
-            _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-            _stack: &mut ::std::vec::Vec<::std::string::String>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-            _first: &teleparse::syntax::First<Self::L>,
-        ) -> ::core::result::Result<(), teleparse::GrammarError> {
-            Ok(())
-        }
-        fn check_first_conflict(
-            _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-            _first: &teleparse::syntax::First<Self::L>,
-        ) -> ::core::result::Result<(), teleparse::GrammarError> {
-            Ok(())
-        }
-        fn build_follow(_builder: &mut teleparse::syntax::FollowBuilder<Self::L>) {}
-        fn check_first_follow_conflict(
-            _seen: &mut std::collections::BTreeSet<::core::any::TypeId>,
-            _first: &teleparse::syntax::First<Self::L>,
-            _follow: &teleparse::syntax::Follow<Self::L>,
-        ) -> ::core::result::Result<(), teleparse::GrammarError> {
-            Ok(())
-        }
-        fn build_jump(
-            _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-            _first: &teleparse::syntax::First<Self::L>,
-            _jump: &mut teleparse::syntax::Jump<Self::L>,
-        ) {}
-        #[inline]
-        fn parse_ast<'s>(
-            parser: &mut teleparse::Parser<'s, Self::L>,
-            meta: &teleparse::syntax::Metadata<Self::L>,
-        ) -> teleparse::syntax::Result<Self, Self::L> {
-            let follow = meta.follow.get(&Self::type_id());
-            parser.parse_token_lit(TokenType::Param, "(", follow).map(Self::from)
         }
     }
     #[automatically_derived]
-    impl teleparse::ParseTree for ParamOpen {
-        type AST = Self;
-        fn from_ast<'s>(ast: Self, _: &mut teleparse::Parser<'s, TokenType>) -> Self {
-            ast
+    impl teleparse::parser::Produce for ParenOpen {
+        type Prod = Self;
+        fn produce(
+            parser: &mut teleparse::Parser<
+                '_,
+                <Self::Prod as teleparse::syntax::Production>::L,
+            >,
+            meta: &teleparse::syntax::Metadata<
+                <Self::Prod as teleparse::syntax::Production>::L,
+            >,
+        ) -> teleparse::syntax::Result<
+            Self,
+            <Self::Prod as teleparse::syntax::Production>::L,
+        > {
+            let follow = meta.follow.get(&<Self as teleparse::syntax::Production>::id());
+            parser.parse_token_lit(TokenType::Paren, "(", follow).map(Self::from)
         }
     }
 };
-/// Terminal symbol derived from [`TokenType`] with `terminal(ParamClose = ")")`
-pub struct ParamClose(pub teleparse::Token<TokenType>);
+/// Terminal symbol derived from [`TokenType`] with `terminal(ParenClose = ")")`
+pub struct ParenClose(pub teleparse::Token<TokenType>);
 #[automatically_derived]
-impl ::core::clone::Clone for ParamClose {
+impl ::core::clone::Clone for ParenClose {
     #[inline]
-    fn clone(&self) -> ParamClose {
+    fn clone(&self) -> ParenClose {
         let _: ::core::clone::AssertParamIsClone<teleparse::Token<TokenType>>;
         *self
     }
 }
 #[automatically_derived]
-impl ::core::marker::Copy for ParamClose {}
+impl ::core::marker::Copy for ParenClose {}
 #[automatically_derived]
-impl ::core::marker::StructuralPartialEq for ParamClose {}
+impl ::core::marker::StructuralPartialEq for ParenClose {}
 #[automatically_derived]
-impl ::core::cmp::PartialEq for ParamClose {
+impl ::core::cmp::PartialEq for ParenClose {
     #[inline]
-    fn eq(&self, other: &ParamClose) -> bool {
+    fn eq(&self, other: &ParenClose) -> bool {
         self.0 == other.0
     }
 }
 #[automatically_derived]
-impl ::core::cmp::Eq for ParamClose {
+impl ::core::cmp::Eq for ParenClose {
     #[inline]
     #[doc(hidden)]
     #[coverage(off)]
@@ -552,89 +480,71 @@ impl ::core::cmp::Eq for ParamClose {
     }
 }
 #[automatically_derived]
-impl ::core::hash::Hash for ParamClose {
+impl ::core::hash::Hash for ParenClose {
     #[inline]
     fn hash<__H: ::core::hash::Hasher>(&self, state: &mut __H) -> () {
         ::core::hash::Hash::hash(&self.0, state)
     }
 }
 #[automatically_derived]
-impl teleparse::ToSpan for ParamClose {
-    fn span(&self) -> teleparse::Span {
-        self.0.span()
+impl teleparse::ToSpan for ParenClose {
+    fn lo(&self) -> teleparse::Pos {
+        use teleparse::ToSpan;
+        self.0.lo()
+    }
+    fn hi(&self) -> teleparse::Pos {
+        use teleparse::ToSpan;
+        self.0.hi()
+    }
+}
+impl ParenClose {
+    pub fn from_span<S: ::core::convert::Into<teleparse::Span>>(span: S) -> Self {
+        Self::from(teleparse::Token::new(span, TokenType::Paren))
     }
 }
 const _: () = {
     #[automatically_derived]
-    impl ::core::convert::From<teleparse::Token<TokenType>> for ParamClose {
+    impl ::core::convert::From<teleparse::Token<TokenType>> for ParenClose {
         fn from(token: teleparse::Token<TokenType>) -> Self {
             Self(token)
         }
     }
     #[automatically_derived]
-    impl ::core::fmt::Debug for ParamClose {
+    impl ::core::fmt::Debug for ParenClose {
         fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
             self.0.fmt(f)
         }
     }
     #[automatically_derived]
-    impl teleparse::AbstractSyntaxTree for ParamClose {
+    impl teleparse::syntax::Production for ParenClose {
         type L = TokenType;
         fn debug() -> ::std::borrow::Cow<'static, str> {
-            ::std::borrow::Cow::Borrowed("ParamClose")
+            ::std::borrow::Cow::Borrowed(")")
         }
-        fn build_first(builder: &mut teleparse::syntax::FirstBuilder<Self::L>) {
-            let t = Self::type_id();
-            if builder.visit(t, "ParamClose") {
-                let expr = teleparse::syntax::FirstRel::insert_token(
-                    t,
-                    TokenType::Param,
-                    Some(")"),
-                );
-                builder.add(expr);
+        fn register(meta: &mut teleparse::syntax::MetadataBuilder<Self::L>) {
+            let t = <Self as teleparse::syntax::Production>::id();
+            if meta.visit(t, || Self::debug().into_owned()) {
+                meta.add_terminal(t, TokenType::Paren, Some(")"));
             }
-        }
-        fn check_left_recursive(
-            _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-            _stack: &mut ::std::vec::Vec<::std::string::String>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-            _first: &teleparse::syntax::First<Self::L>,
-        ) -> ::core::result::Result<(), teleparse::GrammarError> {
-            Ok(())
-        }
-        fn check_first_conflict(
-            _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-            _first: &teleparse::syntax::First<Self::L>,
-        ) -> ::core::result::Result<(), teleparse::GrammarError> {
-            Ok(())
-        }
-        fn build_follow(_builder: &mut teleparse::syntax::FollowBuilder<Self::L>) {}
-        fn check_first_follow_conflict(
-            _seen: &mut std::collections::BTreeSet<::core::any::TypeId>,
-            _first: &teleparse::syntax::First<Self::L>,
-            _follow: &teleparse::syntax::Follow<Self::L>,
-        ) -> ::core::result::Result<(), teleparse::GrammarError> {
-            Ok(())
-        }
-        fn build_jump(
-            _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-            _first: &teleparse::syntax::First<Self::L>,
-            _jump: &mut teleparse::syntax::Jump<Self::L>,
-        ) {}
-        #[inline]
-        fn parse_ast<'s>(
-            parser: &mut teleparse::Parser<'s, Self::L>,
-            meta: &teleparse::syntax::Metadata<Self::L>,
-        ) -> teleparse::syntax::Result<Self, Self::L> {
-            let follow = meta.follow.get(&Self::type_id());
-            parser.parse_token_lit(TokenType::Param, ")", follow).map(Self::from)
         }
     }
     #[automatically_derived]
-    impl teleparse::ParseTree for ParamClose {
-        type AST = Self;
-        fn from_ast<'s>(ast: Self, _: &mut teleparse::Parser<'s, TokenType>) -> Self {
-            ast
+    impl teleparse::parser::Produce for ParenClose {
+        type Prod = Self;
+        fn produce(
+            parser: &mut teleparse::Parser<
+                '_,
+                <Self::Prod as teleparse::syntax::Production>::L,
+            >,
+            meta: &teleparse::syntax::Metadata<
+                <Self::Prod as teleparse::syntax::Production>::L,
+            >,
+        ) -> teleparse::syntax::Result<
+            Self,
+            <Self::Prod as teleparse::syntax::Production>::L,
+        > {
+            let follow = meta.follow.get(&<Self as teleparse::syntax::Production>::id());
+            parser.parse_token_lit(TokenType::Paren, ")", follow).map(Self::from)
         }
     }
 };
@@ -648,7 +558,7 @@ const _: () = {
         Operator,
         #[token("(")]
         #[token(")")]
-        Param,
+        Paren,
     }
     impl<'s> ::logos::Logos<'s> for DerivedLogos {
         type Error = ();
@@ -3500,7 +3410,7 @@ const _: () = {
             }
             #[inline]
             fn goto193_x<'s>(lex: &mut Lexer<'s>) {
-                lex.set(Ok(DerivedLogos::Param));
+                lex.set(Ok(DerivedLogos::Paren));
             }
             #[inline]
             fn goto173_at2<'s>(lex: &mut Lexer<'s>) {
@@ -5128,7 +5038,7 @@ const _: () = {
             }
             #[inline]
             fn goto192_x<'s>(lex: &mut Lexer<'s>) {
-                lex.set(Ok(DerivedLogos::Param));
+                lex.set(Ok(DerivedLogos::Paren));
             }
             #[inline]
             fn goto19_at1<'s>(lex: &mut Lexer<'s>) {
@@ -5821,7 +5731,7 @@ const _: () = {
             match token {
                 DerivedLogos::Integer => Self::Integer,
                 DerivedLogos::Operator => Self::Operator,
-                DerivedLogos::Param => Self::Param,
+                DerivedLogos::Paren => Self::Paren,
             }
         }
     }
@@ -5833,7 +5743,7 @@ const _: () = {
         fn id(&self) -> usize {
             *self as usize
         }
-        fn from_id(id: usize) -> Self {
+        fn from_id_unchecked(id: usize) -> Self {
             unsafe { std::mem::transmute(id) }
         }
         fn to_bit(&self) -> Self::Bit {
@@ -5844,10 +5754,10 @@ const _: () = {
         }
         fn next(&self) -> ::core::option::Option<Self> {
             match self {
-                Self::Param => None,
+                Self::Paren => None,
                 _ => {
                     let next = self.id() + 1;
-                    Some(Self::from_id(next))
+                    Some(Self::from_id_unchecked(next))
                 }
             }
         }
@@ -5856,9 +5766,9 @@ const _: () = {
                 _ => false,
             }
         }
-        fn lexer<'s>(
-            source: &'s str,
-        ) -> ::core::result::Result<Self::Lexer<'s>, teleparse::GrammarError> {
+        fn lexer(
+            source: &str,
+        ) -> ::core::result::Result<Self::Lexer<'_>, teleparse::GrammarError> {
             use teleparse::__priv::logos::Logos;
             Ok(teleparse::lex::LogosLexerWrapper::new(DerivedLogos::lexer(source)))
         }

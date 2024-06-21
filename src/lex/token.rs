@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use super::{ToSpan, Span, Lexicon};
+use super::{Lexicon, Span, ToSpan};
 
 ///////////////////////////////////////////////////////////
 // Token
@@ -24,7 +24,10 @@ impl<L: Lexicon> Debug for Token<L> {
 impl<L: Lexicon> Token<L> {
     /// Create a new Token
     pub fn new<TSpan: Into<Span>>(span: TSpan, ty: L) -> Self {
-        Self { span: span.into(), ty }
+        Self {
+            span: span.into(),
+            ty,
+        }
     }
 
     /// Get the source of this token from the entire source input
@@ -79,7 +82,7 @@ mod tests {
         let token = Token::new((0, 1), T::A);
         assert_eq!(token.src("abc"), "a");
     }
-    
+
     #[test]
     fn test_src_empty() {
         let token = Token::new((0, 0), T::A);
@@ -89,7 +92,7 @@ mod tests {
         let token = Token::new((1, 0), T::A);
         assert_eq!(token.src("abc"), "");
     }
-    
+
     #[test]
     fn test_overflows() {
         let token = Token::new(0..100, T::A);

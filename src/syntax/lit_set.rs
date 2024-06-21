@@ -4,7 +4,7 @@ use derivative::Derivative;
 
 /// A set of literal constants
 #[derive(Derivative, Clone, PartialEq)]
-#[derivative(Default(new="true"))]
+#[derivative(Default(new = "true"))]
 pub enum LitSet {
     /// A finite set
     #[derivative(Default)]
@@ -22,8 +22,7 @@ impl std::fmt::Debug for LitSet {
     }
 }
 
-impl<T : IntoIterator<Item = &'static str>, > From<T> for LitSet
-{
+impl<T: IntoIterator<Item = &'static str>> From<T> for LitSet {
     #[inline]
     fn from(set: T) -> Self {
         Self::Match(set.into_iter().collect())
@@ -48,7 +47,7 @@ impl LitSet {
     pub fn clear(&mut self) {
         match self {
             Self::Match(set) => set.clear(),
-            Self::Any => {},
+            Self::Any => {}
         }
     }
 
@@ -71,7 +70,7 @@ impl LitSet {
             Self::Any => false,
         }
     }
-    
+
     /// Check if the set contains a literal constant
     #[inline]
     pub fn contains(&self, lit: &str) -> bool {
@@ -105,12 +104,12 @@ impl LitSet {
             }
             (s, _) => {
                 let is_self_any = matches!(s, Self::Any);
-                *s= Self::Any;
+                *s = Self::Any;
                 !is_self_any
             }
         }
     }
-    
+
     /// Test if this set intersects with another set
     pub fn intersects(&self, other: &Self) -> bool {
         match (self, other) {
@@ -127,10 +126,8 @@ impl LitSet {
             (Self::Match(set), Self::Match(other_set)) => {
                 Self::Match(set.intersection(other_set).copied().collect())
             }
-            (Self::Any, Self::Any)  => Self::Any,
-            (Self::Any, s) | (s, Self::Any) => {
-                s.clone()
-            }
+            (Self::Any, Self::Any) => Self::Any,
+            (Self::Any, s) | (s, Self::Any) => s.clone(),
         }
     }
 
@@ -143,7 +140,6 @@ impl LitSet {
             Self::Any => None,
         }
     }
-
 }
 
 #[cfg(test)]
@@ -243,6 +239,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::bool_assert_comparison)] //it's clearer
     fn intersect_empty_universe() {
         let set1 = LitSet::new();
         let set2 = LitSet::universe();
@@ -257,8 +254,8 @@ mod tests {
         let u = LitSet::universe();
         let set = LitSet::from(["a", "b"]);
 
-        assert_eq!(u.intersects(&set), true);
-        assert_eq!(set.intersects(&u), true);
+        assert!(u.intersects(&set));
+        assert!(set.intersects(&u));
         assert_eq!(u.intersection(&set), set);
         assert_eq!(set.intersection(&u), set);
     }
@@ -267,8 +264,8 @@ mod tests {
     fn intersect_disjoint() {
         let set1 = LitSet::from(["a", "b"]);
         let set2 = LitSet::from(["c", "d"]);
-        assert_eq!(set1.intersects(&set2), false);
-        assert_eq!(set2.intersects(&set1), false);
+        assert!(!set1.intersects(&set2));
+        assert!(!set2.intersects(&set1));
         assert_eq!(set2.intersection(&set1), LitSet::new());
         assert_eq!(set1.intersection(&set2), LitSet::new());
     }
@@ -277,8 +274,8 @@ mod tests {
     fn intersect_subset() {
         let set1 = LitSet::from(["a", "b"]);
         let set2 = LitSet::from(["a"]);
-        assert_eq!(set1.intersects(&set2), true);
-        assert_eq!(set2.intersects(&set1), true);
+        assert!(set1.intersects(&set2));
+        assert!(set2.intersects(&set1));
         assert_eq!(set2.intersection(&set1), set2);
         assert_eq!(set1.intersection(&set2), set2);
     }
@@ -287,8 +284,8 @@ mod tests {
     fn intersect_empty() {
         let set1 = LitSet::from(["a", "b"]);
         let set2 = LitSet::new();
-        assert_eq!(set1.intersects(&set2), false);
-        assert_eq!(set2.intersects(&set1), false);
+        assert!(!set1.intersects(&set2));
+        assert!(!set2.intersects(&set1));
         assert_eq!(set2.intersection(&set1), set2);
         assert_eq!(set1.intersection(&set2), set2);
     }

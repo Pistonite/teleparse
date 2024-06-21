@@ -1,0 +1,50 @@
+name: Teleparse Book
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  book-build:
+    name: Build Book
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: baptiste0928/cargo-install@v3
+        with:
+          crate: mdbook
+      - uses: baptiste0928/cargo-install@v3
+        with:
+          crate: txtpp
+      - run: task build:book
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: book/book
+          retention-days: 3
+
+  book-deploy:
+    name: Deploy Book
+    needs:
+      - book-build
+    if: github.event_name != 'pull_request'
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

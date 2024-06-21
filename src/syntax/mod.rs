@@ -1,5 +1,3 @@
-#![doc = include_str!("./README.md")]
-
 mod lit_set;
 pub use lit_set::*;
 mod term_set;
@@ -18,4 +16,3 @@ mod metadata;
 pub use metadata::*;
 
 mod passthrough;
-

@@ -8,15 +8,15 @@ pub fn expand(input: &mut syn::DeriveInput) -> syn::Result<TokenStream2> {
     let teleparse = crate_ident();
 
     let (extra_derive, output) = match &mut input.data {
-        syn::Data::Struct(data) => {
-            (None, expand_struct(input.ident.clone(), data, &root_attr)?)
-        }
-        syn::Data::Enum(data) => {
-            (Some(
-                quote! {#[derive(#teleparse::ToSpan)]}
-            ), expand_enum(input.ident.clone(), data, &root_attr)?)
-        }
-        _ => syn_error!(input, "derive_syntax can only be used with structs or enums")
+        syn::Data::Struct(data) => (None, expand_struct(input.ident.clone(), data, &root_attr)?),
+        syn::Data::Enum(data) => (
+            Some(quote! {#[derive(#teleparse::ToSpan)]}),
+            expand_enum(input.ident.clone(), data, &root_attr)?,
+        ),
+        _ => syn_error!(
+            input,
+            "derive_syntax can only be used with structs or enums"
+        ),
     };
 
     let root_test = if !root_attr.root || root_attr.no_test {
@@ -35,21 +35,25 @@ pub fn expand(input: &mut syn::DeriveInput) -> syn::Result<TokenStream2> {
     Ok(output)
 }
 
-fn expand_struct(ident: syn::Ident, input: &mut syn::DataStruct, root_attr: &RootAttr) -> syn::Result<TokenStream2> {
+fn expand_struct(
+    ident: syn::Ident,
+    input: &mut syn::DataStruct,
+    root_attr: &RootAttr,
+) -> syn::Result<TokenStream2> {
     match &mut input.fields {
-        syn::Fields::Unnamed(fields) => {
-            expand_struct_unnamed(ident, fields, root_attr)
-        }
-        syn::Fields::Named(fields) => {
-            expand_struct_named(ident, fields, root_attr)
-        }
+        syn::Fields::Unnamed(fields) => expand_struct_unnamed(ident, fields, root_attr),
+        syn::Fields::Named(fields) => expand_struct_named(ident, fields, root_attr),
         syn::Fields::Unit => {
             syn_error!(ident, "derive_syntax does not support unit structs");
         }
     }
 }
 
-fn expand_struct_unnamed(ident: syn::Ident, input: &mut syn::FieldsUnnamed, root_attr: &RootAttr) -> syn::Result<TokenStream2> {
+fn expand_struct_unnamed(
+    ident: syn::Ident,
+    input: &mut syn::FieldsUnnamed,
+    root_attr: &RootAttr,
+) -> syn::Result<TokenStream2> {
     let teleparse = crate_ident();
     let mut field_attrs = Vec::with_capacity(input.unnamed.len());
     for field in &mut input.unnamed {
@@ -63,7 +67,9 @@ fn expand_struct_unnamed(ident: syn::Ident, input: &mut syn::FieldsUnnamed, root
     };
 
     let mut apply_semantic_impl = TokenStream2::new();
-    for ((i, field), attrs) in std::iter::zip(input.unnamed.iter().enumerate(), field_attrs.into_iter()) {
+    for ((i, field), attrs) in
+        std::iter::zip(input.unnamed.iter().enumerate(), field_attrs.into_iter())
+    {
         let field_attr = parse_field_attributes(field, attrs)?;
         let idx = syn::Index::from(i);
         if let Some(semantic) = field_attr.semantic {
@@ -78,7 +84,7 @@ fn expand_struct_unnamed(ident: syn::Ident, input: &mut syn::FieldsUnnamed, root
         }
     }
 
-    let last = syn::Index::from(pt_ty.len()-1);
+    let last = syn::Index::from(pt_ty.len() - 1);
     let root_derive = if root_attr.root {
         Some(root::expand(&ident))
     } else {
@@ -108,8 +114,8 @@ fn expand_struct_unnamed(ident: syn::Ident, input: &mut syn::FieldsUnnamed, root
         #[automatically_derived]
         impl #teleparse::parser::Produce for #ident {
             type Prod = #prod_struct;
-            fn produce<'s>(
-                parser: &mut #teleparse::parser::Parser<'s, <Self::Prod as #teleparse::syntax::Production>::L>,
+            fn produce(
+                parser: &mut #teleparse::parser::Parser<'_, <Self::Prod as #teleparse::syntax::Production>::L>,
                 meta: &#teleparse::syntax::Metadata<<Self::Prod as #teleparse::syntax::Production>::L>,
             ) -> #teleparse::syntax::Result<Self, <Self::Prod as #teleparse::syntax::Production>::L> {
                 use #teleparse::parser::Produce;
@@ -129,7 +135,11 @@ fn expand_struct_unnamed(ident: syn::Ident, input: &mut syn::FieldsUnnamed, root
     Ok(anon_const_block(output))
 }
 
-fn expand_struct_named(ident: syn::Ident, input: &mut syn::FieldsNamed, root_attr: &RootAttr) -> syn::Result<TokenStream2> {
+fn expand_struct_named(
+    ident: syn::Ident,
+    input: &mut syn::FieldsNamed,
+    root_attr: &RootAttr,
+) -> syn::Result<TokenStream2> {
     let teleparse = crate_ident();
     let mut field_attrs = Vec::with_capacity(input.named.len());
     for field in &mut input.named {
@@ -150,7 +160,7 @@ fn expand_struct_named(ident: syn::Ident, input: &mut syn::FieldsNamed, root_att
         if let Some(semantic) = field_attr.semantic {
             apply_semantic_impl.extend(quote! {
                 parser.apply_semantic(
-                    &result.#field_ident, 
+                    &result.#field_ident,
                     #teleparse::token_set!(<Self::Prod as #teleparse::syntax::Production>::L{
                         #( #semantic )|*
                     })
@@ -184,6 +194,7 @@ fn expand_struct_named(ident: syn::Ident, input: &mut syn::FieldsNamed, root_att
                 #teleparse::register_sequence!(meta, #( <#pt_ty as #teleparse::parser::Produce>::Prod ),*);
             }
         }
+
         #[automatically_derived]
         impl #teleparse::ToSpan for #ident {
             fn lo(&self) -> #teleparse::Pos { self.#first_ident.lo() }
@@ -192,8 +203,8 @@ fn expand_struct_named(ident: syn::Ident, input: &mut syn::FieldsNamed, root_att
         #[automatically_derived]
         impl #teleparse::parser::Produce for #ident {
             type Prod = #prod_struct;
-            fn produce<'s>(
-                parser: &mut #teleparse::parser::Parser<'s, <Self::Prod as #teleparse::syntax::Production>::L>,
+            fn produce(
+                parser: &mut #teleparse::parser::Parser<'_, <Self::Prod as #teleparse::syntax::Production>::L>,
                 meta: &#teleparse::syntax::Metadata<<Self::Prod as #teleparse::syntax::Production>::L>,
             ) -> #teleparse::syntax::Result<Self, <Self::Prod as #teleparse::syntax::Production>::L> {
                 use #teleparse::parser::Produce;
@@ -212,7 +223,11 @@ fn expand_struct_named(ident: syn::Ident, input: &mut syn::FieldsNamed, root_att
     Ok(anon_const_block(output))
 }
 
-fn expand_enum(ident: syn::Ident, input: &mut syn::DataEnum, root_attr: &RootAttr) -> syn::Result<TokenStream2> {
+fn expand_enum(
+    ident: syn::Ident,
+    input: &mut syn::DataEnum,
+    root_attr: &RootAttr,
+) -> syn::Result<TokenStream2> {
     let teleparse = crate_ident();
 
     let mut variant_attrs = Vec::with_capacity(input.variants.len());
@@ -224,7 +239,10 @@ fn expand_enum(ident: syn::Ident, input: &mut syn::DataEnum, root_attr: &RootAtt
     let mut pt_ty = Vec::with_capacity(input.variants.len());
     for variant in &input.variants {
         if variant.discriminant.is_some() {
-            syn_error!(variant, "derive_syntax does not support enums with discriminants");
+            syn_error!(
+                variant,
+                "derive_syntax does not support enums with discriminants"
+            );
         }
         pt_ident.push(&variant.ident);
         match &variant.fields {
@@ -232,13 +250,19 @@ fn expand_enum(ident: syn::Ident, input: &mut syn::DataEnum, root_attr: &RootAtt
                 let x = match ensure_one(fields.unnamed.iter()) {
                     EnsureOne::One(x) => x,
                     _ => {
-                        syn_error!(fields, "derive_syntax only supports variant with exactly one unnamed field");
+                        syn_error!(
+                            fields,
+                            "derive_syntax only supports variant with exactly one unnamed field"
+                        );
                     }
                 };
                 pt_ty.push(&x.ty);
             }
             _ => {
-                syn_error!(variant, "derive_syntax only supports variant with exactly one unnamed field");
+                syn_error!(
+                    variant,
+                    "derive_syntax only supports variant with exactly one unnamed field"
+                );
             }
         }
     }
@@ -253,7 +277,7 @@ fn expand_enum(ident: syn::Ident, input: &mut syn::DataEnum, root_attr: &RootAtt
         if let Some(semantic) = variant_attr.semantic {
             apply_semantic_impl.push(quote! {
                 parser.apply_semantic(
-                    &inner, 
+                    &inner,
                     #teleparse::token_set!(<Self::Prod as #teleparse::syntax::Production>::L{
                         #( #semantic )|*
                     })
@@ -271,7 +295,7 @@ fn expand_enum(ident: syn::Ident, input: &mut syn::DataEnum, root_attr: &RootAtt
     } else {
         None
     };
-    
+
     let (name, prod_struct) = derived_prod_name(&ident);
     let output = quote! {
         #[doc(hidden)]
@@ -291,8 +315,8 @@ fn expand_enum(ident: syn::Ident, input: &mut syn::DataEnum, root_attr: &RootAtt
         #[automatically_derived]
         impl #teleparse::parser::Produce for #ident {
             type Prod = #prod_struct;
-            fn produce<'s>(
-                parser: &mut #teleparse::parser::Parser<'s, <Self::Prod as #teleparse::syntax::Production>::L>, 
+            fn produce(
+                parser: &mut #teleparse::parser::Parser<'_, <Self::Prod as #teleparse::syntax::Production>::L>,
                 meta: &#teleparse::syntax::Metadata<<Self::Prod as #teleparse::syntax::Production>::L>,
             ) -> #teleparse::syntax::Result<Self, <Self::Prod as #teleparse::syntax::Production>::L> {
                 use #teleparse::syntax::Production;
@@ -363,15 +387,22 @@ fn parse_root_attributes(input: &mut syn::DeriveInput) -> syn::Result<RootAttr> 
 
 struct FieldAttr {
     semantic: Option<Vec<syn::Ident>>,
-    hook: Option<syn::Ident>,
+    // hook: Option<syn::Ident>,
 }
 
-fn parse_field_attributes<T: ToTokens>(field: &T, attrs: Vec<syn::Attribute>) -> syn::Result<FieldAttr> {
+fn parse_field_attributes<T: ToTokens>(
+    field: &T,
+    attrs: Vec<syn::Attribute>,
+) -> syn::Result<FieldAttr> {
     let mut semantic = None;
     let mut hook = None;
     let attr = match ensure_one(attrs) {
-        EnsureOne::None => return Ok(FieldAttr { semantic, hook }),
-        EnsureOne::More => syn_error!(field, "Multiple {} attributes found! You might want to merge them.", CRATE),
+        EnsureOne::None => return Ok(FieldAttr { semantic }),
+        EnsureOne::More => syn_error!(
+            field,
+            "Multiple {} attributes found! You might want to merge them.",
+            CRATE
+        ),
         EnsureOne::One(attr) => attr,
     };
     for meta in parse_crate_attr_meta(&attr)? {
@@ -379,10 +410,18 @@ fn parse_field_attributes<T: ToTokens>(field: &T, attrs: Vec<syn::Attribute>) ->
             syn::Meta::List(meta) => {
                 if meta.path.is_ident("semantic") {
                     if semantic.is_some() {
-                        syn_error!(meta, "Duplicated `semantic` attribute. You might want to merge them.");
+                        syn_error!(
+                            meta,
+                            "Duplicated `semantic` attribute. You might want to merge them."
+                        );
                     }
-                    semantic = Some(meta.parse_args_with(Punctuated::<syn::Ident, syn::Token![,]>::parse_terminated)?
-                    .into_iter().collect::<Vec<_>>());
+                    semantic = Some(
+                        meta.parse_args_with(
+                            Punctuated::<syn::Ident, syn::Token![,]>::parse_terminated,
+                        )?
+                        .into_iter()
+                        .collect::<Vec<_>>(),
+                    );
                     continue;
                 }
                 if meta.path.is_ident("hook") {
@@ -397,6 +436,5 @@ fn parse_field_attributes<T: ToTokens>(field: &T, attrs: Vec<syn::Attribute>) ->
         }
     }
 
-    Ok(FieldAttr { semantic, hook })
+    Ok(FieldAttr { semantic })
 }
-

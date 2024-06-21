@@ -5,7 +5,6 @@
 mod prelude;
 use prelude::*;
 
-
 /// Transform an enum into a token type (a lexicon)
 ///
 /// This will derive the lexicon trait as well as the super traits, and also generate

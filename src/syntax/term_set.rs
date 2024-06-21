@@ -8,14 +8,13 @@ use crate::Lexicon;
 
 use super::LitSet;
 
-
 /// A set of terminal symbols, and possibly a special `empty` symbol
 ///
 /// The implementation should be fast to look up if a token (T, src) is in the set,
 /// which makes it suitable as the implementation for [FIRST](super::first) and
 /// [FOLLOW](super::follow) sets.
 #[derive(Derivative, PartialEq, Clone)]
-#[derivative(Default(new="true", bound=""))]
+#[derivative(Default(new = "true", bound = ""))]
 pub struct TerminalSet<L: Lexicon> {
     /// Maps token to the set of literals to form the terminal set
     pub map: Map<L, LitSet>,
@@ -30,7 +29,7 @@ impl<L: Lexicon> std::fmt::Debug for TerminalSet<L> {
             s.entry(&Epsilon);
         }
         for (ty, set) in self.map.iter_zip() {
-            match set.iter()  {
+            match set.iter() {
                 None => {
                     s.entry(&Term(ty, None));
                 }
@@ -74,7 +73,7 @@ impl<L: Lexicon> TerminalSet<L> {
             set.clear();
         }
     }
-    /// Insert the empty symbol into the set. 
+    /// Insert the empty symbol into the set.
     ///
     /// Returns if the set is changed
     #[inline]
@@ -83,7 +82,7 @@ impl<L: Lexicon> TerminalSet<L> {
         self.e = true;
         changed
     }
-    
+
     /// Check if the set contains the empty symbol
     #[inline]
     pub fn contains_e(&self) -> bool {
@@ -93,26 +92,20 @@ impl<L: Lexicon> TerminalSet<L> {
     /// Insert the terminal `(ty, lit)` into the set. None indicates any literal.
     pub fn insert(&mut self, ty: L, lit: Option<&'static str>) -> bool {
         match lit {
-            Some(lit) => {
-                self.map.get_mut(ty).insert(lit)
-            },
-            None => {
-                self.map.get_mut(ty).union_universe()
-            }
+            Some(lit) => self.map.get_mut(ty).insert(lit),
+            None => self.map.get_mut(ty).union_universe(),
         }
     }
 
     /// Check if the set contains the terminal `(ty, lit)`
-    pub fn contains<'s>(&self, token: Option<TokenSrc<'s, L>>) -> bool {
+    pub fn contains(&self, token: Option<TokenSrc<'_, L>>) -> bool {
         match token {
             None => self.e,
-            Some(token) => {
-                self.map.get(token.ty).contains(&token.src)
-            }
+            Some(token) => self.map.get(token.ty).contains(token.src),
         }
     }
 
-    /// Union with another [`TerminalSet`] 
+    /// Union with another [`TerminalSet`]
     ///
     /// Effectively:
     /// ```text
@@ -122,8 +115,8 @@ impl<L: Lexicon> TerminalSet<L> {
     /// Returns if self is changed
     /// ## Excluding empty symbol
     /// if `include_e` is false, the empty symbol is excluded from `other`
-    /// when unioning. 
-    /// Effectively: 
+    /// when unioning.
+    /// Effectively:
     /// ```text
     /// Self = Self U (Other - {E})
     /// ```
@@ -160,10 +153,8 @@ impl<L: Lexicon> TerminalSet<L> {
     ///
     /// This returns immediately when one terminal is found in both sets
     pub fn intersects(&self, other: &Self, include_e: bool) -> bool {
-        if include_e {
-            if self.e && other.e {
-                return true;
-            }
+        if include_e && self.e && other.e {
+            return true;
         }
         for (set, other_set) in self.map.iter().zip(other.map.iter()) {
             if set.intersects(other_set) {
@@ -192,10 +183,8 @@ impl<L: Lexicon> TerminalSet<L> {
     /// in which case it will never appear in the intersection.
     pub fn intersection_repr(&self, other: &Self, include_e: bool) -> BTreeSet<String> {
         let mut terminals = BTreeSet::new();
-        if include_e {
-            if self.e && other.e {
-                terminals.insert("<empty>".to_string());
-            }
+        if include_e && self.e && other.e {
+            terminals.insert("<empty>".to_string());
         }
         for ((ty, set), other_set) in self.map.iter_zip().zip(other.map.iter()) {
             let intersection = set.intersection(other_set);
@@ -295,14 +284,14 @@ mod tests {
         let mut set = TerminalSet::<T>::new();
         assert!(!set.contains_e());
         assert!(!set.contains(None));
-        assert_eq!(set.insert_e(), true);
+        assert!(set.insert_e());
         assert!(set.contains_e());
         assert!(set.contains(None));
-        assert_eq!(set.insert_e(), false);
+        assert!(!set.insert_e());
         assert!(set.contains_e());
         assert!(set.contains(None));
     }
-    
+
     #[test]
     fn insert() {
         let mut set = TerminalSet::new();
@@ -317,7 +306,7 @@ mod tests {
         assert!(set.contains(Some((T::B, "a").into())));
         assert!(!set.contains(Some((T::B, "b").into())));
     }
-    
+
     #[test]
     fn union_empty() {
         let mut set_a = TerminalSet::<T>::new();
@@ -328,58 +317,56 @@ mod tests {
         assert_eq!(set_a, set_b);
         assert_eq!(set_a, set_a);
     }
-    
+
     #[test]
     fn union_disjoint_token() {
         let mut set_a = TerminalSet::new();
         assert!(set_a.insert(T::A, Some("a")));
         assert!(set_a.insert(T::A, Some("b")));
-    
+
         let mut set_b = TerminalSet::new();
         assert!(set_b.insert(T::B, None));
-    
+
         let mut expected = TerminalSet::new();
         assert!(expected.insert(T::A, Some("a")));
         assert!(expected.insert(T::A, Some("b")));
         assert!(expected.insert(T::B, None));
-    
+
         assert!(set_a.union(&set_b, true));
         assert_eq!(set_a, expected);
         assert!(set_b.union(&set_a, true));
         assert_eq!(set_b, expected);
     }
-    
+
     #[test]
     fn union_exclude_e() {
         let mut set_a = TerminalSet::new();
         assert!(set_a.insert(T::A, Some("a")));
         assert!(set_a.insert(T::B, Some("b")));
-    
+
         let mut set_b = set_a.clone();
         assert!(set_b.insert_e());
-    
+
         assert_ne!(set_a, set_b);
         assert!(!set_a.union(&set_b, false));
         assert!(set_a.union(&set_b, true));
     }
-    
+
     #[test]
     fn union_to_any() {
         let mut set_a = TerminalSet::new();
         assert!(set_a.insert(T::A, Some("a")));
         assert!(set_a.insert(T::B, None));
-    
+
         let mut set_b = TerminalSet::new();
         assert!(set_b.insert(T::A, None));
         assert!(set_b.insert(T::B, Some("b")));
-    
+
         let mut expected = TerminalSet::new();
         assert!(expected.insert(T::A, None));
         assert!(expected.insert(T::B, None));
-    
+
         assert!(set_a.union(&set_b, true));
         assert_eq!(set_a, expected);
     }
-
-
 }

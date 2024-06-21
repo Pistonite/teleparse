@@ -58,28 +58,35 @@ Progress:
   - [ ] Documentation
 - [ ] Usability testing
 - [ ] mdBook
-  - [ ] derive_lexicon
+  - [x] derive_lexicon
   - [ ] derive_syntax
     - [ ] semantic tokens
   - [ ] using `tp`
   - [ ] hooks
   - [ ] using parser data
 
-Here is the "textbook grammar" implemented in a few minutes (full version at `tests/first_follow.rs`)
+Traditionally recursive grammar can also be simplified with built-in syntax types.
+```text
+// with recursion
+E  => T E'
+E' => + T E' | ε
+T  => F T'
+T' => * F T' | ε
+F  => ( E ) | id
+
+// simplified
+E  => T ( + T )*
+T  => F ( * F )*
+F  => ( E ) | id
 ```
-E -> T E'
-E' -> + T E' | ε
-T -> F T'
-T' -> * F T' | ε
-F -> ( E ) | id
-```
+Which can then be implemented as:
 ```rust
 use teleparse::prelude::*;
 
 #[derive_lexicon]
-#[teleparse(ignore(r#"\s+"#))]
+#[teleparse(ignore(r"\s+"))]
 pub enum TokenType {
-    #[teleparse(regex(r#"\w+"#), terminal(Ident))]
+    #[teleparse(regex(r"\w+"), terminal(Ident))]
     Ident,
     #[teleparse(terminal(
         OpAdd = "+",
@@ -96,63 +103,20 @@ pub enum TokenType {
 
 #[derive_syntax]
 #[teleparse(root)]
-struct E { 
-    first: T,
-    rest: Eprime,
-}
-
-// Eplus has to be a separate struct because it contains Eprime.
-// Eprime(tp::Option<(OpAdd, T, Box<Eprime>)>) 
-// will cause a loop in Eprime -> tp::Option -> Eprime when trying
-// to determine if traits are satisfied
+struct E(tp::Split<T, OpAdd>); // E -> T ( + T )*
 #[derive_syntax]
-struct Eprime(tp::Option<Eplus>);
-
-#[derive_syntax]
-struct Eplus {
-    op: OpAdd,
-    t: T,
-    rest: Box<Eprime>,
-}
-
-#[derive_syntax]
-struct T {
-    first: F,
-    rest: Tprime,
-}
-
-#[derive_syntax]
-struct Tprime(tp::Option<Tstar>);
-
-#[derive_syntax]
-struct Tstar {
-    op: OpMul,
-    f: F,
-    rest: Box<Tprime>,
-}
-
+struct T(tp::Split<F, OpMul>); // T -> F ( * F )*
 #[derive_syntax]
 enum F {
     Ident(Ident),
     Paren((ParenOpen, Box<E>, ParenClose)),
 }
 
-let source = "(a+b)*(c+d)";
-let t = E::parse(source).unwrap().unwrap();
-```
-
-WIP - with the utils provided it can be simplified to
-```rust
-use teleparse::prelude::*;
-
-#[derive_lexicon]
-struct E(tp::Split<T, OpAdd>); // E -> T ( + T )*
-#[derive_lexicon]
-struct T(tp::Split<F, OpMul>); // T -> F ( * F )*
-#[derive_lexicon]
-enum F {
-    Paren((ParenOpen, Box<E>, ParenClose)),
-    Ident
+fn main() -> Result<(), teleparse::GrammarError> {
+    let source = "(a+b)*(c+d)";
+    let _expr = E::parse(source)?;
+    
+    Ok(())
 }
 
 ```

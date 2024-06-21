@@ -26,7 +26,7 @@ impl<L: Lexicon> From<TerminalSet<L>> for FollowSet<L> {
 }
 
 impl<L: Lexicon> FollowSet<L> {
-    /// Insert EOF into the set. 
+    /// Insert EOF into the set.
     ///
     /// Returns if the set is changed
     #[inline]
@@ -48,7 +48,7 @@ impl<L: Lexicon> FollowSet<L> {
 
     /// Check if the set contains the term `(ty, lit)`
     #[inline]
-    pub fn contains<'s>(&self, token: Option<TokenSrc<'s, L>>) -> bool {
+    pub fn contains(&self, token: Option<TokenSrc<'_, L>>) -> bool {
         self.0.contains(token)
     }
 
@@ -60,7 +60,6 @@ impl<L: Lexicon> FollowSet<L> {
     pub fn union_first(&mut self, other: &FirstSet<L>) -> bool {
         self.0.union(other.as_terminal_set(), false)
     }
-
 
     /// Union with another FOLLOW set
     ///

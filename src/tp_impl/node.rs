@@ -12,7 +12,10 @@ pub use teleparse_macros::Node;
 
 impl<T> Node<T> {
     pub fn new<S: Into<Span>>(span: S, value: T) -> Self {
-        Self { span: span.into(), value }
+        Self {
+            span: span.into(),
+            value,
+        }
     }
 
     #[inline]
@@ -27,4 +30,3 @@ impl<T: std::fmt::Debug> std::fmt::Debug for Node<T> {
         self.value.fmt(f)
     }
 }
-

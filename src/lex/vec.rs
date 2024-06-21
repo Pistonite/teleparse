@@ -4,7 +4,7 @@ use std::ops::{Deref, DerefMut};
 use deref_derive::{Deref, DerefMut};
 use derivative::Derivative;
 
-use super::{Lexicon, Set, Token, Span, Pos};
+use super::{Lexicon, Pos, Set, Span, Token};
 
 /// Stores token and semantic information during parsing
 #[derive(Derivative, Debug, Clone, PartialEq)]
@@ -183,12 +183,12 @@ impl<L: Lexicon> TokenSlice<L> {
     pub fn inside_bounds<S: Into<Span>>(&self, span: S) -> Option<(usize, usize)> {
         let span = span.into();
         let lo = match self.search_lo(span.lo) {
-            Ok(i) => i, // i must be overlapping/included
+            Ok(i) => i,  // i must be overlapping/included
             Err(i) => i, // i-1 is definitely not fully inside
         };
         let hi = match self.search_hi(span.hi) {
             Ok(i) => i + 1, // i must be overlapping/included
-            Err(i) => i, // i is definitely not fully inside
+            Err(i) => i,    // i is definitely not fully inside
         };
         if lo < hi {
             Some((lo, hi))
@@ -210,7 +210,11 @@ impl<L: Lexicon> TokenSlice<L> {
     ///
     /// Returns `None` if there are no tokens that ends at `pos`,
     /// or the token that ends at `pos` does not satisfy the predicate
-    pub fn ends_at_matches<F: Fn(&Cell<L>) -> bool>(&self, pos: Pos, predicate: F) -> Option<&Self> {
+    pub fn ends_at_matches<F: Fn(&Cell<L>) -> bool>(
+        &self,
+        pos: Pos,
+        predicate: F,
+    ) -> Option<&Self> {
         match self.ends_at_matches_bounds(pos, predicate) {
             Some((lo, hi)) => Some(Self::from_slice(&self.0[lo..hi])),
             None => None,
@@ -223,20 +227,28 @@ impl<L: Lexicon> TokenSlice<L> {
     ///
     /// Returns `None` if there are no tokens that ends at `pos`,
     /// or the token that ends at `pos` does not satisfy the predicate
-    pub fn ends_at_matches_mut<F: Fn(&Cell<L>) -> bool>(&mut self, pos: Pos, predicate: F) -> Option<&mut Self> {
+    pub fn ends_at_matches_mut<F: Fn(&Cell<L>) -> bool>(
+        &mut self,
+        pos: Pos,
+        predicate: F,
+    ) -> Option<&mut Self> {
         match self.ends_at_matches_bounds(pos, predicate) {
             Some((lo, hi)) => Some(Self::from_slice_mut(&mut self.0[lo..hi])),
             None => None,
         }
     }
 
-    pub fn ends_at_matches_bounds<F: Fn(&Cell<L>) -> bool>(&self, pos: Pos, predicate: F) -> Option<(usize, usize)> {
+    pub fn ends_at_matches_bounds<F: Fn(&Cell<L>) -> bool>(
+        &self,
+        pos: Pos,
+        predicate: F,
+    ) -> Option<(usize, usize)> {
         let hi = match self.search_hi(pos) {
             Ok(i) => i + 1,
             Err(_) => return None,
         };
         let mut lo = hi;
-        while lo > 0 && predicate(&self.0[lo-1]) {
+        while lo > 0 && predicate(&self.0[lo - 1]) {
             lo -= 1;
         }
         if lo < hi {
@@ -252,7 +264,11 @@ impl<L: Lexicon> TokenSlice<L> {
     ///
     /// Returns `None` if there are no tokens that ends at `pos`,
     /// or the token that ends at `pos` does not satisfy the predicate
-    pub fn begins_at_matches<F: Fn(&Cell<L>) -> bool>(&self, pos: Pos, predicate: F) -> Option<&Self> {
+    pub fn begins_at_matches<F: Fn(&Cell<L>) -> bool>(
+        &self,
+        pos: Pos,
+        predicate: F,
+    ) -> Option<&Self> {
         match self.begins_at_matches_bounds(pos, predicate) {
             Some((lo, hi)) => Some(Self::from_slice(&self.0[lo..hi])),
             None => None,
@@ -265,14 +281,22 @@ impl<L: Lexicon> TokenSlice<L> {
     ///
     /// Returns `None` if there are no tokens that ends at `pos`,
     /// or the token that ends at `pos` does not satisfy the predicate
-    pub fn begins_at_matches_mut<F: Fn(&Cell<L>) -> bool>(&mut self, pos: Pos, predicate: F) -> Option<&mut Self> {
+    pub fn begins_at_matches_mut<F: Fn(&Cell<L>) -> bool>(
+        &mut self,
+        pos: Pos,
+        predicate: F,
+    ) -> Option<&mut Self> {
         match self.begins_at_matches_bounds(pos, predicate) {
             Some((lo, hi)) => Some(Self::from_slice_mut(&mut self.0[lo..hi])),
             None => None,
         }
     }
 
-    pub fn begins_at_matches_bounds<F: Fn(&Cell<L>) -> bool>(&self, pos: Pos, predicate: F) -> Option<(usize, usize)> {
+    pub fn begins_at_matches_bounds<F: Fn(&Cell<L>) -> bool>(
+        &self,
+        pos: Pos,
+        predicate: F,
+    ) -> Option<(usize, usize)> {
         let lo = match self.search_lo(pos) {
             Ok(i) => i,
             Err(_) => return None,
@@ -309,7 +333,6 @@ impl<L: Lexicon> TokenSlice<L> {
         &mut self.0
     }
 }
-
 
 /// One cell in a [`TokenVec`], with the token and any semantic types added
 #[derive(Deref, DerefMut, Clone, PartialEq, Eq)]
@@ -359,15 +382,14 @@ impl<L: Lexicon> Cell<L> {
     pub fn semantics_mut(&mut self) -> &mut Set<L> {
         &mut self.semantic
     }
-    
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    use crate::token_set;
     use crate::test::TestTokenType as T;
+    use crate::token_set;
 
     fn example_empty() -> TokenVec<T> {
         TokenVec::new()
@@ -586,8 +608,8 @@ mod tests {
     #[test]
     fn left_over_min_right_over_max() {
         let vec = example();
-        assert_eq!(vec.overlap(0..100).as_slice(), &vec.as_slice()[..]);
-        assert_eq!(vec.inside(0..100).as_slice(), &vec.as_slice()[..]);
+        assert_eq!(vec.overlap(0..100).as_slice(), vec.as_slice());
+        assert_eq!(vec.inside(0..100).as_slice(), vec.as_slice());
     }
 
     #[test]
@@ -616,35 +638,51 @@ mod tests {
     #[test]
     fn begin_none() {
         let vec = example();
-        assert_eq!(vec.begins_at_matches(5, |_| {
-            panic!("should not be called");
-        }), None);
-        assert_eq!(vec.begins_at_matches(8, |_| {
-            panic!("should not be called");
-        }), None);
-        assert_eq!(vec.begins_at_matches(11, |x| {
-            x.semantics().contains(T::G)
-        }), None);
+        assert_eq!(
+            vec.begins_at_matches(5, |_| {
+                panic!("should not be called");
+            }),
+            None
+        );
+        assert_eq!(
+            vec.begins_at_matches(8, |_| {
+                panic!("should not be called");
+            }),
+            None
+        );
+        assert_eq!(
+            vec.begins_at_matches(11, |x| { x.semantics().contains(T::G) }),
+            None
+        );
     }
 
     #[test]
     fn begin_single() {
         let vec = example();
-        let result = vec.begins_at_matches(7, |x| x.semantics().contains(T::A)).unwrap().as_slice();
+        let result = vec
+            .begins_at_matches(7, |x| x.semantics().contains(T::A))
+            .unwrap()
+            .as_slice();
         assert_eq!(result, &vec.as_slice()[3..4]);
     }
 
     #[test]
     fn begin_many() {
         let vec = example();
-        let result = vec.begins_at_matches(7, |x| x.semantics().contains(T::D)).unwrap().as_slice();
+        let result = vec
+            .begins_at_matches(7, |x| x.semantics().contains(T::D))
+            .unwrap()
+            .as_slice();
         assert_eq!(result, &vec.as_slice()[3..5]);
     }
 
     #[test]
     fn begin_to_end() {
         let vec = example();
-        let result = vec.begins_at_matches(7, |x| x.semantics().contains(T::E)).unwrap().as_slice();
+        let result = vec
+            .begins_at_matches(7, |x| x.semantics().contains(T::E))
+            .unwrap()
+            .as_slice();
         assert_eq!(result, &vec.as_slice()[3..]);
         let result = vec.begins_at_matches(7, |_| true).unwrap().as_slice();
         assert_eq!(result, &vec.as_slice()[3..]);
@@ -653,38 +691,53 @@ mod tests {
     #[test]
     fn end_none() {
         let vec = example();
-        assert_eq!(vec.ends_at_matches(7, |_| {
-            panic!("should not be called");
-        }), None);
-        assert_eq!(vec.ends_at_matches(10, |_| {
-            panic!("should not be called");
-        }), None);
-        assert_eq!(vec.ends_at_matches(13, |x| {
-            x.semantics().contains(T::G)
-        }), None);
+        assert_eq!(
+            vec.ends_at_matches(7, |_| {
+                panic!("should not be called");
+            }),
+            None
+        );
+        assert_eq!(
+            vec.ends_at_matches(10, |_| {
+                panic!("should not be called");
+            }),
+            None
+        );
+        assert_eq!(
+            vec.ends_at_matches(13, |x| { x.semantics().contains(T::G) }),
+            None
+        );
     }
 
     #[test]
     fn end_single() {
         let vec = example();
-        let result = vec.ends_at_matches(5, |x| x.semantics().contains(T::A)).unwrap().as_slice();
+        let result = vec
+            .ends_at_matches(5, |x| x.semantics().contains(T::A))
+            .unwrap()
+            .as_slice();
         assert_eq!(result, &vec.as_slice()[2..3]);
     }
 
     #[test]
     fn end_many() {
         let vec = example();
-        let result = vec.ends_at_matches(5, |x| x.semantics().contains(T::D)).unwrap().as_slice();
+        let result = vec
+            .ends_at_matches(5, |x| x.semantics().contains(T::D))
+            .unwrap()
+            .as_slice();
         assert_eq!(result, &vec.as_slice()[1..3]);
     }
 
     #[test]
     fn end_from_begin() {
         let vec = example();
-        let result = vec.ends_at_matches(5, |x| x.semantics().contains(T::E)).unwrap().as_slice();
+        let result = vec
+            .ends_at_matches(5, |x| x.semantics().contains(T::E))
+            .unwrap()
+            .as_slice();
         assert_eq!(result, &vec.as_slice()[..3]);
         let result = vec.ends_at_matches(5, |_| true).unwrap().as_slice();
         assert_eq!(result, &vec.as_slice()[..3]);
     }
-    
 }

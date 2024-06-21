@@ -20,20 +20,14 @@ pub enum TestTokenType {
 pub enum MathTokenType {
     #[teleparse(regex(r#"[a-zA-Z]+"#), terminal(Ident))]
     Ident,
-    #[teleparse(terminal(
-        OpAdd = "+",
-        OpMul = "*",
-    ))]
+    #[teleparse(terminal(OpAdd = "+", OpMul = "*",))]
     Op,
     /// Parentheses
-    #[teleparse(terminal(
-        ParenOpen = "(",
-        ParenClose = ")"
-    ))]
+    #[teleparse(terminal(ParenOpen = "(", ParenClose = ")"))]
     Paren,
 
     #[teleparse(regex(r"\d+"), terminal(Integer))]
-    Integer
+    Integer,
 }
 
 pub mod prelude {
@@ -47,8 +41,7 @@ pub mod prelude {
             };
             assert_eq!(err, $err);
             assert!(<$pt>::parse("").is_err());
-        }
+        };
     }
     pub(crate) use assert_not_ll1;
-
 }

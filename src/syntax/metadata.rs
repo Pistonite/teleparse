@@ -1,4 +1,3 @@
-
 use std::any::TypeId;
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -8,10 +7,12 @@ use itertools::Itertools;
 use crate::syntax::FirstSet;
 use crate::{GrammarError, Lexicon, Production};
 
-use super::{DebugFirst, DebugFollow, DebugJump, First, FirstBuilder, FirstRel, Follow, FollowBuilder, Jump};
+use super::{
+    DebugFirst, DebugFollow, DebugJump, First, FirstBuilder, FirstRel, Follow, FollowBuilder, Jump,
+};
 
 #[derive(Derivative)]
-#[derivative(Default(new="true", bound=""))]
+#[derivative(Default(new = "true", bound = ""))]
 pub struct MetadataBuilder<L: Lexicon> {
     pub names: BTreeMap<TypeId, String>,
     pub productions: BTreeMap<TypeId, ProductionEntry>,
@@ -19,7 +20,6 @@ pub struct MetadataBuilder<L: Lexicon> {
 }
 
 impl<L: Lexicon> MetadataBuilder<L> {
-
     #[inline]
     #[must_use]
     pub fn visit<F: FnOnce() -> String>(&mut self, t: TypeId, name: F) -> bool {
@@ -41,12 +41,14 @@ impl<L: Lexicon> MetadataBuilder<L> {
     }
 
     pub fn add_sequence(&mut self, t: TypeId, types: &[TypeId]) {
-        self.productions.insert(t, ProductionEntry::Sequence(types.to_vec()));
+        self.productions
+            .insert(t, ProductionEntry::Sequence(types.to_vec()));
         self.first_builder.build_sequence(t, types);
     }
 
     pub fn add_union(&mut self, t: TypeId, types: &[TypeId]) {
-        self.productions.insert(t, ProductionEntry::Union(types.to_vec()));
+        self.productions
+            .insert(t, ProductionEntry::Union(types.to_vec()));
         self.first_builder.build_union(t, types);
     }
 
@@ -58,21 +60,15 @@ impl<L: Lexicon> MetadataBuilder<L> {
         let mut set = BTreeSet::new();
         let mut stack = Vec::new();
         check_left_recursive(
-            &names,
-            &prods,
-            root,
-            &mut seen,
-            &mut set,
-            &mut stack,
-            &first
+            &names, &prods, root, &mut seen, &mut set, &mut stack, &first,
         )?;
         let mut follow_builder = FollowBuilder::new(&first);
         for (t, prod) in &prods {
             match prod {
-                ProductionEntry::Terminal => {},
+                ProductionEntry::Terminal => {}
                 ProductionEntry::Sequence(types) => {
                     follow_builder.build_sequence(*t, types);
-                },
+                }
                 ProductionEntry::Union(types) => {
                     follow_builder.build_union(*t, types);
                 }
@@ -80,24 +76,10 @@ impl<L: Lexicon> MetadataBuilder<L> {
         }
         let follow = follow_builder.build(root);
         seen.clear();
-        check_conflicts(
-            &names,
-            &prods,
-            root,
-            &mut seen,
-            &first,
-            &follow
-        )?;
+        check_conflicts(&names, &prods, root, &mut seen, &first, &follow)?;
         let mut jump = Jump::new();
         seen.clear();
-        build_jump(
-            &names,
-            &prods,
-            root,
-            &mut seen,
-            &first,
-            &mut jump,
-        );
+        build_jump(&prods, root, &mut seen, &first, &mut jump);
         Ok(Metadata {
             names,
             first,
@@ -105,45 +87,38 @@ impl<L: Lexicon> MetadataBuilder<L> {
             jump,
         })
     }
-
-
 }
 fn check_left_recursive<L: Lexicon>(
-    names: &BTreeMap<TypeId, String>, 
-    prods: &BTreeMap<TypeId, ProductionEntry>, 
+    names: &BTreeMap<TypeId, String>,
+    prods: &BTreeMap<TypeId, ProductionEntry>,
     t: TypeId,
     seen: &mut BTreeSet<TypeId>,
     set: &mut BTreeSet<TypeId>,
     stack: &mut Vec<TypeId>,
-    first: &First<L>
+    first: &First<L>,
 ) -> Result<(), GrammarError> {
     if !seen.insert(t) {
         return Ok(());
     }
     if !set.insert(t) {
-        let stack = stack.iter().map(|t| names.get(t).map(|x|x.as_str()).unwrap_or_default()).collect::<Vec<_>>();
-        let current = names.get(&t).map(|x|x.as_str()).unwrap_or_default();
+        let stack = stack
+            .iter()
+            .map(|t| names.get(t).map(|x| x.as_str()).unwrap_or_default())
+            .collect::<Vec<_>>();
+        let current = names.get(&t).map(|x| x.as_str()).unwrap_or_default();
         return Err(GrammarError::left_recursion(&stack, current));
     }
     match prods.get(&t) {
         None => {
             set.remove(&t);
-        },
+        }
         Some(ProductionEntry::Terminal) => {
             set.remove(&t);
-        },
+        }
         Some(ProductionEntry::Union(types)) => {
             stack.push(t);
             for inner in types.iter() {
-                let result = check_left_recursive(
-                    names,
-                    prods,
-                    *inner,
-                    seen,
-                    set,
-                    stack,
-                    first
-                );
+                let result = check_left_recursive(names, prods, *inner, seen, set, stack, first);
                 if let Err(e) = result {
                     stack.pop();
                     set.remove(&t);
@@ -152,7 +127,7 @@ fn check_left_recursive<L: Lexicon>(
             }
             stack.pop();
             set.remove(&t);
-        },
+        }
         Some(ProductionEntry::Sequence(types)) => {
             stack.push(t);
             let mut iter = types.iter();
@@ -164,15 +139,7 @@ fn check_left_recursive<L: Lexicon>(
                     return Ok(());
                 }
             };
-            let result = check_left_recursive(
-                names,
-                prods,
-                *inner_first,
-                seen,
-                set,
-                stack,
-                first
-            );
+            let result = check_left_recursive(names, prods, *inner_first, seen, set, stack, first);
             if let Err(e) = result {
                 stack.pop();
                 set.remove(&t);
@@ -181,24 +148,18 @@ fn check_left_recursive<L: Lexicon>(
             let mut temp_stack = Vec::new();
             let mut temp_set = BTreeSet::new();
 
-            let (mut cur_stack, mut cur_set, mut need_pop) = if first.get(inner_first).contains_epsilon() {
-                (stack, set, true)
-            } else {
-                stack.pop();
-                set.remove(&t);
-                (&mut temp_stack, &mut temp_set, false)
-            };
+            let (mut cur_stack, mut cur_set, mut need_pop) =
+                if first.get(inner_first).contains_epsilon() {
+                    (stack, set, true)
+                } else {
+                    stack.pop();
+                    set.remove(&t);
+                    (&mut temp_stack, &mut temp_set, false)
+                };
 
             for inner in iter {
-                let result = check_left_recursive(
-                    names,
-                    prods,
-                    *inner,
-                    seen,
-                    cur_set,
-                    cur_stack,
-                    first
-                );
+                let result =
+                    check_left_recursive(names, prods, *inner, seen, cur_set, cur_stack, first);
                 if let Err(e) = result {
                     if need_pop {
                         cur_stack.pop();
@@ -222,68 +183,59 @@ fn check_left_recursive<L: Lexicon>(
                 cur_stack.pop();
                 cur_set.remove(&t);
             }
-        },
+        }
     }
 
     Ok(())
 }
 
 fn check_conflicts<L: Lexicon>(
-    names: &BTreeMap<TypeId, String>, 
-    prods: &BTreeMap<TypeId, ProductionEntry>, 
+    names: &BTreeMap<TypeId, String>,
+    prods: &BTreeMap<TypeId, ProductionEntry>,
     t: TypeId,
     seen: &mut BTreeSet<TypeId>,
     first: &First<L>,
-    follow: &Follow<L>
-) -> Result<(), GrammarError>{
-            if !seen.insert(t) {
-                return Ok(());
-            }
+    follow: &Follow<L>,
+) -> Result<(), GrammarError> {
+    if !seen.insert(t) {
+        return Ok(());
+    }
     match prods.get(&t) {
-        None => {},
-        Some(ProductionEntry::Terminal) => {},
+        None => {}
+        Some(ProductionEntry::Terminal) => {}
         Some(ProductionEntry::Union(types)) => {
             let mut check_set = FirstSet::new();
             for inner in types.iter() {
                 let first_set = first.get(inner);
-                if check_set.intersects(&first_set) {
+                if check_set.intersects(first_set) {
                     // find which one is conflicting
                     for before in types.iter() {
-                        if first_set.intersects(&first.get(before)) {
-                            let self_name = names.get(&t).map(|x|x.as_str()).unwrap_or_default();
-                            let before_name = names.get(before).map(|x|x.as_str()).unwrap_or_default();
-                            let inner_name = names.get(inner).map(|x|x.as_str()).unwrap_or_default();
+                        if first_set.intersects(first.get(before)) {
+                            let self_name = names.get(&t).map(|x| x.as_str()).unwrap_or_default();
+                            let before_name =
+                                names.get(before).map(|x| x.as_str()).unwrap_or_default();
+                            let inner_name =
+                                names.get(inner).map(|x| x.as_str()).unwrap_or_default();
                             let intersection = first_set
-                                .intersection_repr(&first.get(before))
+                                .intersection_repr(first.get(before))
                                 .into_iter()
                                 .join(", ");
                             return Err(GrammarError::FirstFirstConflict(
                                 self_name.to_string(),
                                 before_name.to_string(),
                                 inner_name.to_string(),
-                                intersection));
+                                intersection,
+                            ));
                         }
                     }
                 }
-                check_set.union(&first_set);
+                check_set.union(first_set);
             }
-            check_self_first_follow_conflict(
-                names,
-                t,
-                first,
-                follow
-            )?;
+            check_self_first_follow_conflict(names, t, first, follow)?;
             for inner in types.iter() {
-                check_conflicts(
-                    names,
-                    prods,
-                    *inner,
-                    seen,
-                    first,
-                    follow
-                )?;
+                check_conflicts(names, prods, *inner, seen, first, follow)?;
             }
-        },
+        }
         Some(ProductionEntry::Sequence(types)) => {
             let mut iter = types.iter();
             let mut cur = match iter.next() {
@@ -306,7 +258,9 @@ fn check_conflicts<L: Lexicon>(
                         .intersection_repr_minus_epsilon(next_first)
                         .into_iter()
                         .join(", ");
-                    return Err(GrammarError::FirstFollowSeqConflict(self_name, cur_name, next_name, terminals));
+                    return Err(GrammarError::FirstFollowSeqConflict(
+                        self_name, cur_name, next_name, terminals,
+                    ));
                 }
                 if next_first.contains_epsilon() {
                     cur_check.union_minus_epsilon(next_first);
@@ -315,21 +269,9 @@ fn check_conflicts<L: Lexicon>(
                     cur = inner;
                 }
             }
-            check_self_first_follow_conflict(
-                names,
-                t,
-                first,
-                follow
-            )?;
+            check_self_first_follow_conflict(names, t, first, follow)?;
             for inner in types.iter() {
-                check_conflicts(
-                    names,
-                    prods,
-                    *inner,
-                    seen,
-                    first,
-                    follow
-                )?;
+                check_conflicts(names, prods, *inner, seen, first, follow)?;
             }
         }
     }
@@ -340,8 +282,8 @@ fn check_conflicts<L: Lexicon>(
 fn check_self_first_follow_conflict<L: Lexicon>(
     names: &BTreeMap<TypeId, String>,
     t: TypeId,
-    first: &First<L>, 
-    follow: &Follow<L>
+    first: &First<L>,
+    follow: &Follow<L>,
 ) -> Result<(), GrammarError> {
     let first_set = first.get(&t);
     if !first_set.contains_epsilon() {
@@ -350,7 +292,10 @@ fn check_self_first_follow_conflict<L: Lexicon>(
     let follow_set = follow.get(&t);
     if follow_set.intersects_first(first_set) {
         let name = names.get(&t).cloned().unwrap_or_default();
-        let intersection = follow_set.intersection_repr_first(first_set).into_iter().join(", ");
+        let intersection = follow_set
+            .intersection_repr_first(first_set)
+            .into_iter()
+            .join(", ");
         Err(GrammarError::FirstFollowConflict(name, intersection))
     } else {
         Ok(())
@@ -358,43 +303,28 @@ fn check_self_first_follow_conflict<L: Lexicon>(
 }
 
 fn build_jump<L: Lexicon>(
-    names: &BTreeMap<TypeId, String>,
     prods: &BTreeMap<TypeId, ProductionEntry>,
     t: TypeId,
     seen: &mut BTreeSet<TypeId>,
     first: &First<L>,
-    jump: &mut Jump<L>
+    jump: &mut Jump<L>,
 ) {
     if !seen.insert(t) {
         return;
     }
     match prods.get(&t) {
-        None => {},
-        Some(ProductionEntry::Terminal) => {},
+        None => {}
+        Some(ProductionEntry::Terminal) => {}
         Some(ProductionEntry::Sequence(types)) => {
             for inner in types.iter() {
-                build_jump(
-                    names,
-                    prods,
-                    *inner,
-                    seen,
-                    first,
-                    jump
-                );
+                build_jump(prods, *inner, seen, first, jump);
             }
-        },
+        }
         Some(ProductionEntry::Union(types)) => {
             for (i, inner) in types.iter().enumerate() {
                 let first_set = first.get(inner);
                 jump.register(t, first_set, i);
-                build_jump(
-                    names,
-                    prods,
-                    *inner,
-                    seen,
-                    first,
-                    jump
-                );
+                build_jump(prods, *inner, seen, first, jump);
             }
         }
     }
@@ -406,7 +336,7 @@ pub enum ProductionEntry {
     Union(Vec<TypeId>),
 }
 
-pub struct Metadata<L: Lexicon>{
+pub struct Metadata<L: Lexicon> {
     pub names: BTreeMap<TypeId, String>,
     pub first: First<L>,
     pub follow: Follow<L>,
@@ -424,11 +354,10 @@ impl<L: Lexicon> std::fmt::Debug for Metadata<L> {
 }
 
 impl<L: Lexicon> Metadata<L> {
-    pub fn build_for<T: Production<L=L>>() -> Result<Self, GrammarError> {
+    pub fn build_for<T: Production<L = L>>() -> Result<Self, GrammarError> {
         let _lexer = L::lexer("")?;
         let mut builder = MetadataBuilder::new();
         T::register(&mut builder);
         builder.build(T::id())
     }
-    
 }

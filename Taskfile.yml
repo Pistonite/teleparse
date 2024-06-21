@@ -1,12 +1,21 @@
 version: "3"
 
 tasks:
+
+############
+# Dev inner loop
+############
+  
+  dev:
+    desc: Run tests in watch mode
+    cmds:
+      - cargo watch -s "cargo test {{.CLI_ARGS}}"
+
   book:
     desc: Watch and serve the book
     cmds:
       - txtpp book -r && mdbook build book
       - live-server book/book -p 8081 &
-      # - ../live-server/target/release/live-server.exe book/book -p 8081 &
       - cargo watch -s "txtpp book -r -N && mdbook build book"
 
   doc:
@@ -16,14 +25,39 @@ tasks:
       - live-server target/doc -p 8080 &
       - cargo watch -s "txtpp src -r -N && cargo doc"
 
-  dev:
-    desc: Dev inner loop. Run tests in watch mode
-    cmds:
-      - cargo watch -s "cargo test {{.CLI_ARGS}}"
-
-  refresh:
-    desc: Refresh test snapshots
+  refresh:macrotest:
+    desc: Refresh macro expand test snapshots
     env:
       MACROTEST: overwrite
     cmds:
       - cargo test --test macrotest
+
+  refresh:trybuild:
+    desc: Refresh compiler output test snapshots
+    env:
+      TRYBUILD: overwrite
+    cmds:
+      - cargo test --test trybuild
+
+############
+# Automation tasks
+############
+
+  build:book:
+    desc: Build the book
+    cmds:
+      - txtpp book -r
+      - mdbook build book
+
+  check:
+    desc: Run clippy and other checks
+    vars:
+      CLIPPY_FLAGS: -D warnings -D clippy::todo
+    env:
+      RUSTDOCFLAGS: -D warnings
+    cmds:
+      - cargo clippy --package teleparse-macros --all-targets -- {{.CLIPPY_FLAGS}}
+      - cargo clippy --package teleparse --all-targets -- {{.CLIPPY_FLAGS}}
+      - cargo doc
+      - cargo fmt --check
+

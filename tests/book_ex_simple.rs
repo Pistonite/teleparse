@@ -5,21 +5,15 @@ use teleparse::prelude::*;
 pub enum TokenType {
     #[teleparse(regex(r#"\w+"#), terminal(Ident))]
     Ident,
-    #[teleparse(terminal(
-        OpAdd = "+",
-        OpMul = "*",
-    ))]
+    #[teleparse(terminal(OpAdd = "+", OpMul = "*",))]
     Op,
-    #[teleparse(terminal(
-        ParenOpen = "(",
-        ParenClose = ")"
-    ))]
+    #[teleparse(terminal(ParenOpen = "(", ParenClose = ")"))]
     Paren,
 }
 
 #[derive_syntax]
 #[teleparse(root)]
-struct E { 
+struct E {
     terms: tp::Split<T, OpAdd>,
 }
 
@@ -36,7 +30,7 @@ enum F {
 #[test]
 fn main() -> Result<(), teleparse::GrammarError> {
     let source = "(a+b)*(c+d)";
-    let t = E::parse(source)?;
+    let _ = E::parse(source)?;
 
     Ok(())
 }

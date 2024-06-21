@@ -1,6 +1,6 @@
 #![doc = include_str!("../README.md")]
 
-// So macro works in tests, see 
+// So macro works in tests, see
 // https://github.com/bkchr/proc-macro-crate/issues/14
 extern crate self as teleparse;
 
@@ -12,28 +12,25 @@ pub mod prelude {
     pub use crate::{derive_lexicon, derive_syntax};
 
     // traits
-    pub use crate::ToSpan as _;
-    pub use crate::Lexicon as _;
     pub use crate::Lexer as _;
-    pub use crate::Production as _;
+    pub use crate::Lexicon as _;
     pub use crate::Produce as _;
+    pub use crate::Production as _;
     pub use crate::Root as _;
+    pub use crate::ToSpan as _;
 
     pub use crate::tp;
     // util
-    pub use crate::{
-        Pos, Span, Token, tp::Node,
-    };
+    pub use crate::{tp::Node, Pos, Span, Token};
 
     // macros
-    pub use crate::{token_set, terminal_set, first_set, follow_set};
+    pub use crate::{first_set, follow_set, terminal_set, token_set};
     // pub use crate::{derive_root, assert_ll1};
-
 }
 
 pub mod lex;
 #[doc(inline)]
-pub use lex::{ToSpan, Lexer, Lexicon, Pos, Span, Token};
+pub use lex::{Lexer, Lexicon, Pos, Span, ToSpan, Token};
 
 pub mod syntax;
 #[doc(inline)]
@@ -46,10 +43,10 @@ pub use parser::{Parser, Produce, Root};
 mod tp_impl;
 
 pub mod tp {
-    pub use crate::tp_impl::Node;
-    pub use crate::tp_impl::option::Optional as Option;
     pub use crate::tp_impl::option::Exists;
-    pub use crate::tp_impl::string::{Quote, Parse};
+    pub use crate::tp_impl::option::Optional as Option;
+    pub use crate::tp_impl::string::{Parse, Quote};
+    pub use crate::tp_impl::Node;
     pub type String<T> = Quote<std::string::String, T>;
     pub use crate::tp_impl::iter::Plus;
     pub type Nev<T> = Plus<std::vec::Vec<T>, T>;
@@ -58,12 +55,10 @@ pub mod tp {
     pub type Vec<T> = Star<std::vec::Vec<T>, T>;
     pub type VecDeque<T> = Star<std::collections::VecDeque<T>, T>;
     pub use crate::tp_impl::iter::Loop;
-    pub use crate::tp_impl::split::Split;
     pub use crate::tp_impl::punct::Punct;
     pub use crate::tp_impl::recover::Recover;
+    pub use crate::tp_impl::split::Split;
 }
-
-
 
 #[cfg(test)]
 pub(crate) mod test;
@@ -91,6 +86,6 @@ impl GrammarError {
 // private module for macros
 #[doc(hidden)]
 pub mod __priv {
-    pub use teleparse_macros::*;
     pub use logos;
+    pub use teleparse_macros::*;
 }

@@ -8,8 +8,5 @@ pub enum MyToken {
 }
 
 fn main() {
-    assert_eq!(
-        Ident::parse("hell0"),
-        Ok(Some(Ident::from_span(0..5)))
-    );
+    assert_eq!(Ident::parse("hell0"), Ok(Some(Ident::from_span(0..5))));
 }

@@ -1,5 +1,5 @@
 error: This regex does not match the literal `bar`. This is likely a mistake, because the terminal will never be matched
  --> tests/ui/lex_regex_no_match.rs:6:23
   |
-6 |     #[teleparse(regex(r#"foo"#), terminal(Key, Bar = "bar"))]
-  |                       ^^^^^^^^
+6 |     #[teleparse(regex("foo"), terminal(Key, Bar = "bar"))]
+  |                       ^^^^^
