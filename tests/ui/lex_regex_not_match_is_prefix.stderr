@@ -1,5 +1,5 @@
 error: This regex matches a proper prefix of `keyboard`. This is likely a mistake, because the terminal will never be matched (the prefix will instead)
  --> tests/ui/lex_regex_not_match_is_prefix.rs:4:23
   |
-4 |     #[teleparse(regex(r#"key"#), terminal(Key, Keyboard = "keyboard"))]
-  |                       ^^^^^^^^
+4 |     #[teleparse(regex("key"), terminal(Key, Keyboard = "keyboard"))]
+  |                       ^^^^^

@@ -79,8 +79,18 @@ impl ::core::hash::Hash for Pizza {
 }
 #[automatically_derived]
 impl teleparse::ToSpan for Pizza {
-    fn span(&self) -> teleparse::Span {
-        self.0.span()
+    fn lo(&self) -> teleparse::Pos {
+        use teleparse::ToSpan;
+        self.0.lo()
+    }
+    fn hi(&self) -> teleparse::Pos {
+        use teleparse::ToSpan;
+        self.0.hi()
+    }
+}
+impl Pizza {
+    pub fn from_span<S: ::core::convert::Into<teleparse::Span>>(span: S) -> Self {
+        Self::from(teleparse::Token::new(span, MyToken::Food))
     }
 }
 const _: () = {
@@ -97,111 +107,62 @@ const _: () = {
         }
     }
     #[automatically_derived]
-    impl teleparse::AbstractSyntaxTree for Pizza {
+    impl teleparse::syntax::Production for Pizza {
         type L = MyToken;
         fn debug() -> ::std::borrow::Cow<'static, str> {
-            ::std::borrow::Cow::Borrowed("Pizza")
+            ::std::borrow::Cow::Borrowed("pizza")
         }
-        fn build_first(builder: &mut teleparse::syntax::FirstBuilder<Self::L>) {
-            let t = Self::type_id();
-            if builder.visit(t, "Pizza") {
-                let expr = teleparse::syntax::FirstRel::insert_token(
-                    t,
-                    MyToken::Food,
-                    Some("pizza"),
-                );
-                builder.add(expr);
+        fn register(meta: &mut teleparse::syntax::MetadataBuilder<Self::L>) {
+            let t = <Self as teleparse::syntax::Production>::id();
+            if meta.visit(t, || Self::debug().into_owned()) {
+                meta.add_terminal(t, MyToken::Food, Some("pizza"));
             }
         }
-        fn check_left_recursive(
-            _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-            _stack: &mut ::std::vec::Vec<::std::string::String>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-            _first: &teleparse::syntax::First<Self::L>,
-        ) -> ::core::result::Result<(), teleparse::GrammarError> {
-            Ok(())
-        }
-        fn check_first_conflict(
-            _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-            _first: &teleparse::syntax::First<Self::L>,
-        ) -> ::core::result::Result<(), teleparse::GrammarError> {
-            Ok(())
-        }
-        fn build_follow(_builder: &mut teleparse::syntax::FollowBuilder<Self::L>) {}
-        fn check_first_follow_conflict(
-            _seen: &mut std::collections::BTreeSet<::core::any::TypeId>,
-            _first: &teleparse::syntax::First<Self::L>,
-            _follow: &teleparse::syntax::Follow<Self::L>,
-        ) -> ::core::result::Result<(), teleparse::GrammarError> {
-            Ok(())
-        }
-        fn build_jump(
-            _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-            _first: &teleparse::syntax::First<Self::L>,
-            _jump: &mut teleparse::syntax::Jump<Self::L>,
-        ) {}
-        #[inline]
-        fn parse_ast<'s>(
-            parser: &mut teleparse::Parser<'s, Self::L>,
-            meta: &teleparse::syntax::Metadata<Self::L>,
-        ) -> teleparse::syntax::Result<Self, Self::L> {
-            let follow = meta.follow.get(&Self::type_id());
+    }
+    #[automatically_derived]
+    impl teleparse::parser::Produce for Pizza {
+        type Prod = Self;
+        fn produce(
+            parser: &mut teleparse::Parser<
+                '_,
+                <Self::Prod as teleparse::syntax::Production>::L,
+            >,
+            meta: &teleparse::syntax::Metadata<
+                <Self::Prod as teleparse::syntax::Production>::L,
+            >,
+        ) -> teleparse::syntax::Result<
+            Self,
+            <Self::Prod as teleparse::syntax::Production>::L,
+        > {
+            let follow = meta.follow.get(&<Self as teleparse::syntax::Production>::id());
             parser.parse_token_lit(MyToken::Food, "pizza", follow).map(Self::from)
         }
     }
     #[automatically_derived]
-    impl teleparse::ParseTree for Pizza {
-        type AST = Self;
-        fn from_ast<'s>(ast: Self, _: &mut teleparse::Parser<'s, MyToken>) -> Self {
-            ast
-        }
-    }
-    #[automatically_derived]
-    impl teleparse::AbstractSyntaxRoot for Pizza {
+    impl teleparse::parser::Root for Pizza {
         fn metadata() -> &'static ::core::result::Result<
-            teleparse::syntax::Metadata<Self::L>,
+            teleparse::syntax::Metadata<
+                <Self::Prod as teleparse::syntax::Production>::L,
+            >,
             teleparse::GrammarError,
         > {
-            use teleparse::syntax::AbstractSyntaxTree;
+            use teleparse::syntax::Production;
             static METADATA: ::std::sync::OnceLock<
                 ::core::result::Result<
                     teleparse::syntax::Metadata<
-                        <Pizza as teleparse::syntax::AbstractSyntaxTree>::L,
+                        <<Pizza as teleparse::parser::Produce>::Prod as teleparse::syntax::Production>::L,
                     >,
                     teleparse::GrammarError,
                 >,
             > = ::std::sync::OnceLock::new();
             METADATA
                 .get_or_init(|| {
-                    let _lexer = <Self::L as teleparse::lex::Lexicon>::lexer("")?;
-                    let mut first = teleparse::syntax::FirstBuilder::new();
-                    Self::build_first(&mut first);
-                    let (names, first) = first.build();
-                    let mut stack = ::std::vec::Vec::new();
-                    let mut seen = ::std::collections::BTreeSet::new();
-                    let mut set = ::std::collections::BTreeSet::new();
-                    Self::check_left_recursive(&mut seen, &mut stack, &mut set, &first)?;
-                    seen.clear();
-                    Self::check_first_conflict(&mut seen, &first)?;
-                    seen.clear();
-                    let mut follow = teleparse::syntax::FollowBuilder::new(first);
-                    Self::build_follow(&mut follow);
-                    let (first, follow) = follow.build(<Pizza>::type_id());
-                    Self::check_first_follow_conflict(&mut seen, &first, &follow)?;
-                    seen.clear();
-                    let mut jump = teleparse::syntax::Jump::new();
-                    Self::build_jump(&mut seen, &first, &mut jump);
-                    Ok(teleparse::syntax::Metadata {
-                        names,
-                        first,
-                        follow,
-                        jump,
-                    })
+                    teleparse::syntax::Metadata::build_for::<
+                        <Pizza as teleparse::parser::Produce>::Prod,
+                    >()
                 })
         }
     }
-    #[automatically_derived]
-    impl teleparse::ParseRoot for Pizza {}
 };
 /// Terminal symbol derived from [`MyToken`] with `terminal(Pasta = "pasta")`
 pub struct Pasta(pub teleparse::Token<MyToken>);
@@ -242,8 +203,18 @@ impl ::core::hash::Hash for Pasta {
 }
 #[automatically_derived]
 impl teleparse::ToSpan for Pasta {
-    fn span(&self) -> teleparse::Span {
-        self.0.span()
+    fn lo(&self) -> teleparse::Pos {
+        use teleparse::ToSpan;
+        self.0.lo()
+    }
+    fn hi(&self) -> teleparse::Pos {
+        use teleparse::ToSpan;
+        self.0.hi()
+    }
+}
+impl Pasta {
+    pub fn from_span<S: ::core::convert::Into<teleparse::Span>>(span: S) -> Self {
+        Self::from(teleparse::Token::new(span, MyToken::Food))
     }
 }
 const _: () = {
@@ -260,111 +231,62 @@ const _: () = {
         }
     }
     #[automatically_derived]
-    impl teleparse::AbstractSyntaxTree for Pasta {
+    impl teleparse::syntax::Production for Pasta {
         type L = MyToken;
         fn debug() -> ::std::borrow::Cow<'static, str> {
-            ::std::borrow::Cow::Borrowed("Pasta")
+            ::std::borrow::Cow::Borrowed("pasta")
         }
-        fn build_first(builder: &mut teleparse::syntax::FirstBuilder<Self::L>) {
-            let t = Self::type_id();
-            if builder.visit(t, "Pasta") {
-                let expr = teleparse::syntax::FirstRel::insert_token(
-                    t,
-                    MyToken::Food,
-                    Some("pasta"),
-                );
-                builder.add(expr);
+        fn register(meta: &mut teleparse::syntax::MetadataBuilder<Self::L>) {
+            let t = <Self as teleparse::syntax::Production>::id();
+            if meta.visit(t, || Self::debug().into_owned()) {
+                meta.add_terminal(t, MyToken::Food, Some("pasta"));
             }
         }
-        fn check_left_recursive(
-            _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-            _stack: &mut ::std::vec::Vec<::std::string::String>,
-            _set: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-            _first: &teleparse::syntax::First<Self::L>,
-        ) -> ::core::result::Result<(), teleparse::GrammarError> {
-            Ok(())
-        }
-        fn check_first_conflict(
-            _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-            _first: &teleparse::syntax::First<Self::L>,
-        ) -> ::core::result::Result<(), teleparse::GrammarError> {
-            Ok(())
-        }
-        fn build_follow(_builder: &mut teleparse::syntax::FollowBuilder<Self::L>) {}
-        fn check_first_follow_conflict(
-            _seen: &mut std::collections::BTreeSet<::core::any::TypeId>,
-            _first: &teleparse::syntax::First<Self::L>,
-            _follow: &teleparse::syntax::Follow<Self::L>,
-        ) -> ::core::result::Result<(), teleparse::GrammarError> {
-            Ok(())
-        }
-        fn build_jump(
-            _seen: &mut ::std::collections::BTreeSet<::core::any::TypeId>,
-            _first: &teleparse::syntax::First<Self::L>,
-            _jump: &mut teleparse::syntax::Jump<Self::L>,
-        ) {}
-        #[inline]
-        fn parse_ast<'s>(
-            parser: &mut teleparse::Parser<'s, Self::L>,
-            meta: &teleparse::syntax::Metadata<Self::L>,
-        ) -> teleparse::syntax::Result<Self, Self::L> {
-            let follow = meta.follow.get(&Self::type_id());
+    }
+    #[automatically_derived]
+    impl teleparse::parser::Produce for Pasta {
+        type Prod = Self;
+        fn produce(
+            parser: &mut teleparse::Parser<
+                '_,
+                <Self::Prod as teleparse::syntax::Production>::L,
+            >,
+            meta: &teleparse::syntax::Metadata<
+                <Self::Prod as teleparse::syntax::Production>::L,
+            >,
+        ) -> teleparse::syntax::Result<
+            Self,
+            <Self::Prod as teleparse::syntax::Production>::L,
+        > {
+            let follow = meta.follow.get(&<Self as teleparse::syntax::Production>::id());
             parser.parse_token_lit(MyToken::Food, "pasta", follow).map(Self::from)
         }
     }
     #[automatically_derived]
-    impl teleparse::ParseTree for Pasta {
-        type AST = Self;
-        fn from_ast<'s>(ast: Self, _: &mut teleparse::Parser<'s, MyToken>) -> Self {
-            ast
-        }
-    }
-    #[automatically_derived]
-    impl teleparse::AbstractSyntaxRoot for Pasta {
+    impl teleparse::parser::Root for Pasta {
         fn metadata() -> &'static ::core::result::Result<
-            teleparse::syntax::Metadata<Self::L>,
+            teleparse::syntax::Metadata<
+                <Self::Prod as teleparse::syntax::Production>::L,
+            >,
             teleparse::GrammarError,
         > {
-            use teleparse::syntax::AbstractSyntaxTree;
+            use teleparse::syntax::Production;
             static METADATA: ::std::sync::OnceLock<
                 ::core::result::Result<
                     teleparse::syntax::Metadata<
-                        <Pasta as teleparse::syntax::AbstractSyntaxTree>::L,
+                        <<Pasta as teleparse::parser::Produce>::Prod as teleparse::syntax::Production>::L,
                     >,
                     teleparse::GrammarError,
                 >,
             > = ::std::sync::OnceLock::new();
             METADATA
                 .get_or_init(|| {
-                    let _lexer = <Self::L as teleparse::lex::Lexicon>::lexer("")?;
-                    let mut first = teleparse::syntax::FirstBuilder::new();
-                    Self::build_first(&mut first);
-                    let (names, first) = first.build();
-                    let mut stack = ::std::vec::Vec::new();
-                    let mut seen = ::std::collections::BTreeSet::new();
-                    let mut set = ::std::collections::BTreeSet::new();
-                    Self::check_left_recursive(&mut seen, &mut stack, &mut set, &first)?;
-                    seen.clear();
-                    Self::check_first_conflict(&mut seen, &first)?;
-                    seen.clear();
-                    let mut follow = teleparse::syntax::FollowBuilder::new(first);
-                    Self::build_follow(&mut follow);
-                    let (first, follow) = follow.build(<Pasta>::type_id());
-                    Self::check_first_follow_conflict(&mut seen, &first, &follow)?;
-                    seen.clear();
-                    let mut jump = teleparse::syntax::Jump::new();
-                    Self::build_jump(&mut seen, &first, &mut jump);
-                    Ok(teleparse::syntax::Metadata {
-                        names,
-                        first,
-                        follow,
-                        jump,
-                    })
+                    teleparse::syntax::Metadata::build_for::<
+                        <Pasta as teleparse::parser::Produce>::Prod,
+                    >()
                 })
         }
     }
-    #[automatically_derived]
-    impl teleparse::ParseRoot for Pasta {}
 };
 const _: () = {
     pub enum DerivedLogos {
@@ -453,7 +375,7 @@ const _: () = {
         fn id(&self) -> usize {
             *self as usize
         }
-        fn from_id(id: usize) -> Self {
+        fn from_id_unchecked(id: usize) -> Self {
             unsafe { std::mem::transmute(id) }
         }
         fn to_bit(&self) -> Self::Bit {
@@ -467,7 +389,7 @@ const _: () = {
                 Self::Food => None,
                 _ => {
                     let next = self.id() + 1;
-                    Some(Self::from_id(next))
+                    Some(Self::from_id_unchecked(next))
                 }
             }
         }
@@ -476,9 +398,9 @@ const _: () = {
                 _ => false,
             }
         }
-        fn lexer<'s>(
-            source: &'s str,
-        ) -> ::core::result::Result<Self::Lexer<'s>, teleparse::GrammarError> {
+        fn lexer(
+            source: &str,
+        ) -> ::core::result::Result<Self::Lexer<'_>, teleparse::GrammarError> {
             use teleparse::__priv::logos::Logos;
             Ok(teleparse::lex::LogosLexerWrapper::new(DerivedLogos::lexer(source)))
         }

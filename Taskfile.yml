@@ -18,7 +18,6 @@ tasks:
       - live-server book/book -p 8081 &
       - cargo watch -s "txtpp book -r -N && mdbook build book"
 
-
   doc:
     desc: Watch and serve documentation
     cmds:
@@ -26,12 +25,19 @@ tasks:
       - live-server target/doc -p 8080 &
       - cargo watch -s "txtpp src -r -N && cargo doc"
 
-  refresh:
-    desc: Refresh test snapshots
+  refresh:macrotest:
+    desc: Refresh macro expand test snapshots
     env:
       MACROTEST: overwrite
     cmds:
       - cargo test --test macrotest
+
+  refresh:trybuild:
+    desc: Refresh compiler output test snapshots
+    env:
+      TRYBUILD: overwrite
+    cmds:
+      - cargo test --test trybuild
 
 ############
 # Automation tasks

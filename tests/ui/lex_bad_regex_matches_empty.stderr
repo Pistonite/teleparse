@@ -1,5 +1,5 @@
 error: the rule regular expression must not match the empty string
  --> tests/ui/lex_bad_regex_matches_empty.rs:5:23
   |
-5 |     #[teleparse(regex(r""))]
-  |                       ^^^
+5 |     #[teleparse(regex(""))]
+  |                       ^^

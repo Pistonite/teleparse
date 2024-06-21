@@ -157,7 +157,7 @@ fn first_table() {
     assert_eq!(meta.first.get(&F::prod_id()), &first_e_t_f);
 
     assert_eq!(meta.first.get(&Eprime::prod_id()), &first_e_prime);
-    assert_eq!(meta.first.get(&Eprime::prod_id()), &first_t_prime);
+    assert_eq!(meta.first.get(&Tprime::prod_id()), &first_t_prime);
 }
 
 #[test]

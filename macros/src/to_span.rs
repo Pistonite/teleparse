@@ -35,6 +35,7 @@ pub fn expand(input: &syn::DeriveInput) -> syn::Result<TokenStream2> {
 }
 
 fn expand_struct(input: &syn::DataStruct, expr: TokenStream2) -> syn::Result<TokenStream2> {
+    let teleparse = crate_ident();
     match &input.fields {
         syn::Fields::Named(fields) => {
             let ident = match fields.named.first() {
@@ -46,10 +47,12 @@ fn expand_struct(input: &syn::DataStruct, expr: TokenStream2) -> syn::Result<Tok
                 }
             };
             Ok(quote! {
+                use #teleparse::ToSpan;
                 self.#ident.#expr
             })
         }
         syn::Fields::Unnamed(_) => Ok(quote! {
+            use #teleparse::ToSpan;
             self.0.#expr
         }),
         syn::Fields::Unit => unsupported_empty_field(&input.fields),
@@ -57,6 +60,7 @@ fn expand_struct(input: &syn::DataStruct, expr: TokenStream2) -> syn::Result<Tok
 }
 
 fn expand_enum(input: &syn::DataEnum, expr: TokenStream2) -> syn::Result<TokenStream2> {
+    let teleparse = crate_ident();
     let mut arms = TokenStream2::new();
     for variant in &input.variants {
         let ident = &variant.ident;
@@ -86,6 +90,7 @@ fn expand_enum(input: &syn::DataEnum, expr: TokenStream2) -> syn::Result<TokenSt
     }
 
     Ok(quote! {
+        use #teleparse::ToSpan;
         match self {
             #arms
         }

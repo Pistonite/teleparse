@@ -194,6 +194,7 @@ fn expand_struct_named(
                 #teleparse::register_sequence!(meta, #( <#pt_ty as #teleparse::parser::Produce>::Prod ),*);
             }
         }
+
         #[automatically_derived]
         impl #teleparse::ToSpan for #ident {
             fn lo(&self) -> #teleparse::Pos { self.#first_ident.lo() }
