@@ -1,5 +1,5 @@
 # Lexical Analysis
-The `[derive_lexicon]` macro is used to declare token types and lexical analyzer rules (the lexer rules)
+The `#[derive_lexicon]` macro is used to declare token types and lexical analyzer rules (the lexer rules)
 using an enum. It was already showcased in the beginning of the book with the full example. Let's take a closer look
 here.
 

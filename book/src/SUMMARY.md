@@ -17,13 +17,12 @@
 # Syntax Analysis
 
 - [`derive_syntax`](./syntax_analysis/derive_syntax_g.md)
-  - [Structs (Sequence)](./syntax_analysis/structs_g.md)
-  - [Enums (Union)](./syntax_analysis/enums_g.md)
+  - [LL(1)](./syntax_analysis/ll1.md)
   - [Note on Recursion](./syntax_analysis/recursion_g.md)
-  - [LL(1) Validation](./syntax_analysis/ll1.md)
   - [Static Metadata](./syntax_analysis/static_metadata_g.md)
 
 # Built-in Syntax Types
+- [Tuple]()
 - [Option](./tp/option_g.md)
 - [Quote and Parse](./tp/string_g.md)
 - [Iteration](./tp/iter_g.md)
