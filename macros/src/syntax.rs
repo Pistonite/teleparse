@@ -8,7 +8,10 @@ pub fn expand(input: &mut syn::DeriveInput) -> syn::Result<TokenStream2> {
     let teleparse = crate_ident();
 
     let (extra_derive, output) = match &mut input.data {
-        syn::Data::Struct(data) => (None, expand_struct(&input.vis, input.ident.clone(), data, &root_attr)?),
+        syn::Data::Struct(data) => (
+            None,
+            expand_struct(&input.vis, input.ident.clone(), data, &root_attr)?,
+        ),
         syn::Data::Enum(data) => (
             Some(quote! {#[derive(#teleparse::ToSpan)]}),
             expand_enum(&input.vis, input.ident.clone(), data, &root_attr)?,
