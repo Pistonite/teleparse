@@ -3,4 +3,4 @@ authors = ["Pistonight"]
 language = "en"
 multilingual = false
 src = "src"
-title = "teleparse"
+title = "The Teleparse Book"

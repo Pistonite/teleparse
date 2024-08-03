@@ -8,10 +8,13 @@ pub fn expand(input: &mut syn::DeriveInput) -> syn::Result<TokenStream2> {
     let teleparse = crate_ident();
 
     let (extra_derive, output) = match &mut input.data {
-        syn::Data::Struct(data) => (None, expand_struct(input.ident.clone(), data, &root_attr)?),
+        syn::Data::Struct(data) => (
+            None,
+            expand_struct(&input.vis, input.ident.clone(), data, &root_attr)?,
+        ),
         syn::Data::Enum(data) => (
             Some(quote! {#[derive(#teleparse::ToSpan)]}),
-            expand_enum(input.ident.clone(), data, &root_attr)?,
+            expand_enum(&input.vis, input.ident.clone(), data, &root_attr)?,
         ),
         _ => syn_error!(
             input,
@@ -36,13 +39,14 @@ pub fn expand(input: &mut syn::DeriveInput) -> syn::Result<TokenStream2> {
 }
 
 fn expand_struct(
+    vis: &syn::Visibility,
     ident: syn::Ident,
     input: &mut syn::DataStruct,
     root_attr: &RootAttr,
 ) -> syn::Result<TokenStream2> {
     match &mut input.fields {
-        syn::Fields::Unnamed(fields) => expand_struct_unnamed(ident, fields, root_attr),
-        syn::Fields::Named(fields) => expand_struct_named(ident, fields, root_attr),
+        syn::Fields::Unnamed(fields) => expand_struct_unnamed(vis, ident, fields, root_attr),
+        syn::Fields::Named(fields) => expand_struct_named(vis, ident, fields, root_attr),
         syn::Fields::Unit => {
             syn_error!(ident, "derive_syntax does not support unit structs");
         }
@@ -50,6 +54,7 @@ fn expand_struct(
 }
 
 fn expand_struct_unnamed(
+    vis: &syn::Visibility,
     ident: syn::Ident,
     input: &mut syn::FieldsUnnamed,
     root_attr: &RootAttr,
@@ -94,7 +99,7 @@ fn expand_struct_unnamed(
     let output = quote! {
         #[doc(hidden)]
         #[allow(non_camel_case_types)]
-        struct #prod_struct;
+        #vis struct #prod_struct;
         #[automatically_derived]
         impl #teleparse::syntax::Production for #prod_struct {
             type L = <<#first_ty as #teleparse::parser::Produce>::Prod as #teleparse::syntax::Production>::L;
@@ -136,6 +141,7 @@ fn expand_struct_unnamed(
 }
 
 fn expand_struct_named(
+    vis: &syn::Visibility,
     ident: syn::Ident,
     input: &mut syn::FieldsNamed,
     root_attr: &RootAttr,
@@ -182,7 +188,7 @@ fn expand_struct_named(
     let output = quote! {
         #[doc(hidden)]
         #[allow(non_camel_case_types)]
-        struct #prod_struct;
+        #vis struct #prod_struct;
         #[automatically_derived]
         impl #teleparse::syntax::Production for #prod_struct {
             type L = <<#first_ty as #teleparse::parser::Produce>::Prod as #teleparse::syntax::Production>::L;
@@ -224,6 +230,7 @@ fn expand_struct_named(
 }
 
 fn expand_enum(
+    vis: &syn::Visibility,
     ident: syn::Ident,
     input: &mut syn::DataEnum,
     root_attr: &RootAttr,
@@ -300,7 +307,7 @@ fn expand_enum(
     let output = quote! {
         #[doc(hidden)]
         #[allow(non_camel_case_types)]
-        struct #prod_struct;
+        #vis struct #prod_struct;
         #[automatically_derived]
         impl #teleparse::syntax::Production for #prod_struct {
             type L = <<#first_ty as #teleparse::parser::Produce>::Prod as #teleparse::syntax::Production>::L;
