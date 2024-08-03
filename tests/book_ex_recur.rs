@@ -18,10 +18,8 @@ struct E {
     rest: Eprime,
 }
 
-// Eplus has to be a separate struct because it contains Eprime.
-// Eprime(tp::Option<(OpAdd, T, Box<Eprime>)>)
-// will cause a loop in Eprime -> tp::Option -> Eprime when trying
-// to determine if traits are satisfied
+// Eplus has to be a separate struct because of recursion when
+// computing trait satisfaction. See chapter 3.2 Note on Recursion for more details
 #[derive_syntax]
 struct Eprime(tp::Option<Eplus>);
 
