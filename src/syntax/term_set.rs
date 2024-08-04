@@ -83,6 +83,16 @@ impl<L: Lexicon> TerminalSet<L> {
         changed
     }
 
+    /// Remove the empty symbol into the set.
+    ///
+    /// Returns if the set is changed
+    #[inline]
+    pub fn remove_e(&mut self) -> bool {
+        let changed = self.e;
+        self.e = false;
+        changed
+    }
+
     /// Check if the set contains the empty symbol
     #[inline]
     pub fn contains_e(&self) -> bool {
