@@ -24,46 +24,25 @@ Progress:
   - [x] Semantic Tokens (token type applied later by the parser)
     - [ ] Tests
     - [ ] Documentation
-  - [ ] Tests
-    - [ ] Trybuild tests
+  - [x] Tests
   - [ ] Documentation
   - [ ] Hooks
-- [x] Utils `tp`
-  - [x] Tuples
-  - [x] boxed
-  - [x] option-based `tp::Option<T>` and `tp::Exists<T>`
-  - [x] string-based `tp::Quote<X: From<String>, T>` `tp::Parse<X: FromStr>` (alias `tp::String`)
-    - [x] Test
-    - [ ] Documentation
-  - [x] iter-based `tp::Star<V: FromIterator<T>, T>` `tp::Plus<V: FromIterator<T>, T>` (alias `tp::Vec`, `tp::Nev`, `tp::VecDeque`, `tp::NevDeque`)
-    - [x] Test
-    - [ ] Documentation
-  - [x] Loop `tp::Loop<T>` (loop until the end of input)
-    - [x] Test
-    - [ ] Documentation
-  - [x] delimited `tp::Split<T, P>`, `tp::Punct<T, P>`
-    - [x] Split (no trailing)
-      - [x] Test
-      - [ ] Documentation
-    - [x] Punct (optional trailing)
-      - [x] Test
-      - [ ] Documentation
-  - [x] recovery `tp::Recover<A, B>`
-    - [x] Test
-    - [ ] Documentation
-  - [ ] Documentation
+- [x] Utillity types `tp`
 - [ ] Static Metadata
   - [ ] Bench
   - [ ] Test
   - [ ] Documentation
-- [ ] Usability testing
-- [ ] mdBook
-  - [x] derive_lexicon
-  - [ ] derive_syntax
+- [x] mdBook
+  - [ ] Chapters
+    - [x] derive_lexicon
+    - [x] derive_syntax
+    - [x] using `tp`
     - [ ] semantic tokens
-  - [ ] using `tp`
-  - [ ] hooks
-  - [ ] using parser data
+    - [ ] hooks
+    - [ ] using parser data
+  - [ ] second iteration to add links
+- [ ] Usability testing
+- [ ] crate documentation linking to the book
 
 Traditionally recursive grammar can also be simplified with built-in syntax types.
 ```text
