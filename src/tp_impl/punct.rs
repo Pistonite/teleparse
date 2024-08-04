@@ -2,7 +2,7 @@ use std::borrow::Cow;
 use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
 
-use crate::syntax::{self, Metadata, MetadataBuilder, Result as SynResult, FirstSet};
+use crate::syntax::{self, FirstSet, Metadata, MetadataBuilder, Result as SynResult};
 use crate::{Parser, Produce, Production, Span, ToSpan};
 
 use super::option::OptionProd;
@@ -154,7 +154,7 @@ where
                     let mut expecting = follow.as_terminal_set().clone();
                     expecting.remove_e();
                     let mut expecting = FirstSet::from(expecting);
-                    expecting.union_minus_epsilon(&elem_first);
+                    expecting.union_minus_epsilon(elem_first);
 
                     if let Some(p) = &mut panic {
                         p.span.hi = parser.current_span().hi;
@@ -426,7 +426,7 @@ mod tests {
     #[test]
     fn parse_stop_expecting_item() -> Result<(), GrammarError> {
         let mut parser = Parser::new("(a + b + (c + d")?;
-        //-------------------------------------^ expecting Ident 
+        //-------------------------------------^ expecting Ident
         let result = parser.parse::<ParenPunct>()?;
         assert_eq!(
             result,
@@ -435,13 +435,13 @@ mod tests {
                 tp::Punct {
                     span: Span::from(1..15),
                     elems: vec![
-                        Ident::from_span(1..2), 
+                        Ident::from_span(1..2),
                         Ident::from_span(5..6),
                         Ident::from_span(10..11),
                         Ident::from_span(14..15),
                     ],
                     puncts: vec![
-                        OpAdd::from_span(3..4), 
+                        OpAdd::from_span(3..4),
                         OpAdd::from_span(7..8),
                         OpAdd::from_span(12..13),
                     ]
@@ -472,14 +472,14 @@ mod tests {
         let result = parser.parse::<ParenPunct2>()?;
         assert_eq!(
             result,
-            Some(ParenPunct2(tp::Punct {
-                span: Span::from(0..4),
-                elems: vec![
-                        Ident::from_span(0..1),
-                        Ident::from_span(2..3),
-                ],
-                puncts: vec![OpAdd::from_span(1..2), OpAdd::from_span(3..4),]
-            }, ParenClose::from_span(9..10)))
+            Some(ParenPunct2(
+                tp::Punct {
+                    span: Span::from(0..4),
+                    elems: vec![Ident::from_span(0..1), Ident::from_span(2..3),],
+                    puncts: vec![OpAdd::from_span(1..2), OpAdd::from_span(3..4),]
+                },
+                ParenClose::from_span(9..10)
+            ))
         );
 
         assert_eq!(parser.remaining(), "");
@@ -606,10 +606,7 @@ mod tests {
                         ParenClose::from_span(8..9)
                     ),
                 ],
-                puncts: vec![
-                    OpAdd::from_span(3..4),
-                    OpAdd::from_span(5..6),
-                ]
+                puncts: vec![OpAdd::from_span(3..4), OpAdd::from_span(5..6),]
             }))
         );
         assert_eq!(parser.remaining(), "");
@@ -638,10 +635,7 @@ mod tests {
                     Ident::from_span(1..2),
                     ParenClose::from_span(2..3)
                 ),],
-                puncts: vec![
-                    OpAdd::from_span(3..4),
-                    OpAdd::from_span(5..6),
-                ]
+                puncts: vec![OpAdd::from_span(3..4), OpAdd::from_span(5..6),]
             }))
         );
         assert_eq!(parser.remaining(), "");
