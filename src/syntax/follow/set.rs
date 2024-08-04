@@ -83,4 +83,9 @@ impl<L: Lexicon> FollowSet<L> {
     pub fn intersection_repr_first(&self, other: &FirstSet<L>) -> BTreeSet<String> {
         self.0.intersection_repr(other.as_terminal_set(), false)
     }
+
+    #[inline]
+    pub(crate) fn as_terminal_set(&self) -> &TerminalSet<L> {
+        &self.0
+    }
 }

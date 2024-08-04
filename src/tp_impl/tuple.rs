@@ -11,14 +11,12 @@ const _: () = {
     {
         type L = <$e1 as Production>::L;
         fn debug() -> ::std::borrow::Cow<'static, str> {
-            let mut s = ::std::string::String::new();//from("(");
+            let mut s = ::std::string::String::new();
             s.push_str(&<$e1>::debug());
         $(
             s.push(' ');
             s.push_str(&<$e>::debug());
         )*
-            // s.push(')');
-
             ::std::borrow::Cow::Owned(s)
         }
         fn register(meta: &mut $crate::syntax::MetadataBuilder<Self::L>) {

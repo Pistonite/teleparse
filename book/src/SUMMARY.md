@@ -17,17 +17,16 @@
   - [Note on Recursion](./syntax_analysis/recursion.md)
   - [Static Metadata]()
 
-- [Utility Types]()
-  - [Tuple]()
-  - [Option](./tp/option_g.md)
-  - [Quote and Parse](./tp/string_g.md)
-  - [Iteration](./tp/iter_g.md)
-  - [Delimited](./tp/delimited_g.md)
-  - [Recover](./tp/recover_g.md)
-  - [Loop](./tp/loop_g.md)
+- [Utility Types](./tp/intro.md)
+  - [Option](./tp/option.md)
+  - [String](./tp/string.md)
+  - [Iteration](./tp/iter.md)
+  - [Delimited List](./tp/delimited.md)
+  - [Recover](./tp/recover.md)
+  - [Loop](./tp/loop.md)
 
 # Extras
 
-- [Semantic](./semantic_analysis/semantic_g.md)
-- [Hooks](./semantic_analysis/hooks_g.md)
-- [Process Tokens](./semantic_analysis/parser_data_g.md)
+- [Semantic]()
+- [Hooks]()
+- [Processing Tokens]()

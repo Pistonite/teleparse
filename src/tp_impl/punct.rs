@@ -2,7 +2,7 @@ use std::borrow::Cow;
 use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
 
-use crate::syntax::{self, Metadata, MetadataBuilder, Result as SynResult};
+use crate::syntax::{self, FirstSet, Metadata, MetadataBuilder, Result as SynResult};
 use crate::{Parser, Produce, Production, Span, ToSpan};
 
 use super::option::OptionProd;
@@ -139,28 +139,56 @@ where
                 // expecting (Punct<T, P>)?
                 let token = parser.peek_token_src();
                 if token.is_none() {
-                    break;
+                    if let Some(e) = panic {
+                        errors.push(e);
+                    }
+                    break 'outer;
                 }
                 if !elem_first.contains(token) {
-                    break;
-                }
-                // expecting Punct<T, P> => T (P (Punct<T, P>)?)?
-                match T::produce(parser, meta) {
-                    SynResult::Success(t) => {
-                        elems.push(t);
-                        continue 'outer;
+                    if follow.contains(token) {
+                        if let Some(e) = panic {
+                            errors.push(e);
+                        }
+                        break 'outer;
                     }
-                    SynResult::Recovered(t, e) => {
-                        elems.push(t);
-                        errors.extend(e);
-                        continue 'outer;
+                    let mut expecting = follow.as_terminal_set().clone();
+                    expecting.remove_e();
+                    let mut expecting = FirstSet::from(expecting);
+                    expecting.union_minus_epsilon(elem_first);
+
+                    if let Some(p) = &mut panic {
+                        p.span.hi = parser.current_span().hi;
+                    } else {
+                        panic = Some(syntax::Error::new(
+                            parser.current_span(),
+                            syntax::ErrorKind::Expecting(expecting),
+                        ));
                     }
-                    SynResult::Panic(e) => {
-                        if let Some(e) = e.into_iter().next_back() {
-                            if let Some(p) = &mut panic {
-                                p.span.hi = e.span.hi;
-                            } else {
-                                panic = Some(e);
+                } else {
+                    // expecting Punct<T, P> => T (P (Punct<T, P>)?)?
+                    match T::produce(parser, meta) {
+                        SynResult::Success(t) => {
+                            elems.push(t);
+                            if let Some(e) = panic {
+                                errors.push(e);
+                            }
+                            continue 'outer;
+                        }
+                        SynResult::Recovered(t, e) => {
+                            elems.push(t);
+                            if let Some(e) = panic {
+                                errors.push(e);
+                            }
+                            errors.extend(e);
+                            continue 'outer;
+                        }
+                        SynResult::Panic(e) => {
+                            if let Some(e) = e.into_iter().next_back() {
+                                if let Some(p) = &mut panic {
+                                    p.span.hi = e.span.hi;
+                                } else {
+                                    panic = Some(e);
+                                }
                             }
                         }
                     }
@@ -168,7 +196,6 @@ where
                 // recovery
                 let token = parser.peek_token_src();
                 if punct_first.contains(token) {
-                    puncts.pop();
                     if let Some(e) = panic {
                         errors.push(e);
                     }
@@ -399,30 +426,69 @@ mod tests {
     #[test]
     fn parse_stop_expecting_item() -> Result<(), GrammarError> {
         let mut parser = Parser::new("(a + b + (c + d")?;
+        //-------------------------------------^ expecting Ident
         let result = parser.parse::<ParenPunct>()?;
         assert_eq!(
             result,
             Some(ParenPunct(
                 ParenOpen::from_span(0..1),
                 tp::Punct {
-                    span: Span::from(1..8),
-                    elems: vec![Ident::from_span(1..2), Ident::from_span(5..6),],
-                    puncts: vec![OpAdd::from_span(3..4), OpAdd::from_span(7..8),]
+                    span: Span::from(1..15),
+                    elems: vec![
+                        Ident::from_span(1..2),
+                        Ident::from_span(5..6),
+                        Ident::from_span(10..11),
+                        Ident::from_span(14..15),
+                    ],
+                    puncts: vec![
+                        OpAdd::from_span(3..4),
+                        OpAdd::from_span(7..8),
+                        OpAdd::from_span(12..13),
+                    ]
                 }
             ))
         );
-        assert_eq!(parser.remaining(), "(c + d");
-        let result = parser.parse::<ParenPunct>()?;
+        assert_eq!(parser.remaining(), "");
+        assert_eq!(
+            parser.info().errors,
+            vec![syntax::Error::new(
+                9..10,
+                ErrorKind::Expecting(first_set!(T { Ident: * }))
+            )]
+        );
+
+        Ok(())
+    }
+
+    #[derive_syntax]
+    #[teleparse(root)]
+    #[derive(Debug, PartialEq)]
+    struct ParenPunct2(tp::Punct<Ident, OpAdd>, ParenClose);
+
+    #[test]
+    fn parse_recover_with_follow() -> Result<(), GrammarError> {
+        let mut parser = Parser::new("a+b+1 1 1)")?;
+        //--------------------------------^ expecting ) or Ident
+        let result = parser.parse::<ParenPunct2>()?;
         assert_eq!(
             result,
-            Some(ParenPunct(
-                ParenOpen::from_span(9..10),
+            Some(ParenPunct2(
                 tp::Punct {
-                    span: Span::from(10..15),
-                    elems: vec![Ident::from_span(10..11), Ident::from_span(14..15),],
-                    puncts: vec![OpAdd::from_span(12..13),]
-                }
+                    span: Span::from(0..4),
+                    elems: vec![Ident::from_span(0..1), Ident::from_span(2..3),],
+                    puncts: vec![OpAdd::from_span(1..2), OpAdd::from_span(3..4),]
+                },
+                ParenClose::from_span(9..10)
             ))
+        );
+
+        assert_eq!(parser.remaining(), "");
+        assert_eq!(
+            parser.info().errors,
+            vec![syntax::Error::new(
+                4..9,
+                ErrorKind::Expecting(first_set!(T { Paren: ")", Ident:* }))
+            )]
         );
 
         Ok(())
@@ -540,7 +606,7 @@ mod tests {
                         ParenClose::from_span(8..9)
                     ),
                 ],
-                puncts: vec![OpAdd::from_span(5..6),]
+                puncts: vec![OpAdd::from_span(3..4), OpAdd::from_span(5..6),]
             }))
         );
         assert_eq!(parser.remaining(), "");
@@ -569,7 +635,7 @@ mod tests {
                     Ident::from_span(1..2),
                     ParenClose::from_span(2..3)
                 ),],
-                puncts: vec![OpAdd::from_span(5..6),]
+                puncts: vec![OpAdd::from_span(3..4), OpAdd::from_span(5..6),]
             }))
         );
         assert_eq!(parser.remaining(), "");
