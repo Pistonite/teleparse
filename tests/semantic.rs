@@ -10,7 +10,7 @@ pub enum MathTokenType {
     Op,
     #[teleparse(terminal(ParenOpen = "(", ParenClose = ")"))]
     Paren,
-    Variable
+    Variable,
 }
 
 #[derive_syntax]
@@ -44,10 +44,18 @@ fn test_simple() -> Result<(), teleparse::GrammarError> {
     let mut parser = Parser::<MathTokenType>::new(source)?;
     let assignment = parser.parse::<Assignment>()?.unwrap();
 
-    let token = parser.info().tokens.at_span(assignment.variable.span()).unwrap();
+    let token = parser
+        .info()
+        .tokens
+        .at_span(assignment.variable.span())
+        .unwrap();
     assert!(token.semantic.contains(MathTokenType::Variable));
 
-    let token = parser.info().tokens.at_span(assignment.expression.terms[0].span()).unwrap();
+    let token = parser
+        .info()
+        .tokens
+        .at_span(assignment.expression.terms[0].span())
+        .unwrap();
     assert!(!token.semantic.contains(MathTokenType::Variable));
 
     Ok(())
