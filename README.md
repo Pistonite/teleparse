@@ -22,8 +22,8 @@ Progress:
   - [x] LL(1) stuff
   - [x] Macros
   - [x] Semantic Tokens (token type applied later by the parser)
-    - [ ] Tests
-    - [ ] Documentation
+    - [x] Tests
+    - [x] Documentation
   - [x] Tests
   - [ ] Documentation
   - [ ] Hooks
@@ -37,8 +37,8 @@ Progress:
     - [x] derive_lexicon
     - [x] derive_syntax
     - [x] using `tp`
-    - [ ] semantic tokens
-    - [ ] hooks
+    - [x] semantic tokens
+    - [ ] hooks (1.1)
     - [ ] using parser data
   - [ ] second iteration to add links
 - [ ] Usability testing
