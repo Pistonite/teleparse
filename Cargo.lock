@@ -385,7 +385,7 @@ dependencies = [
 
 [[package]]
 name = "teleparse"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "deref-derive",
  "derivative",
@@ -400,7 +400,7 @@ dependencies = [
 
 [[package]]
 name = "teleparse-macros"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
