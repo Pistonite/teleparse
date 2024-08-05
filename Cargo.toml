@@ -4,7 +4,7 @@ members = ["macros"]
 
 [package]
 name = "teleparse"
-version = "0.0.3"
+version = "0.0.4"
 edition = "2021"
 description = "teleparse"
 license = "MIT"
@@ -13,7 +13,7 @@ repository = "https://github.com/Pistonite/teleparse"
 authors = ["Pistonight <terrabyte100k@gmail.com>"]
 
 [dependencies]
-teleparse-macros = { path = "macros", version = "=0.0.3" }
+teleparse-macros = { path = "macros", version = "=0.0.4" }
 deref-derive = "0.1.0"
 num = "0.4.3"
 thiserror = "1.0.61"

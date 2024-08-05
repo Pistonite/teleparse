@@ -25,8 +25,8 @@
   - [Recover](./tp/recover.md)
   - [Loop](./tp/loop.md)
 
-# Extras
-
-- [Semantic]()
-- [Hooks]()
-- [Processing Tokens]()
+- [Using the Parser]()
+  - [Parse the Root]()
+  - [Processing Tokens]()
+  - [Semantic](./parser/semantic.md)
+  - [Hooks]()

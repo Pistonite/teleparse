@@ -63,6 +63,19 @@ impl<L: Lexicon> BorrowMut<[Cell<L>]> for TokenSlice<L> {
     }
 }
 
+impl<L: Lexicon> Deref for TokenSlice<L> {
+    type Target = [Cell<L>];
+    fn deref(&self) -> &Self::Target {
+        self.borrow()
+    }
+}
+
+impl<L: Lexicon> DerefMut for TokenSlice<L> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.borrow_mut()
+    }
+}
+
 impl<'a, L: Lexicon> IntoIterator for &'a TokenSlice<L> {
     type Item = &'a Cell<L>;
     type IntoIter = std::slice::Iter<'a, Cell<L>>;
@@ -91,6 +104,18 @@ impl<L: Lexicon> TokenSlice<L> {
     /// Get the i-th token in the underlying vec
     pub fn at(&self, pos: usize) -> Option<&Cell<L>> {
         self.0.get(pos)
+    }
+
+    /// Get the token whose span equals the input span
+    ///
+    /// Returns `None` if the span doesn't cover exactly one token
+    pub fn at_span<S: Into<Span>>(&self, span: S) -> Option<&Cell<L>> {
+        let span = span.into();
+        let (lo, hi) = self.inside_bounds(span)?;
+        if lo != hi - 1 {
+            return None;
+        }
+        self.at(lo)
     }
 
     pub fn is_empty(&self) -> bool {
@@ -339,7 +364,7 @@ impl<L: Lexicon> TokenSlice<L> {
 pub struct Cell<L: Lexicon> {
     #[deref]
     token: Token<L>,
-    semantic: Set<L>,
+    pub semantic: Set<L>,
 }
 
 impl<L: Lexicon> std::fmt::Debug for Cell<L> {
@@ -410,6 +435,25 @@ mod tests {
     }
 
     #[test]
+    fn at_span_empty() {
+        let vec = example();
+        assert!(vec.at_span(0..1).is_none());
+        assert!(vec.at_span(2..3).is_none());
+        assert!(vec.at_span(1..4).is_none());
+        assert!(vec.at_span(1..1).is_none());
+        assert!(vec.at_span(16..17).is_none());
+    }
+
+    #[test]
+    fn at_span_ok() {
+        let vec = example();
+        assert_eq!(vec.at_span(1..2), Some(&vec[0]));
+        assert_eq!(vec.at_span(1..3), Some(&vec[0]));
+        assert_eq!(vec.at_span(3..4), Some(&vec[1]));
+        assert_eq!(vec.at_span(15..18), Some(&vec[5]));
+    }
+
+    #[test]
     fn overlap_empty_input() {
         let vec = example();
         assert!(vec.overlap(2..2).is_empty());
@@ -439,170 +483,170 @@ mod tests {
     #[test]
     fn both_end_fully_inside() {
         let vec = example();
-        assert_eq!(vec.overlap(1..9).as_slice(), &vec.as_slice()[0..4]);
-        assert_eq!(vec.inside(1..9).as_slice(), &vec.as_slice()[0..4]);
+        assert_eq!(vec.overlap(1..9).as_slice(), &vec[0..4]);
+        assert_eq!(vec.inside(1..9).as_slice(), &vec[0..4]);
     }
 
     #[test]
     fn left_fully_inside_right_partially_inside() {
         let vec = example();
-        assert_eq!(vec.overlap(3..8).as_slice(), &vec.as_slice()[1..4]);
-        assert_eq!(vec.inside(3..8).as_slice(), &vec.as_slice()[1..3]);
+        assert_eq!(vec.overlap(3..8).as_slice(), &vec[1..4]);
+        assert_eq!(vec.inside(3..8).as_slice(), &vec[1..3]);
     }
 
     #[test]
     fn left_fully_inside_right_fully_outside() {
         let vec = example();
-        assert_eq!(vec.overlap(1..10).as_slice(), &vec.as_slice()[0..4]);
-        assert_eq!(vec.inside(1..10).as_slice(), &vec.as_slice()[0..4]);
+        assert_eq!(vec.overlap(1..10).as_slice(), &vec[0..4]);
+        assert_eq!(vec.inside(1..10).as_slice(), &vec[0..4]);
     }
 
     #[test]
     fn left_fully_inside_right_touching() {
         let vec = example();
-        assert_eq!(vec.overlap(1..15).as_slice(), &vec.as_slice()[0..5]);
-        assert_eq!(vec.inside(1..15).as_slice(), &vec.as_slice()[0..5]);
+        assert_eq!(vec.overlap(1..15).as_slice(), &vec[0..5]);
+        assert_eq!(vec.inside(1..15).as_slice(), &vec[0..5]);
     }
 
     #[test]
     fn left_fully_inside_right_over_max() {
         let vec = example();
-        assert_eq!(vec.overlap(7..100).as_slice(), &vec.as_slice()[3..]);
-        assert_eq!(vec.inside(7..100).as_slice(), &vec.as_slice()[3..]);
+        assert_eq!(vec.overlap(7..100).as_slice(), &vec[3..]);
+        assert_eq!(vec.inside(7..100).as_slice(), &vec[3..]);
     }
 
     #[test]
     fn left_partially_inside_right_fully_inside() {
         let vec = example();
-        assert_eq!(vec.overlap(8..13).as_slice(), &vec.as_slice()[3..5]);
-        assert_eq!(vec.inside(8..13).as_slice(), &vec.as_slice()[4..5]);
+        assert_eq!(vec.overlap(8..13).as_slice(), &vec[3..5]);
+        assert_eq!(vec.inside(8..13).as_slice(), &vec[4..5]);
     }
 
     #[test]
     fn both_partially_inside() {
         let vec = example();
-        assert_eq!(vec.overlap(8..16).as_slice(), &vec.as_slice()[3..6]);
-        assert_eq!(vec.inside(8..16).as_slice(), &vec.as_slice()[4..5]);
+        assert_eq!(vec.overlap(8..16).as_slice(), &vec[3..6]);
+        assert_eq!(vec.inside(8..16).as_slice(), &vec[4..5]);
         assert!(vec.inside(8..12).is_empty());
     }
 
     #[test]
     fn left_partially_inside_right_fully_outside() {
         let vec = example();
-        assert_eq!(vec.overlap(8..14).as_slice(), &vec.as_slice()[3..5]);
-        assert_eq!(vec.inside(8..14).as_slice(), &vec.as_slice()[4..5]);
+        assert_eq!(vec.overlap(8..14).as_slice(), &vec[3..5]);
+        assert_eq!(vec.inside(8..14).as_slice(), &vec[4..5]);
     }
 
     #[test]
     fn left_partially_inside_right_touching() {
         let vec = example();
-        assert_eq!(vec.overlap(8..15).as_slice(), &vec.as_slice()[3..5]);
-        assert_eq!(vec.inside(8..15).as_slice(), &vec.as_slice()[4..5]);
+        assert_eq!(vec.overlap(8..15).as_slice(), &vec[3..5]);
+        assert_eq!(vec.inside(8..15).as_slice(), &vec[4..5]);
     }
 
     #[test]
     fn left_partially_inside_right_over_max() {
         let vec = example();
-        assert_eq!(vec.overlap(12..100).as_slice(), &vec.as_slice()[4..]);
-        assert_eq!(vec.inside(12..100).as_slice(), &vec.as_slice()[5..]);
+        assert_eq!(vec.overlap(12..100).as_slice(), &vec[4..]);
+        assert_eq!(vec.inside(12..100).as_slice(), &vec[5..]);
     }
 
     #[test]
     fn left_fully_outside_right_fully_inside() {
         let vec = example();
-        assert_eq!(vec.overlap(6..13).as_slice(), &vec.as_slice()[3..5]);
-        assert_eq!(vec.inside(6..13).as_slice(), &vec.as_slice()[3..5]);
+        assert_eq!(vec.overlap(6..13).as_slice(), &vec[3..5]);
+        assert_eq!(vec.inside(6..13).as_slice(), &vec[3..5]);
     }
 
     #[test]
     fn left_fully_outside_right_partially_inside() {
         let vec = example();
-        assert_eq!(vec.overlap(6..12).as_slice(), &vec.as_slice()[3..5]);
-        assert_eq!(vec.inside(6..12).as_slice(), &vec.as_slice()[3..4]);
+        assert_eq!(vec.overlap(6..12).as_slice(), &vec[3..5]);
+        assert_eq!(vec.inside(6..12).as_slice(), &vec[3..4]);
     }
 
     #[test]
     fn both_fully_outside() {
         let vec = example();
-        assert_eq!(vec.overlap(6..14).as_slice(), &vec.as_slice()[3..5]);
-        assert_eq!(vec.inside(6..14).as_slice(), &vec.as_slice()[3..5]);
+        assert_eq!(vec.overlap(6..14).as_slice(), &vec[3..5]);
+        assert_eq!(vec.inside(6..14).as_slice(), &vec[3..5]);
     }
 
     #[test]
     fn left_fully_outside_right_touching() {
         let vec = example();
-        assert_eq!(vec.overlap(6..15).as_slice(), &vec.as_slice()[3..5]);
-        assert_eq!(vec.inside(6..15).as_slice(), &vec.as_slice()[3..5]);
+        assert_eq!(vec.overlap(6..15).as_slice(), &vec[3..5]);
+        assert_eq!(vec.inside(6..15).as_slice(), &vec[3..5]);
     }
 
     #[test]
     fn left_fully_outside_right_over_max() {
         let vec = example();
-        assert_eq!(vec.overlap(6..100).as_slice(), &vec.as_slice()[3..]);
-        assert_eq!(vec.inside(6..100).as_slice(), &vec.as_slice()[3..]);
+        assert_eq!(vec.overlap(6..100).as_slice(), &vec[3..]);
+        assert_eq!(vec.inside(6..100).as_slice(), &vec[3..]);
     }
 
     #[test]
     fn left_fully_outside_touching_right_fully_inside() {
         let vec = example();
-        assert_eq!(vec.overlap(2..13).as_slice(), &vec.as_slice()[1..5]);
-        assert_eq!(vec.inside(2..13).as_slice(), &vec.as_slice()[1..5]);
+        assert_eq!(vec.overlap(2..13).as_slice(), &vec[1..5]);
+        assert_eq!(vec.inside(2..13).as_slice(), &vec[1..5]);
     }
 
     #[test]
     fn left_full_outside_touching_right_partially_inside() {
         let vec = example();
-        assert_eq!(vec.overlap(2..12).as_slice(), &vec.as_slice()[1..5]);
-        assert_eq!(vec.inside(2..12).as_slice(), &vec.as_slice()[1..4]);
+        assert_eq!(vec.overlap(2..12).as_slice(), &vec[1..5]);
+        assert_eq!(vec.inside(2..12).as_slice(), &vec[1..4]);
     }
 
     #[test]
     fn left_full_outside_touching_right_fully_outside() {
         let vec = example();
-        assert_eq!(vec.overlap(2..10).as_slice(), &vec.as_slice()[1..4]);
-        assert_eq!(vec.inside(2..10).as_slice(), &vec.as_slice()[1..4]);
+        assert_eq!(vec.overlap(2..10).as_slice(), &vec[1..4]);
+        assert_eq!(vec.inside(2..10).as_slice(), &vec[1..4]);
     }
 
     #[test]
     fn left_full_outside_touching_right_fully_outside_touching() {
         let vec = example();
-        assert_eq!(vec.overlap(2..15).as_slice(), &vec.as_slice()[1..5]);
-        assert_eq!(vec.inside(2..15).as_slice(), &vec.as_slice()[1..5]);
+        assert_eq!(vec.overlap(2..15).as_slice(), &vec[1..5]);
+        assert_eq!(vec.inside(2..15).as_slice(), &vec[1..5]);
     }
 
     #[test]
     fn left_full_outside_touching_right_over_max() {
         let vec = example();
-        assert_eq!(vec.overlap(2..100).as_slice(), &vec.as_slice()[1..]);
-        assert_eq!(vec.inside(2..100).as_slice(), &vec.as_slice()[1..]);
+        assert_eq!(vec.overlap(2..100).as_slice(), &vec[1..]);
+        assert_eq!(vec.inside(2..100).as_slice(), &vec[1..]);
     }
 
     #[test]
     fn left_over_min_right_fully_inside() {
         let vec = example();
-        assert_eq!(vec.overlap(0..13).as_slice(), &vec.as_slice()[0..5]);
-        assert_eq!(vec.inside(0..13).as_slice(), &vec.as_slice()[0..5]);
+        assert_eq!(vec.overlap(0..13).as_slice(), &vec[0..5]);
+        assert_eq!(vec.inside(0..13).as_slice(), &vec[0..5]);
     }
 
     #[test]
     fn left_over_min_right_partially_inside() {
         let vec = example();
-        assert_eq!(vec.overlap(0..8).as_slice(), &vec.as_slice()[0..4]);
-        assert_eq!(vec.inside(0..8).as_slice(), &vec.as_slice()[0..3]);
+        assert_eq!(vec.overlap(0..8).as_slice(), &vec[0..4]);
+        assert_eq!(vec.inside(0..8).as_slice(), &vec[0..3]);
     }
 
     #[test]
     fn left_over_min_right_fully_outside() {
         let vec = example();
-        assert_eq!(vec.overlap(0..6).as_slice(), &vec.as_slice()[0..3]);
-        assert_eq!(vec.inside(0..6).as_slice(), &vec.as_slice()[0..3]);
+        assert_eq!(vec.overlap(0..6).as_slice(), &vec[0..3]);
+        assert_eq!(vec.inside(0..6).as_slice(), &vec[0..3]);
     }
 
     #[test]
     fn left_over_min_right_touching() {
         let vec = example();
-        assert_eq!(vec.overlap(0..11).as_slice(), &vec.as_slice()[0..4]);
-        assert_eq!(vec.inside(0..11).as_slice(), &vec.as_slice()[0..4]);
+        assert_eq!(vec.overlap(0..11).as_slice(), &vec[0..4]);
+        assert_eq!(vec.inside(0..11).as_slice(), &vec[0..4]);
     }
 
     #[test]
@@ -663,7 +707,7 @@ mod tests {
             .begins_at_matches(7, |x| x.semantics().contains(T::A))
             .unwrap()
             .as_slice();
-        assert_eq!(result, &vec.as_slice()[3..4]);
+        assert_eq!(result, &vec[3..4]);
     }
 
     #[test]
@@ -673,7 +717,7 @@ mod tests {
             .begins_at_matches(7, |x| x.semantics().contains(T::D))
             .unwrap()
             .as_slice();
-        assert_eq!(result, &vec.as_slice()[3..5]);
+        assert_eq!(result, &vec[3..5]);
     }
 
     #[test]
@@ -683,9 +727,9 @@ mod tests {
             .begins_at_matches(7, |x| x.semantics().contains(T::E))
             .unwrap()
             .as_slice();
-        assert_eq!(result, &vec.as_slice()[3..]);
+        assert_eq!(result, &vec[3..]);
         let result = vec.begins_at_matches(7, |_| true).unwrap().as_slice();
-        assert_eq!(result, &vec.as_slice()[3..]);
+        assert_eq!(result, &vec[3..]);
     }
 
     #[test]
@@ -716,7 +760,7 @@ mod tests {
             .ends_at_matches(5, |x| x.semantics().contains(T::A))
             .unwrap()
             .as_slice();
-        assert_eq!(result, &vec.as_slice()[2..3]);
+        assert_eq!(result, &vec[2..3]);
     }
 
     #[test]
@@ -726,7 +770,7 @@ mod tests {
             .ends_at_matches(5, |x| x.semantics().contains(T::D))
             .unwrap()
             .as_slice();
-        assert_eq!(result, &vec.as_slice()[1..3]);
+        assert_eq!(result, &vec[1..3]);
     }
 
     #[test]
@@ -736,8 +780,8 @@ mod tests {
             .ends_at_matches(5, |x| x.semantics().contains(T::E))
             .unwrap()
             .as_slice();
-        assert_eq!(result, &vec.as_slice()[..3]);
+        assert_eq!(result, &vec[..3]);
         let result = vec.ends_at_matches(5, |_| true).unwrap().as_slice();
-        assert_eq!(result, &vec.as_slice()[..3]);
+        assert_eq!(result, &vec[..3]);
     }
 }
