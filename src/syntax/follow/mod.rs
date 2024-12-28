@@ -41,7 +41,7 @@ impl<L: Lexicon> Follow<L> {
 #[doc(hidden)]
 pub struct DebugFollow<'a, 'b, L: Lexicon>(pub &'a Follow<L>, pub &'b BTreeMap<TypeId, String>);
 
-impl<'a, 'b, L: Lexicon> std::fmt::Debug for DebugFollow<'a, 'b, L> {
+impl<L: Lexicon> std::fmt::Debug for DebugFollow<'_, '_, L> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut fmt = f.debug_struct("Follow");
 

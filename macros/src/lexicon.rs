@@ -282,6 +282,7 @@ pub fn expand(input: &mut syn::DeriveInput) -> syn::Result<TokenStream2> {
         #extra_derives
         const _: () = {
             #[derive(#teleparse::__priv::logos::Logos)]
+            #[logos(crate = #teleparse::__priv::logos)]
         #(
             #[logos(skip #ignore)]
         )*

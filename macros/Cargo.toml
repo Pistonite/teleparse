@@ -1,18 +1,18 @@
 [package]
 name = "teleparse-macros"
-version = "0.0.4"
+version = "0.0.5"
 edition = "2021"
 description = "Proc-macro crate for teleparse"
 repository = "https://github.com/Pistonite/teleparse"
 license = "MIT"
-authors = ["Pistonight <terrabyte100k@gmail.com>"]
+authors = ["Pistonight <pistonknight@outlook.com>"]
 
 [dependencies]
-proc-macro-crate = "3.1.0"
-proc-macro2 = "1.0.83"
-quote = "1.0.36"
-regex = "1.10.4"
-syn = { version = "2.0.66", features = ["full"] }
+proc-macro-crate = "3.2.0"
+proc-macro2 = "1.0.92"
+quote = "1.0.38"
+regex = "1.11.1"
+syn = { version = "2.0.92", features = ["full"] }
 
 [lib]
 proc-macro = true
