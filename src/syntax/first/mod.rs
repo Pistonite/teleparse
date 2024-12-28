@@ -42,7 +42,7 @@ impl<L: Lexicon> First<L> {
 #[doc(hidden)]
 pub struct DebugFirst<'a, 'b, L: Lexicon>(pub &'a First<L>, pub &'b BTreeMap<TypeId, String>);
 
-impl<'a, 'b, L: Lexicon> std::fmt::Debug for DebugFirst<'a, 'b, L> {
+impl<L: Lexicon> std::fmt::Debug for DebugFirst<'_, '_, L> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut fmt = f.debug_struct("First");
 

@@ -289,18 +289,19 @@ const _: () = {
     }
 };
 const _: () = {
+    #[logos(crate = teleparse::__priv::logos)]
     pub enum DerivedLogos {
         #[token("pizza")]
         #[token("pasta")]
         Food,
     }
-    impl<'s> ::logos::Logos<'s> for DerivedLogos {
+    impl<'s> teleparse::__priv::logos::Logos<'s> for DerivedLogos {
         type Error = ();
         type Extras = ();
         type Source = str;
-        fn lex(lex: &mut ::logos::Lexer<'s, Self>) {
-            use ::logos::internal::{LexerInternal, CallbackResult};
-            type Lexer<'s> = ::logos::Lexer<'s, DerivedLogos>;
+        fn lex(lex: &mut teleparse::__priv::logos::Lexer<'s, Self>) {
+            use teleparse::__priv::logos::internal::{LexerInternal, CallbackResult};
+            type Lexer<'s> = teleparse::__priv::logos::Lexer<'s, DerivedLogos>;
             fn _end<'s>(lex: &mut Lexer<'s>) {
                 lex.end()
             }
@@ -338,7 +339,7 @@ const _: () = {
             }
             #[inline]
             fn goto5_at1_with5<'s>(lex: &mut Lexer<'s>) {
-                let byte = unsafe { lex.read_unchecked::<u8>(1usize) };
+                let byte = unsafe { lex.read_byte_unchecked(1usize) };
                 match byte {
                     b'a' => goto7_at2_with5(lex),
                     b'i' => goto6_at2_with5(lex),

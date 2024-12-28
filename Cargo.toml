@@ -4,24 +4,24 @@ members = ["macros"]
 
 [package]
 name = "teleparse"
-version = "0.0.4"
+version = "0.0.5"
 edition = "2021"
 description = "teleparse"
 license = "MIT"
 exclude = ["**/*.expanded.rs", "book/**/*"]
 repository = "https://github.com/Pistonite/teleparse"
-authors = ["Pistonight <terrabyte100k@gmail.com>"]
+authors = ["Pistonight <pistonknight@outlook.com>"]
 
 [dependencies]
-teleparse-macros = { path = "macros", version = "=0.0.4" }
+teleparse-macros = { path = "macros", version = "=0.0.5" }
 deref-derive = "0.1.0"
 num = "0.4.3"
-thiserror = "1.0.61"
+thiserror = "2.0.9"
 derivative = "2.2.0"
 itertools = "0.13.0"
-logos = "0.14.0"
+logos = "0.15.0"
 
 [dev-dependencies]
 # backtrace-on-stack-overflow = "0.3.0" # doesn't work on windows
-macrotest = "1.0.12"
-trybuild = "1.0.96"
+macrotest = "1.0.13"
+trybuild = "1.0.101"
