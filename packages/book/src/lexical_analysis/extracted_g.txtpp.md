@@ -13,5 +13,5 @@ The lexer will still produce those tokens, but instead of passing them to the pa
 they will be kept aside. You can query them using a `Parser` object later.
 
 ```rust
-TXTPP#include ../../../tests/doc_lex_comment.rs
+TXTPP#include ../../../teleparse/tests/doc_lex_comment.rs
 ```

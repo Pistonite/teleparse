@@ -1,0 +1,23 @@
+[package]
+name = "teleparse"
+version = "0.0.6"
+edition = "2021"
+description = "teleparse"
+license = "MIT"
+exclude = ["**/*.expanded.rs"] 
+repository = "https://github.com/Pistonite/teleparse"
+authors = ["Pistonight <pistonknight@outlook.com>"]
+
+[dependencies]
+teleparse-macros = { path = "../macros", version = "=0.0.5" }
+deref-derive = "0.1.0"
+num = "0.4.3"
+thiserror = "2.0.11"
+derivative = "2.2.0"
+itertools = "0.14.0"
+logos = "0.15.0"
+
+[dev-dependencies]
+# backtrace-on-stack-overflow = "0.3.0" # doesn't work on windows
+macrotest = "1.0.13"
+trybuild = "1.0.103"

@@ -9,10 +9,10 @@ Having duplicated terminals is likely a mistake, because
 those terminals are interchangeable in the syntax tree.
 Likewise, you cannot have 2 terminals with no literals.
 ```rust,compile_fail
-TXTPP#include ../../../tests/ui/lex_no_dupe_literal.rs
+TXTPP#include ../../../teleparse/tests/ui/lex_no_dupe_literal.rs
 ```
 ```console
-TXTPP#include ../../../tests/ui/lex_no_dupe_literal.stderr
+TXTPP#include ../../../teleparse/tests/ui/lex_no_dupe_literal.stderr
 ```
 
 ## Regex Features

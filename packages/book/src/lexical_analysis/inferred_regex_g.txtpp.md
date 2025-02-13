@@ -6,13 +6,13 @@ known literal values (for example, a set of keywords),
 the terminals.
 
 ```rust
-TXTPP#include ../../../tests/expand/pizza.rs
+TXTPP#include ../../../teleparse/tests/expand/pizza.rs
 ```
 This is the Don't-Repeat-Yourself (DRY) principle.
 In fact, `derive_lexicon` enforces it:
 ```rust,compile_fail
-TXTPP#include ../../../tests/ui/lex_redundant_regex.rs
+TXTPP#include ../../../teleparse/tests/ui/lex_redundant_regex.rs
 ```
 ```console
-TXTPP#include ../../../tests/ui/lex_redundant_regex.stderr
+TXTPP#include ../../../teleparse/tests/ui/lex_redundant_regex.stderr
 ```

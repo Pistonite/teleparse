@@ -22,6 +22,6 @@ data structures map closer to the verbal description.
 
 In this example, the `tp::Split<T, P>` type is used to parse "list of `T` separated by `P` with no trailing separator".
 ```rust
-TXTPP#include ../../tests/book_ex_simple.rs
+TXTPP#include ../../teleparse/tests/book_ex_simple.rs
 ```
 

@@ -1,0 +1,16 @@
+version: '3'
+
+tasks:
+  dev:
+    desc: Watch and serve the book
+    cmds:
+      - txtpp . -r && mdbook build
+      - live-server book -p 8081 &
+      - cargo watch -s "txtpp packages/book -r -N && mdbook build packages/book"
+
+  build:
+    desc: Build the book
+    cmds:
+      - txtpp . -r
+      - mdbook build
+
