@@ -12,6 +12,17 @@ use super::Lexicon;
 #[derivative(Default(new = "true", bound = ""))]
 pub struct Map<L: Lexicon, T: Default + Clone>(L::Map<T>);
 
+#[cfg(feature = "serde")]
+impl<L: Lexicon, T: Default + Clone + serde::Serialize> serde::Serialize for Map<L, T> {
+    #[inline]
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        self.0.borrow().serialize(serializer)
+    }
+}
+
 impl<L: Lexicon, T: Default + Clone + std::fmt::Debug> std::fmt::Debug for Map<L, T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut s = f.debug_map();
