@@ -1,0 +1,31 @@
+version: '3'
+
+tasks:
+  dev:
+    desc: Run tests in watch mode
+    cmds:
+      - cargo watch -s "cargo test {{.CLI_ARGS}}"
+
+  dev-doc:
+    desc: Watch and serve documentation
+    cmds:
+      - live-server ../../target/doc -p 8080 &
+      - cargo watch -s "cargo doc"
+
+  update-macrotest:
+    desc: Refresh macro expand test snapshots
+    alias: [umacro]
+    env:
+      MACROTEST: overwrite
+    cmds:
+      - cargo test --test macrotest
+
+  update-trybuild:
+    alias: [utry]
+    desc: Refresh compiler output test snapshots
+    env:
+      TRYBUILD: overwrite
+    cmds:
+      - cargo test --test trybuild
+
+

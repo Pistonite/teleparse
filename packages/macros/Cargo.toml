@@ -9,10 +9,10 @@ authors = ["Pistonight <pistonknight@outlook.com>"]
 
 [dependencies]
 proc-macro-crate = "3.2.0"
-proc-macro2 = "1.0.92"
+proc-macro2 = "1.0.93"
 quote = "1.0.38"
 regex = "1.11.1"
-syn = { version = "2.0.92", features = ["full"] }
+syn = { version = "2.0.98", features = ["full"] }
 
 [lib]
 proc-macro = true

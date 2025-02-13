@@ -4,7 +4,7 @@ using an enum. It was already showcased in the beginning of the book with the fu
 here.
 
 ```rust
-TXTPP#include ../../../tests/expand/lexicon_example.rs
+TXTPP#include ../../../teleparse/tests/expand/lexicon_example.rs
 ```
 Attributes on the enum:
 - `#[derive_lexicon]` is the entry point, and processes the other `teleparse` attributes.

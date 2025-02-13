@@ -17,7 +17,7 @@ In this example, `+`, `*`, `(`, `)`, and `id` are terminals. The other symbols a
 The terminal structs derived by `#[derive_lexicon]` are the building blocks
 to define the syntax tree. For example:
 ```rust
-TXTPP#include ../../../tests/book_terminal.rs
+TXTPP#include ../../../teleparse/tests/book_terminal.rs
 ```
 
 Here:

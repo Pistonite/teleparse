@@ -27,6 +27,6 @@ This can *almost* be translated directly into Rust code with `teleparse`.
 Some helper structs are needed to avoid loops when calculating trait requirements,
 which are annotated with comments.
 ```rust
-TXTPP#include ../../tests/book_ex_recur.rs
+TXTPP#include ../../teleparse/tests/book_ex_recur.rs
 ```
 

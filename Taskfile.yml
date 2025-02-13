@@ -1,63 +1,40 @@
 version: "3"
 
-tasks:
-
-############
-# Dev inner loop
-############
-  
-  dev:
-    desc: Run tests in watch mode
-    cmds:
-      - cargo watch -s "cargo test {{.CLI_ARGS}}"
-
+includes:
   book:
-    desc: Watch and serve the book
-    cmds:
-      - txtpp book -r && mdbook build book
-      - live-server book/book -p 8081 &
-      - cargo watch -s "txtpp book -r -N && mdbook build book"
+    taskfile: ./packages/book/
+    dir: ./packages/book/
 
-  doc:
-    desc: Watch and serve documentation
-    cmds:
-      - txtpp src -r && cargo doc
-      - live-server target/doc -p 8080 &
-      - cargo watch -s "txtpp src -r -N && cargo doc"
+  cargo:
+    taskfile: ./packages/mono-dev/task/cargo.yaml
+    internal: true
 
-  refresh:macrotest:
-    desc: Refresh macro expand test snapshots
-    env:
-      MACROTEST: overwrite
+tasks:
+  install-cargo-extra-tools:
+    aliases: [icets]
     cmds:
-      - cargo test --test macrotest
+      - cargo install txtpp mdbook live-server cargo-expand cargo-watch
 
-  refresh:trybuild:
-    desc: Refresh compiler output test snapshots
-    env:
-      TRYBUILD: overwrite
+  install:
     cmds:
-      - cargo test --test trybuild
+      - magoo install
 
-############
-# Automation tasks
-############
-
-  build:book:
-    desc: Build the book
+  test:
     cmds:
-      - txtpp book -r
-      - mdbook build book
+      - cargo test
 
   check:
     desc: Run clippy and other checks
-    vars:
-      CLIPPY_FLAGS: -D warnings -D clippy::todo
-    env:
-      RUSTDOCFLAGS: -D warnings
     cmds:
-      - cargo clippy --package teleparse-macros --all-targets -- {{.CLIPPY_FLAGS}}
-      - cargo clippy --package teleparse --all-targets -- {{.CLIPPY_FLAGS}}
+      - task: cargo:clippy-package
+        vars:
+          PACKAGE: teleparse-macros
+      - task: cargo:clippy-package
+        vars:
+          PACKAGE: teleparse
       - cargo doc
-      - cargo fmt --check
+      - task: cargo:fmt-check
 
+  fix:
+    cmds:
+      - task: cargo:fmt-fix

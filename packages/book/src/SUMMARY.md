@@ -12,7 +12,7 @@
   - [Handling Comments](./lexical_analysis/extracted_g.md)
   - [Lexer Validation](./lexical_analysis/lexer_validation_g.md)
 
-- [`derive_syntax`](./syntax_analysis/derive_syntax_g.md)
+- [`derive_syntax`](./syntax_analysis/derive_syntax.md)
   - [LL(1)](./syntax_analysis/ll1.md)
   - [Note on Recursion](./syntax_analysis/recursion.md)
   - [Static Metadata]()
