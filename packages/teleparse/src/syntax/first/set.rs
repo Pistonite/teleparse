@@ -11,6 +11,7 @@ use crate::Lexicon;
 /// See [module-level documentation](super) for more information.
 #[derive(Derivative, PartialEq, Clone)]
 #[derivative(Default(new = "true", bound = ""))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct FirstSet<L: Lexicon>(TerminalSet<L>);
 
 impl<L: Lexicon> std::fmt::Debug for FirstSet<L> {

@@ -10,6 +10,7 @@ pub type Pos = usize;
 
 /// A span of source code
 #[derive(Default, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Span {
     /// Start of the span, inclusive
     pub lo: Pos,

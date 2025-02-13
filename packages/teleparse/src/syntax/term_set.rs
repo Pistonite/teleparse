@@ -15,6 +15,7 @@ use super::LitSet;
 /// [FOLLOW](super::follow) sets.
 #[derive(Derivative, PartialEq, Clone)]
 #[derivative(Default(new = "true", bound = ""))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct TerminalSet<L: Lexicon> {
     /// Maps token to the set of literals to form the terminal set
     pub map: Map<L, LitSet>,

@@ -21,7 +21,13 @@ tasks:
 
   test:
     cmds:
-      - cargo test
+      - cargo test --all-features
+      - cargo test --no-default-features
+
+  build:
+    cmds:
+      - cargo build {{.CLI_ARGS}} --all-features
+      - cargo build {{.CLI_ARGS}} --no-default-features
 
   check:
     desc: Run clippy and other checks

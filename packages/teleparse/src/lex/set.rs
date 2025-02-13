@@ -5,6 +5,8 @@ use super::Lexicon;
 /// Efficiently stores multiple token types as a bit set
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(transparent)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(transparent))]
 pub struct Set<L: Lexicon>(L::Bit);
 
 impl<L: Lexicon> Default for Set<L> {

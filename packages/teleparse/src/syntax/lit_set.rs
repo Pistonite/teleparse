@@ -5,6 +5,8 @@ use derivative::Derivative;
 /// A set of literal constants
 #[derive(Derivative, Clone, PartialEq)]
 #[derivative(Default(new = "true"))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[cfg_attr(feature = "serde", serde(tag = "type", content = "set"))]
 pub enum LitSet {
     /// A finite set
     #[derivative(Default)]

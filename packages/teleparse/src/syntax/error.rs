@@ -7,6 +7,7 @@ use super::FirstSet;
 
 /// Error encountered during parsing
 #[derive(Debug, Clone, ToSpan, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Error<L: Lexicon> {
     pub span: Span,
     pub data: ErrorKind<L>,
@@ -40,6 +41,7 @@ impl<L: Lexicon> Error<L> {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum ErrorKind<L: Lexicon> {
     Custom(String),
     UnexpectedCharacters,
