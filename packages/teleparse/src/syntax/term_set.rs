@@ -1,9 +1,9 @@
 use std::collections::BTreeSet;
 
 use derivative::Derivative;
+use itertools::Itertools;
 
 use crate::lex::{Map, TokenSrc};
-
 use crate::Lexicon;
 
 use super::LitSet;
@@ -42,6 +42,13 @@ impl<L: Lexicon> std::fmt::Debug for TerminalSet<L> {
             }
         }
         s.finish()
+    }
+}
+
+impl<L: Lexicon> std::fmt::Display for TerminalSet<L> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let string = self.to_repr().into_iter().join(", ");
+        write!(f, "{{{}}}", string)
     }
 }
 

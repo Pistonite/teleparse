@@ -9,12 +9,12 @@ use crate::Lexicon;
 /// Implementation of the output of the FIRST function
 ///
 /// See [module-level documentation](super) for more information.
-#[derive(Derivative, PartialEq, Clone)]
+#[derive(Debug, Derivative, PartialEq, Clone)]
 #[derivative(Default(new = "true", bound = ""))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct FirstSet<L: Lexicon>(TerminalSet<L>);
 
-impl<L: Lexicon> std::fmt::Debug for FirstSet<L> {
+impl<L: Lexicon> std::fmt::Display for FirstSet<L> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.0.fmt(f)
     }
