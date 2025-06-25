@@ -90,15 +90,15 @@ impl ToSpan for Span {
     }
 }
 
-impl ToSpan for &Span {
+impl<T: ToSpan> ToSpan for &T {
     fn lo(&self) -> Pos {
-        self.lo
+        T::lo(self)
     }
     fn hi(&self) -> Pos {
-        self.hi
+        T::hi(self)
     }
     fn span(&self) -> Span {
-        **self
+        T::span(self)
     }
 }
 
