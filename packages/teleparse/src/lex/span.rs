@@ -90,6 +90,18 @@ impl ToSpan for Span {
     }
 }
 
+impl ToSpan for &Span {
+    fn lo(&self) -> Pos {
+        self.lo
+    }
+    fn hi(&self) -> Pos {
+        self.hi
+    }
+    fn span(&self) -> Span {
+        **self
+    }
+}
+
 macro_rules! derive_to_span_tuple {
     ($last:tt, $($n:ident),*) => {
         impl<$($n: ToSpan),*> ToSpan for ($($n,)*) {
@@ -109,3 +121,15 @@ derive_to_span_tuple!(1, A, B);
 derive_to_span_tuple!(2, A, B, C);
 derive_to_span_tuple!(3, A, B, C, D);
 derive_to_span_tuple!(4, A, B, C, D, E);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn ref_to_span() {
+        let span = Span::new(1, 2);
+        let span_ref = &span;
+
+        assert_eq!(span_ref.span(), Span::new(1, 2));
+    }
+}

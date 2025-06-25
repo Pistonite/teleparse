@@ -1,6 +1,6 @@
 [package]
 name = "teleparse"
-version = "0.0.7"
+version = "0.1.0"
 edition = "2021"
 description = "teleparse"
 license = "MIT"
@@ -12,16 +12,16 @@ authors = ["Pistonight <pistonknight@outlook.com>"]
 teleparse-macros = { path = "../macros", version = "=0.0.5" }
 deref-derive = "0.1.0"
 num = "0.4.3"
-thiserror = "2.0.11"
+thiserror = "2.0.12"
 derivative = "2.2.0"
 itertools = "0.14.0"
 logos = "0.15.0"
-serde = { version = "1.0.217", features = ["derive"], optional = true }
+serde = { version = "1.0.219", features = ["derive"], optional = true }
 
 [dev-dependencies]
 # backtrace-on-stack-overflow = "0.3.0" # doesn't work on windows
-macrotest = "1.0.13"
-trybuild = "1.0.103"
+macrotest = "1.1.0"
+trybuild = "1.0.105"
 
 [features]
 default = ["serde"]
