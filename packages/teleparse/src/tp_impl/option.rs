@@ -87,12 +87,12 @@ where
     let token = parser.peek_token_src();
     if token.is_none() {
         // produces epsilon
-        return SynResult::Success(Node::new(parser.current_span_empty(), f(None)));
+        return SynResult::Success(Node::new(parser.empty_span(), f(None)));
     }
     let first = meta.first.get(&T::prod_id());
     if !first.contains(token) {
         // produces epsilon
-        return SynResult::Success(Node::new(parser.current_span_empty(), f(None)));
+        return SynResult::Success(Node::new(parser.empty_span(), f(None)));
     }
     // if parse fails, delay to parent to panic
     match T::produce(parser, meta) {
@@ -101,7 +101,7 @@ where
             SynResult::Recovered(Node::new(t.span(), f(Some(t))), error)
         }
         SynResult::Panic(error) => {
-            SynResult::Recovered(Node::new(parser.current_span_empty(), f(None)), error)
+            SynResult::Recovered(Node::new(parser.empty_span(), f(None)), error)
         }
     }
 }
@@ -111,9 +111,7 @@ mod tests {
     use crate::prelude::*;
     use crate::GrammarError;
 
-    use crate::lex::Token;
     use crate::test::prelude::*;
-    use crate::test::MathTokenType as T;
     use crate::test::{Ident, OpAdd};
 
     #[derive_syntax]
@@ -138,7 +136,7 @@ mod tests {
         assert_eq!(t_str, "Some(token Ident(0..1))");
         assert_eq!(
             t,
-            OptIdent(Node::new(0..1, Some(Ident(Token::new(0..1, T::Ident)))).into())
+            OptIdent(Node::new(0..1, Some(Ident::from_span(0..1))).into())
         );
     }
 
@@ -165,6 +163,22 @@ mod tests {
                 "\"+\"".to_string()
             )
         );
+    }
+
+    #[derive_syntax]
+    #[teleparse(root)]
+    #[derive(Debug, PartialEq, Clone)]
+    struct Seq2(OpAdd, tp::Option<OpAdd>);
+
+    #[test]
+    fn test_seq2() -> Result<(), GrammarError> {
+        let t = Seq2::parse("+    ")?.unwrap();
+        assert_eq!(
+            t,
+            Seq2(OpAdd::from_span(0..1), Node::new(1..1, None).into())
+        );
+
+        Ok(())
     }
 
     #[derive_syntax]

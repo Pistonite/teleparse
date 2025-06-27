@@ -149,7 +149,7 @@ impl<T: Produce> Produce for Loop<T> {
         let span = if let (Some(first), Some(last)) = (output.first(), output.last()) {
             Span::new(first.lo(), last.hi())
         } else {
-            parser.current_span_empty()
+            parser.empty_span()
         };
         (Node::new(span, output).into(), errors).into()
     }
