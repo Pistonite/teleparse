@@ -12,15 +12,9 @@ jobs:
     name: Build and Check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: Pistonight/mono-dev/actions/setup@main
         with:
-          persist-credentials: false
           submodules: true
-      - uses: arduino/setup-task@v2
-        with:
-          version: 3.x
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+          rust: stable
       - run: cargo build --release
       - run: task check
