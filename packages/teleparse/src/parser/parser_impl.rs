@@ -155,7 +155,7 @@ impl<'s, L: Lexicon> Parser<'s, L> {
         let expecting = FirstSet::one(ty, Some(match_lit));
         if follow.contains(Some(token_src)) {
             // do not consume the next token
-            let token = Token::new(self.current_span_empty(), ty);
+            let token = Token::new(self.empty_span(), ty);
             return SynResult::Recovered(token, vec![self.expecting(expecting)]);
         }
 
@@ -233,10 +233,16 @@ impl<'s, L: Lexicon> Parser<'s, L> {
             .unwrap_or_else(|| self.info.eof())
     }
 
-    /// Get start of the lookahead token as a 0-length span
-    pub fn current_span_empty(&mut self) -> Span {
-        let span = self.current_span();
-        Span::new(span.lo, span.lo)
+    /// Get an empty span representing the current position of the parser,
+    /// which is the lowest span that doesn't overlap with consumed tokens
+    pub fn empty_span(&mut self) -> Span {
+        let hi = self
+            .info
+            .tokens
+            .last()
+            .map(|x| x.span.hi)
+            .unwrap_or_default();
+        Span::new(hi, hi)
     }
 
     pub fn apply_semantic<S: ToSpan>(&mut self, span: &S, semantic: Set<L>) {
@@ -246,72 +252,3 @@ impl<'s, L: Lexicon> Parser<'s, L> {
             .apply_semantic(semantic);
     }
 }
-
-//
-// pub struct ParserIter<'s, 'p, L: Lexicon, R>
-//     {
-//     parser: &'p mut Parser<'s, L>,
-//     metadata: &'static Metadata<L>,
-//         _marker: PhantomData<R>,
-// }
-//
-// impl<'s, 'p, L: Lexicon, R: ParseRoot>  ParserIter<'s, 'p, L, R>
-//     where R::AST : AbstractSyntaxRoot<L=L>
-// {
-//     pub fn new(parser: &'p mut Parser<'s, L>) -> Result<Self, GrammarError> {
-//         let metadata = match R::AST::metadata() {
-//             Ok(meta) => meta,
-//             Err(err) => return Err(err.clone()),
-//         };
-//         Ok(Self {
-//             parser,
-//             metadata,
-//             _marker: PhantomData,
-//         })
-//     }
-// }
-//
-// impl<'s, 'p, L: Lexicon, R: ParseTree> Iterator for ParserIter<'s, 'p, L, R>
-//     where R::AST : AbstractSyntaxTree<L=L>
-// {
-//     type Item = R;
-//
-//     fn next(&mut self) -> Option<Self::Item> {
-//         self.parser.next_root(&self.metadata)
-//     }
-// }
-//
-//
-// pub struct ParseRootIter<'s, L: Lexicon, R>
-//     {
-//     parser: Parser<'s, L>,
-//     metadata: &'static Metadata<L>,
-//         _marker: PhantomData<R>,
-// }
-//
-// impl<'s, L: Lexicon, R: ParseRoot>  ParseRootIter<'s, L, R>
-//     where R::AST : AbstractSyntaxRoot<L=L>
-// {
-//     pub fn new(parser: Parser<'s, L>) -> Result<Self, GrammarError> {
-//         let metadata = match R::AST::metadata() {
-//             Ok(meta) => meta,
-//             Err(err) => return Err(err.clone()),
-//         };
-//         Ok(Self {
-//             parser,
-//             metadata,
-//             _marker: PhantomData,
-//         })
-//     }
-// }
-//
-// impl<'s, L: Lexicon, R: ParseTree> Iterator for ParseRootIter<'s, L, R>
-//     where R::AST : AbstractSyntaxTree<L=L>
-// {
-//     type Item = R;
-//
-//     fn next(&mut self) -> Option<Self::Item> {
-//         self.parser.next_root(&self.metadata)
-//     }
-// }
-//

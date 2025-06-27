@@ -32,7 +32,7 @@ impl<L: Lexicon> Error<L> {
             },
             ErrorKind::Expecting(set) => {
                 let set = set.as_terminal_set().to_repr().into_iter().join(", ");
-                format!("Expecting one of {}", set)
+                format!("Expecting one of {set}")
             },
             ErrorKind::UnexpectedEof => "Unexpected end of file".to_string(),
             ErrorKind::UnexpectedNoAdvanceInLoop => "Unexpected: Parser did not advance in a loop. The grammar is probably not LL(1), and this is a bug since the parser should catch that before parsing.".to_string(),

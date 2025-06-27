@@ -1,6 +1,6 @@
 [package]
 name = "teleparse-macros"
-version = "0.0.5"
+version = "0.1.0"
 edition = "2021"
 description = "Proc-macro crate for teleparse"
 repository = "https://github.com/Pistonite/teleparse"

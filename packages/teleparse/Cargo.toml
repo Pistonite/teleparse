@@ -1,6 +1,6 @@
 [package]
 name = "teleparse"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 description = "teleparse"
 license = "MIT"
@@ -9,7 +9,7 @@ repository = "https://github.com/Pistonite/teleparse"
 authors = ["Pistonight <pistonknight@outlook.com>"]
 
 [dependencies]
-teleparse-macros = { path = "../macros", version = "=0.0.5" }
+teleparse-macros = { path = "../macros", version = "=0.1.0" }
 deref-derive = "0.1.0"
 num = "0.4.3"
 thiserror = "2.0.12"

@@ -46,13 +46,11 @@ where
                         errors.extend(e);
                         (None, x.span(), Some(x))
                     }
-                    SynResult::Panic(e) => {
-                        (e.into_iter().next_back(), parser.current_span_empty(), None)
-                    }
+                    SynResult::Panic(e) => (e.into_iter().next_back(), parser.empty_span(), None),
                 }
             } else {
                 let e = parser.expecting(head_first.clone());
-                (Some(e), parser.current_span_empty(), None)
+                (Some(e), parser.empty_span(), None)
             };
         let tail_first = meta.first.get(&R::prod_id());
         let tail = loop {

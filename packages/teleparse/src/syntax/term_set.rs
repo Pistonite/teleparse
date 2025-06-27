@@ -48,7 +48,7 @@ impl<L: Lexicon> std::fmt::Debug for TerminalSet<L> {
 impl<L: Lexicon> std::fmt::Display for TerminalSet<L> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let string = self.to_repr().into_iter().join(", ");
-        write!(f, "{{{}}}", string)
+        write!(f, "{{{string}}}")
     }
 }
 
@@ -212,11 +212,11 @@ impl<L: Lexicon> TerminalSet<L> {
             match intersection.iter() {
                 Some(lits) => {
                     for lit in lits {
-                        terminals.insert(format!("\"{}\"", lit));
+                        terminals.insert(format!("\"{lit}\""));
                     }
                 }
                 None => {
-                    terminals.insert(format!("{:?}", ty));
+                    terminals.insert(format!("{ty:?}"));
                 }
             };
         }
@@ -232,11 +232,11 @@ impl<L: Lexicon> TerminalSet<L> {
             match set.iter() {
                 Some(lits) => {
                     for lit in lits {
-                        terminals.insert(format!("\"{}\"", lit));
+                        terminals.insert(format!("\"{lit}\""));
                     }
                 }
                 None => {
-                    terminals.insert(format!("{:?}", ty));
+                    terminals.insert(format!("{ty:?}"));
                 }
             }
         }

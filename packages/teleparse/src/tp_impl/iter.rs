@@ -149,7 +149,7 @@ impl<T: Produce> Produce for Loop<T> {
         let span = if let (Some(first), Some(last)) = (output.first(), output.last()) {
             Span::new(first.lo(), last.hi())
         } else {
-            parser.current_span_empty()
+            parser.empty_span()
         };
         (Node::new(span, output).into(), errors).into()
     }
@@ -320,7 +320,7 @@ mod tests {
     #[test]
     fn parse_single_item_each() {
         let t = ListPlusList::parse("a+ b").unwrap().unwrap();
-        let t_str = format!("{:?}", t);
+        let t_str = format!("{t:?}");
         assert_eq!(t_str, "ListPlusList(0..1 => [token Ident(0..1)], token Op(1..2), 3..4 => [token Ident(3..4)])");
         assert_eq!(t.span(), Span::from(0..4));
         assert_eq!(
