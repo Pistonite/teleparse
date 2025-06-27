@@ -14,23 +14,11 @@ jobs:
     name: Build Book
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: Pistonight/mono-dev/actions/setup@main
         with:
-          persist-credentials: false
           submodules: true
-      - uses: arduino/setup-task@v2
-        with:
-          version: 3.x
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-      - uses: baptiste0928/cargo-install@v3
-        with:
-          crate: mdbook
-      - uses: baptiste0928/cargo-install@v3
-        with:
-          crate: txtpp
-      - run: task book:build
+          tool-cargo-binstall: mdbook,mdbook-admonish,txtpp
+      - run: task build-book-ci
       - uses: actions/upload-pages-artifact@v3
         with:
           path: packages/book/book

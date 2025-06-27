@@ -1,6 +1,14 @@
 version: '3'
 
+includes:
+  mdbook:
+    taskfile: ../mono-dev/task/mdbook.yaml
+    internal: true
+
 tasks:
+  install:
+    cmds:
+      - task: mdbook:install-theme-monorepo
   dev:
     desc: Watch and serve the book
     cmds:
