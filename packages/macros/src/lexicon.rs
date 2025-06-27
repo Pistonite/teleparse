@@ -141,8 +141,7 @@ pub fn expand(input: &mut syn::DeriveInput) -> syn::Result<TokenStream2> {
                         }
                         infer_literals = None;
                         let doc = format!(
-                            " Terminal symbol derived from [`{}`] with `terminal({})`",
-                            enum_ident, ident
+                            " Terminal symbol derived from [`{enum_ident}`] with `terminal({ident})`",
                         );
                         extra_derives.extend(derive_terminal(
                             terminal_parse,

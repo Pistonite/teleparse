@@ -320,7 +320,7 @@ mod tests {
     #[test]
     fn parse_single_item_each() {
         let t = ListPlusList::parse("a+ b").unwrap().unwrap();
-        let t_str = format!("{:?}", t);
+        let t_str = format!("{t:?}");
         assert_eq!(t_str, "ListPlusList(0..1 => [token Ident(0..1)], token Op(1..2), 3..4 => [token Ident(3..4)])");
         assert_eq!(t.span(), Span::from(0..4));
         assert_eq!(

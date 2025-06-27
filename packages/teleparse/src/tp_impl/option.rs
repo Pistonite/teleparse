@@ -18,10 +18,10 @@ impl<T: Production> Production for OptionProd<T> {
         let inner = T::debug();
         if let Some(rest) = inner.strip_prefix('(') {
             if let Some(inner) = rest.strip_suffix(")+") {
-                return Cow::Owned(format!("({})*", inner));
+                return Cow::Owned(format!("({inner})*"));
             }
             if let Some(inner) = rest.strip_suffix("]+") {
-                return Cow::Owned(format!("({}]*", inner));
+                return Cow::Owned(format!("({inner}]*"));
             }
         }
         Cow::Owned(format!("({})?", T::debug()))
